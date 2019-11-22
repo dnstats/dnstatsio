@@ -3,19 +3,19 @@ import csv
 
 
 def parse():
-    sites = set()
+    sites = dict()
     with open('data.csv', 'r') as csv_file:
         reader = csv.DictReader(csv_file)
         for row in reader:
-            sites.add((publicsuffix2.get_sld((row['IDN_Domain'])), row['GlobalRank']))
+            sites.setdefault(publicsuffix2.get_sld((row['IDN_Domain'])), row['GlobalRank'])
 
-    with open('sites_rank.csv', 'w') as csv_file:
+    with open('sites_rank2.csv', 'w') as csv_file:
         fieldnames = ['site', 'rank']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
 
         writer.writeheader()
 
-        for site in sites:
+        for site in sites.items():
             writer.writerow({'site': site[0], 'rank': site[1]})
 
 
