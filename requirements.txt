@@ -1,2 +1,5 @@
 publicsuffix2
 dnspython3
+celery
+sqlalchemy
+psycopg2
