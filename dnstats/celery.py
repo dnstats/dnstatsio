@@ -32,7 +32,7 @@ def site_stat(site: str, rank: int, run_id: int):
 
 @app.task(base=SqlAlchemyTask)
 def process_result(site, rank, run_id, caa, dmarc, mail, txt, ds):
-    as_dmarc_aggregate, has_dmarc_forensic, has_dmarc, dmarc_policy, dmarc_sub_policy = dnutils.get_dmarc_stats(dmarc)
+    has_dmarc_aggregate, has_dmarc_forensic, has_dmarc, dmarc_policy, dmarc_sub_policy = dnutils.get_dmarc_stats(dmarc)
     dmarc_policy_db = db_session.query(models.DmarcPolicy).filter(policy_string=dmarc_policy)
     sub_dmarc_policy_db = db_session.query(models.DmarcPolicy).filter(policy_string=dmarc_sub_policy)
     has_caa_reporting = dnutils.caa_has_iodef(caa)
