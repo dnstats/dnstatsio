@@ -12,7 +12,7 @@ class Run(Base):
     end_rank = Column(BigInteger)
 
 
-class Sites(Base):
+class Site(Base):
     __tablename__ = 'sites'
     id = Column(BigInteger, primary_key=True)
     domain = Column(String)
