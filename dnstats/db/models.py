@@ -10,13 +10,13 @@ class Run(Base):
     start_time = Column(DateTime)
     start_rank = Column(BigInteger)
     end_rank = Column(BigInteger)
-    current_rank = Column(BigInteger)
 
 
 class Sites(Base):
     __tablename__ = 'sites'
     id = Column(BigInteger, primary_key=True)
     domain = Column(String)
+    current_rank = Column(BigInteger)
 
 
 class SiteRun(Base):
