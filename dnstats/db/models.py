@@ -4,6 +4,13 @@ from sqlalchemy import Column, Boolean, String, DateTime, ForeignKey, BigInteger
 Base = declarative_base()
 
 
+class DmarcPolicy(Base):
+    __tablename__ = 'dmarc_policy'
+    id = Column(BigInteger, primary_key=True)
+    policy_string = Column(String)
+    display_name = Column(String)
+
+
 class Run(Base):
     __tablename__ = 'runs'
     id = Column(BigInteger, primary_key=True)
@@ -26,18 +33,27 @@ class SiteRun(Base):
     run_id = Column(BigInteger, ForeignKey('runs.id'))
     run_rank = Column(BigInteger)
     caa_record = Column(Text)
+    has_caa = Column(Boolean)
     has_caa_reporting = Column(Boolean)
+    caa_issue_count = Column(BigInteger)
+    caa_wildcard_count = Column(BigInteger)
     has_dmarc = Column(Boolean)
     dmarc_policy = Column(Boolean)
     sub_dmarc_policy = Column(Boolean)
-    has_dmarc_reporting = Column(Boolean)
+    has_dmarc_aggregate_reporting = Column(Boolean)
+    has_dmarc_forensic_reporting = Column(Boolean)
     dmarc_policy_id = Column(BigInteger, ForeignKey('dmarc_policy.id'))
+    dmarc_sub_policy_id = Column(BigInteger, ForeignKey('dmarc_policy.id'))
     dmarc_record = Column(Text)
     has_spf = Column(Boolean)
-    spf_policy = Column(BigInteger, ForeignKey('spf_policy.id'))
+    spf_policy_id = Column(BigInteger, ForeignKey('spf_policy.id'))
     txt_records = Column(Text)
     ds_records = Column(Text)
     mx_records = Column(Text)
+    ns_records = Column(Text)
+
+    def has_dmarc_reporting(self):
+        return self.has_dmarc_aggregate_reporting or self.has_dmarc_forensic_reporting
 
 
 class SpfPolicy(Base):
@@ -47,8 +63,4 @@ class SpfPolicy(Base):
     display_name = Column(String)
 
 
-class DmarcPolicy(Base):
-    __tablename__ = 'dmarc_policy'
-    id = Column(BigInteger, primary_key=True)
-    policy_string = Column(String)
-    display_name = Column(String)
+

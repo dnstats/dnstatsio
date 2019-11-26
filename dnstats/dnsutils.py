@@ -30,14 +30,26 @@ def _spf_final_qualifier(record: str) -> str:
     if m:
         return m[0]
     else:
-        return ""
+        return 'no_policy'
 
 
-def caa_has_iodef(ans):
-    for r in ans:
-        if 'iodef' in r:
-            return True
-    return False
+def caa_stats(ans):
+    has_reporting = False
+    has_caa = False
+    allows_wildcard = False
+    issue_count = 0
+    wildcard_count = 0
+    if ans:
+        for r in ans:
+            if ' iodef ' in r:
+                has_reporting = True
+            if ' issuewild ':
+                allows_wildcard = True
+                wildcard_count += 1
+            if ' issue ' in r:
+                has_caa = True
+                issue_count += 1
+    return issue_count, wildcard_count, has_reporting, allows_wildcard, has_caa
 
 
 def get_dmarc_stats(ans):
@@ -46,19 +58,25 @@ def get_dmarc_stats(ans):
     dmarc = False
     policy = ""
     sub_policy = ""
-    for r in ans:
-        if r.startswith('"v=DMARC1'):
-            dmarc = True
-            dmarc_keys = _parse_dmarc(r)
+    if ans:
+        for r in ans:
+            if r.startswith('"v=DMARC1'):
+                dmarc = True
+                dmarc_keys = _parse_dmarc(r)
 
-            if 'rua' in dmarc_keys.keys():
-                aggregate = True
-            if "ruf" in dmarc_keys.keys():
-                forensic = True
-            if "p" in dmarc_keys.keys():
-                policy = dmarc_keys['p']
-            if 'sp' in dmarc_keys.keys():
-                sub_policy = dmarc_keys['sp']
+                if 'rua' in dmarc_keys:
+                    aggregate = True
+                if "ruf" in dmarc_keys:
+                    forensic = True
+                if "p" in dmarc_keys:
+                    policy = dmarc_keys['p']
+                if 'sp' in dmarc_keys:
+                    sub_policy = dmarc_keys['sp']
+                continue
+    if policy is '':
+        policy = 'no_policy'
+    if sub_policy is '':
+        sub_policy = 'no_policy'
     return aggregate, forensic, dmarc, policy, sub_policy
 
 
@@ -70,6 +88,7 @@ def _parse_dmarc(record) -> []:
     policy = dict()
     for part in parts:
         subs = part.split('=')
-        policy[subs[0]] = subs[1]
+        if len(subs) == 2:
+            policy[subs[0].strip()] = subs[1]
     return policy
 
