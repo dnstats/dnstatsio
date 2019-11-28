@@ -9,6 +9,7 @@ class DmarcPolicy(Base):
     id = Column(BigInteger, primary_key=True)
     policy_string = Column(String)
     display_name = Column(String)
+    color = Column(String)
 
 
 class Run(Base):
@@ -61,6 +62,7 @@ class SpfPolicy(Base):
     id = Column(BigInteger, primary_key=True)
     qualifier = Column(String)
     display_name = Column(String)
+    color = Column(String)
 
 
 
