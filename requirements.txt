@@ -1,6 +1,7 @@
 publicsuffix2
 dnspython3
 celery
+flower
 amqp
 sqlalchemy
 psycopg2-binary

@@ -4,6 +4,7 @@ from celery.utils.log import get_task_logger
 from sqlalchemy import and_
 
 import dnstats.dnsutils as dnutils
+import dnstats.dnsutils.spf as spfutils
 import dnstats.db.models as models
 from dnstats.db import db_session
 
@@ -38,14 +39,13 @@ def site_stat(site_id: int, run_id: int):
 
 @app.task(base=SqlAlchemyTask)
 def process_result(result):
-    logger.info(result)
+    logger.warn(result[0])
     has_dmarc_aggregate, has_dmarc_forensic, has_dmarc, dmarc_policy, dmarc_sub_policy = dnutils.get_dmarc_stats(result[4])
     dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=dmarc_policy).scalar()
     sub_dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=dmarc_sub_policy).scalar()
     issue_count, wildcard_count, has_reporting, allows_wildcard, has_caa = dnutils.caa_stats(result[3])
-    is_spf, spf_record, spf_policy = dnutils.get_spf_stats(result[6])
+    is_spf, spf_record, spf_policy = spfutils.get_spf_stats(result[6])
     spf_db = db_session.query(models.SpfPolicy).filter_by(qualifier=spf_policy).scalar()
-    logger.info('msg')
     sr = models.SiteRun(site_id=result[0], run_id=result[2], run_rank=result[1], caa_record=result[3], has_caa=has_caa,
                         has_caa_reporting=has_caa, caa_issue_count=issue_count, caa_wildcard_count=wildcard_count,
                         has_dmarc=has_dmarc, dmarc_policy_id=dmarc_policy_db.id,

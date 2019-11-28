@@ -1,5 +1,4 @@
 import dns.resolver
-import re
 
 
 def safe_query(site: str, type: str):
@@ -17,20 +16,6 @@ def safe_query(site: str, type: str):
     else:
         return None
 
-
-def get_spf_stats(ans):
-    for r in ans:
-        if r.startswith('"v=spf'):
-            return True, r, _spf_final_qualifier(r)
-    return False
-
-
-def _spf_final_qualifier(record: str) -> str:
-    m = re.search(r"[+?~-]all", record)
-    if m:
-        return m[0]
-    else:
-        return 'no_policy'
 
 
 def caa_stats(ans):
@@ -91,4 +76,3 @@ def _parse_dmarc(record) -> []:
         if len(subs) == 2:
             policy[subs[0].strip()] = subs[1]
     return policy
-
