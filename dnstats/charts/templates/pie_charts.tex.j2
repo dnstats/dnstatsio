@@ -1,0 +1,34 @@
+{% raw %}\documentclass{standalone}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows}
+
+\begin{document}
+    \def\angle{0}
+    \def\radius{2}
+    \def\labelradius{3}
+    \def\cyclelist{{"blue","red","green","orange","magenta","gray"}}
+
+    \centering
+    \newcount\cyclecount \cyclecount=-1
+    \newcount\ind \ind=-1
+    \begin{tikzpicture}[nodes = {font=\small}]{%endraw%}
+      \foreach \percent/\name in {
+{% for category in categories %}      {{ category['percent'] }}/{{ category['name'] }},{{ '\n' }}{% endfor %}{% raw %} } {
+          \ifx\percent\empty\else               % If \percent is empty, do nothing
+            \global\advance\cyclecount by 1     % Advance cyclecount
+            \global\advance\ind by 1            % Advance list index
+            \ifnum6<\cyclecount                 % If cyclecount is larger than list
+              \global\cyclecount=0              %   reset cyclecount and
+              \global\ind=0                     %   reset list index
+            \fi
+            \pgfmathparse{\cyclelist[\the\ind]} % Get color from cycle list
+            \edef\color{\pgfmathresult}         %   and store as \color
+            \draw[fill={\color!50},draw={\color}] (0,0) -- (\angle:\radius)
+              arc (\angle:\angle+\percent*3.6:\radius) -- cycle;
+            \draw[draw=white, shorten >=2pt] (\angle+0.5*\percent*3.6:\labelradius) node[text=white] {\name~[\percent\%]} edge (\angle+0.5*\percent*3.6:\radius);
+            \pgfmathparse{\angle+\percent*3.6}  % Advance angle
+            \xdef\angle{\pgfmathresult}         %   and store in \angle
+          \fi
+        };
+    \end{tikzpicture}
+\end{document}{% endraw %}

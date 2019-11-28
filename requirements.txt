@@ -5,3 +5,4 @@ flower
 amqp
 sqlalchemy
 psycopg2-binary
+Jinja2
