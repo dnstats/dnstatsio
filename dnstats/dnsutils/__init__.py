@@ -5,7 +5,7 @@ def safe_query(site: str, type: str):
     r = None
     try:
         r = dns.resolver.query(site, type)
-    except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN):
+    except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.resolver.NoNameservers):
         pass
 
     if r:
@@ -15,7 +15,6 @@ def safe_query(site: str, type: str):
         return results
     else:
         return None
-
 
 
 def caa_stats(ans):
