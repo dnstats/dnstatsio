@@ -1,3 +1,4 @@
+import os
 import subprocess
 from jinja2 import Environment, FileSystemLoader
 
@@ -7,7 +8,7 @@ from dnstats.db import models as models
 
 def render_pie(categories, filename: str):
     # This method assumes that there is no file extension
-    file_loader = FileSystemLoader('/Users/mburket/code/dnsstats/dnstats/charts/templates')
+    file_loader = FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates'))
     env = Environment(loader=file_loader)
     template = env.get_template('pie_charts.tex.j2')
     result = template.render(categories=categories)
