@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>dnstats.io</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <h1>dnstats.io</h1>
+        <h2>Table of Contents</h2>
+
+        {% for chart in charts %}
+            <h2>{{ chart[1] }}</h2>
+            <img src="{{ chart[0] }}.png" />
+        {% endfor %}
+    </body>
+</html>
