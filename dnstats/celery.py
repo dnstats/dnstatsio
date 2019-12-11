@@ -47,7 +47,7 @@ def process_result(result):
     is_spf, spf_record, spf_policy = spfutils.get_spf_stats(result[6])
     spf_db = db_session.query(models.SpfPolicy).filter_by(qualifier=spf_policy).scalar()
     sr = models.SiteRun(site_id=result[0], run_id=result[2], run_rank=result[1], caa_record=result[3], has_caa=has_caa,
-                        has_caa_reporting=has_caa, caa_issue_count=issue_count, caa_wildcard_count=wildcard_count,
+                        has_caa_reporting=has_reporting, caa_issue_count=issue_count, caa_wildcard_count=wildcard_count,
                         has_dmarc=has_dmarc, dmarc_policy_id=dmarc_policy_db.id,
                         dmarc_sub_policy_id=sub_dmarc_policy_db.id, has_dmarc_aggregate_reporting=has_dmarc_aggregate,
                         has_dmarc_forensic_reporting=has_dmarc_forensic, dmarc_record=result[4], has_spf=is_spf,
