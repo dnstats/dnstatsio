@@ -67,10 +67,3 @@ class SpfPolicy(Base):
     display_name = Column(String, nullable=False)
     color = Column(String, nullable=False)
     UniqueConstraint('policy_string')
-
-
-class Color(Base):
-    __timename__ = 'color'
-    id = Column(BigInteger, primary_key=True)
-    name = Column(String, nullable=True)
-    UniqueConstraint('name')
