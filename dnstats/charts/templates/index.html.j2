@@ -2,16 +2,25 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
-        <title>dnstats.io</title>
+        <title>dnstats.io - {{ report_date }}</title>
         <link rel="stylesheet" href="style.css" />
     </head>
     <body>
         <h1>dnstats.io</h1>
-        <h2>Table of Contents</h2>
-
+        <p>
+        Data for this report was collected on {{ report_date }} and it contains data for the domains the of the top
+        {{ end_rank }} sites as defined by <a href="https://majestic.com/reports/majestic-million">Majestic</a> under the
+        <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0 License</a>
+        </a>.
+        </p>
         {% for chart in charts %}
             <h2>{{ chart[1] }}</h2>
+            <hr />
             <img src="{{ chart[0] }}.png" />
         {% endfor %}
+        <hr />
+        <p>This work is licensed under a
+        <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">
+        Creative Commons Attribution 4.0 International License</a>.</p>
     </body>
 </html>

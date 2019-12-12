@@ -1,4 +1,5 @@
 import os
+import time
 import subprocess
 import datetime
 from jinja2 import Environment, FileSystemLoader
@@ -15,9 +16,13 @@ def render_pie(categories, filename: str):
     result = template.render(categories=categories)
     with open('{}.tex'.format(filename), 'w') as f:
         f.write(result)
-    subprocess.run(['pdflatex', filename])
+    subprocess.run(['xelatex', filename])
     subprocess.run(['magick', 'convert', '-density', '3000', '-scale', 'x740', '{}.pdf'.format(filename),
                     '{}.png'.format(filename)])
+    os.remove('{}.tex'.format(filename))
+    os.remove('{}.log'.format(filename))
+    os.remove('{}.aux'.format(filename))
+    os.remove('{}.pdf'.format(filename))
 
 
 def get_categories_from_query(run_id: int, query: str) -> [()]:
@@ -85,14 +90,17 @@ def create_reports(run_id: int):
                  run_report(caa_adoption_query, 'CAA Adoption', True, run_id),
                  run_report(caa_reporting, 'CAA Reporting', True, run_id)]
 
-    create_html(filenames)
+    create_html(filenames, run_id)
 
 
-def create_html(filemaes: [()]):
+def create_html(filenames: [()], run_id: int):
+    print(filenames)
     file_loader = FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates'))
     env = Environment(loader=file_loader)
     template = env.get_template('index.html.j2')
-    result = template.render(charts=filemaes)
+    run = db_session.query(models.Run).filter_by(id=run_id).one()
+    report_date = run.start_time.strftime('%B %d, %Y')
+    result = template.render(charts=filenames, report_date=report_date, end_rank=run.end_rank)
     filename = _create_timedate_filename('index') + '.html'
     with open(filename, 'w') as file:
         file.write(result)

@@ -1,0 +1,19 @@
+body {
+    background-color: black;
+    color: #fff;
+    font-family: 'Open Sans', "Helvetica Neue", Helvetica, Arial, sans-serif;
+    margin: 3%;
+}
+
+img {
+    max-width: 80%;
+
+}
+
+body a {
+    color: #fff;
+}
+
+body a:hover {
+    text-decoration: none;
+}
