@@ -33,7 +33,7 @@ def get_categories_from_query(run_id: int, query: str) -> [()]:
         result_set = connection.execute(query)
 
         for row in result_set:
-            category = {'percent': round((row[0]/total_count) * 100, 1), 'name': row[1], 'color': row[2]}
+            category = {'percent': round((row[0]/total_count) * 100, 3), 'name': row[1], 'color': row[2]}
             categories.append(category)
     return categories
 
@@ -44,9 +44,9 @@ def get_categories_from_adoption_query(run_id: int, query: str) -> [()]:
         total_count = db_session.query(models.SiteRun).filter_by(run_id=run_id).count()
         result_set = connection.execute(query)
         for row in result_set:
-            yes = round((row[0]/total_count), 1) * 100
+            yes = round((row[0]/total_count), 3) * 100
             yes_count = row[0]
-        no = round(((total_count - yes_count)/total_count), 1) * 100
+        no = round(((total_count - yes_count)/total_count), 3) * 100
         categories.append({'percent': yes, 'name': 'Yes', 'color': 'green'})
         categories.append({'percent': no, 'name': 'No', 'color': 'red'})
         return categories
