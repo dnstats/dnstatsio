@@ -12,6 +12,7 @@ app = Celery('dnstats', broker='amqp://guest@localhost//')
 
 logger = get_task_logger('dnstats.scans')
 
+
 class SqlAlchemyTask(Task):
     """An abstract Celery Task that ensures that the connection the the
     database is closed on task completion
@@ -60,6 +61,6 @@ def process_result(result):
 
 @app.task()
 def launch_run(run_id):
-    run = db_session.query(models.Run).filter(models.Run.id==run_id).scalar()
+    run = db_session.query(models.Run).filter(models.Run.id == run_id).scalar()
     sites = db_session.query(models.Site).filter(and_(models.Site.current_rank >= run.start_rank, models.Site.current_rank <= run.end_rank))
     group(chain(site_stat.s(site.id, run.id), process_result.s()) for site in sites).apply_async()
