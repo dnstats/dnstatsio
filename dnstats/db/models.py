@@ -41,8 +41,6 @@ class SiteRun(Base):
     caa_issue_count = Column(BigInteger)
     caa_wildcard_count = Column(BigInteger)
     has_dmarc = Column(Boolean, nullable=False)
-    dmarc_policy = Column(Boolean, nullable=False)
-    sub_dmarc_policy = Column(Boolean, nullable=False)
     has_dmarc_aggregate_reporting = Column(Boolean, nullable=False)
     has_dmarc_forensic_reporting = Column(Boolean, nullable=False)
     dmarc_policy_id = Column(BigInteger, ForeignKey('dmarc_policy.id'))
