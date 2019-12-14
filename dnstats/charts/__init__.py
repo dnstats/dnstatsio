@@ -16,13 +16,10 @@ def render_pie(categories, filename: str):
     result = template.render(categories=categories)
     with open('{}.tex'.format(filename), 'w') as f:
         f.write(result)
-    subprocess.run(['xelatex', filename])
-    subprocess.run(['magick', 'convert', '-density', '3000', '-scale', 'x740', '{}.pdf'.format(filename),
-                    '{}.png'.format(filename)])
-    os.remove('{}.tex'.format(filename))
-    os.remove('{}.log'.format(filename))
-    os.remove('{}.aux'.format(filename))
-    os.remove('{}.pdf'.format(filename))
+    subprocess.run(['latex', '{}.tex'.format(filename)])
+    subprocess.run(['dvisvgm', '{}.dvi'.format(filename)])
+    os.rename('{}-1.svg'.format(filename), '{}.svg'.format(filename))
+    _replace_black('{}.svg'.format(filename))
 
 
 def get_categories_from_query(run_id: int, query: str) -> [()]:
@@ -104,3 +101,13 @@ def create_html(filenames: [()], run_id: int):
     filename = _create_timedate_filename('index') + '.html'
     with open(filename, 'w') as file:
         file.write(result)
+
+
+def _replace_black(filename: str):
+    with open(filename, 'r') as file:
+        svgdata = file.read()
+
+    svgdata = svgdata.replace("stroke='#000'", "stroke='#fff'")
+
+    with open(filename, 'w') as file:
+        file.write(svgdata)
