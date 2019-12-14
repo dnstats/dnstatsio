@@ -57,6 +57,8 @@ def get_dmarc_stats(ans):
                 if 'sp' in dmarc_keys:
                     sub_policy = dmarc_keys['sp']
                 continue
+            else:
+                policy = 'invalid'
     if policy is '':
         policy = 'no_policy'
     if sub_policy is '':
