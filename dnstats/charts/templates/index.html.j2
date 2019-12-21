@@ -10,13 +10,12 @@
         <p>
         Data for this report was collected on {{ report_date }} and it contains data for the domains the of the top
         {{ end_rank }} sites as defined by <a href="https://majestic.com/reports/majestic-million">Majestic</a> under the
-        <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0 License</a>
-        </a>.
+        <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0 License</a>.
         </p>
         {% for chart in charts %}
             <h2>{{ chart[1] }}</h2>
             <hr />
-            <img src="{{ chart[0] }}.svg" />
+            <img src="{{ chart[0] }}.svg" alt="{{ chart[1] }}" />
         {% endfor %}
         <hr />
         <p>This work is licensed under a

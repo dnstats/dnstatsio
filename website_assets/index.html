@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>D3 pie</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div id="myPie"></div>
+    </body>
+    <script src="d3pie.js"></script>
+    <script>
+        let p = document.getElementById('myPie');
+        let pie = new d3pie(p, {
+            header: {
+                title: {
+                    text: "A Very Simple Pie",
+                    fontSize: 30,
+                    color: '#FFF'
+                }
+            },
+            data: {
+                content: [
+                    {label: "JavaScript", value: 264131},
+                    {label: "Ruby", value: 218812},
+                    {label: "Java", value: 157618}
+                ]
+            },
+            labels: {
+                mainLabel: {
+                    color: "#ffffff",
+
+                },
+            },
+            tooltips: {
+                enabled: true,
+                type: "placeholder",
+                string: "{label}: {percentage}% ({value})",
+                styles: {
+                    fadeInSpeed: 500,
+                    backgroundColor: "#e5e5e5",
+                    backgroundOpacity: 0.8,
+                    color: "#ffffcc",
+                    borderRadius: 4,
+                    fontSize: 20,
+                    padding: 3
+                }
+            }
+	});
+    </script>
+</html>
