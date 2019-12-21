@@ -45,6 +45,9 @@ def get_dmarc_stats(ans):
     if ans:
         for r in ans:
             if r.startswith('"v=DMARC1'):
+                if dmarc:
+                    policy = 'invalid'
+                    break
                 dmarc = True
                 dmarc_keys = _parse_dmarc(r)
 
@@ -56,9 +59,8 @@ def get_dmarc_stats(ans):
                     policy = dmarc_keys['p']
                 if 'sp' in dmarc_keys:
                     sub_policy = dmarc_keys['sp']
-                continue
-            else:
-                policy = 'invalid'
+                break
+
     if policy is '':
         policy = 'no_policy'
     if sub_policy is '':
@@ -75,5 +77,5 @@ def _parse_dmarc(record) -> []:
     for part in parts:
         subs = part.split('=')
         if len(subs) == 2:
-            policy[subs[0].strip()] = subs[1]
+            policy[subs[0].strip()] = subs[1].strip()
     return policy
