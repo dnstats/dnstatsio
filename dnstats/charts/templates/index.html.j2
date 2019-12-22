@@ -15,11 +15,14 @@
         {% for chart in charts %}
             <h2>{{ chart[1] }}</h2>
             <hr />
-            <img src="{{ chart[0] }}.svg" alt="{{ chart[1] }}" />
+            <div class="chart" id="{{ chart[2] }}"></div>
         {% endfor %}
         <hr />
         <p>This work is licensed under a
         <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">
         Creative Commons Attribution 4.0 International License</a>.</p>
     </body>
+    <script integrity="sha384-A753X7DKbqixyg9PJac76aNkFtPsX0ycrZTWbtFasXq1cWjTruFWwrvspVjmKQIZ" crossorigin="anonymous"  src="d3.js"></script>
+    <script integrity="sha384-IzZrBY9y4c5KyD9O8fQVdEyyfuEBx6+E+ysTIO3QZRgkOkstdCW4ewps7fms2zbF" crossorigin="anonymous" src="d3pie.js"></script>
+    <script src="{{js_filename}}.js"></script>
 </html>
