@@ -1,6 +1,9 @@
 import os
 import subprocess
 import datetime
+import hashlib
+import base64
+
 from jinja2 import Environment, FileSystemLoader
 
 from dnstats.db import db_session, engine
@@ -130,3 +133,15 @@ def _replace_black(filename: str):
 
     with open(filename, 'w') as file:
         file.write(svgdata)
+
+
+def _slugify(input_str: str) -> str:
+    return input_str.replace(' ', '_').lower()
+
+
+def calculate_sri_hash(filename: str):
+    hashing = hashlib.sha3_384()
+    with open(filename, 'rb') as file:
+        chunk = file.read(hashing.block_size)
+        hashing.update(chunk)
+    return base64.b64encode(hashing.hexdigest())
