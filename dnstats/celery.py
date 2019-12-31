@@ -5,6 +5,7 @@ from sqlalchemy import and_
 
 import dnstats.dnsutils as dnutils
 import dnstats.dnsutils.spf as spfutils
+import dnstats.dnsutils.mx as mxutils
 import dnstats.db.models as models
 from dnstats.db import db_session
 
@@ -41,19 +42,21 @@ def site_stat(site_id: int, run_id: int):
 @app.task(base=SqlAlchemyTask)
 def process_result(result):
     logger.warn(result[0])
+    site = db_session.query(models.Site).filter_by(id=result[0]).one()
     has_dmarc_aggregate, has_dmarc_forensic, has_dmarc, dmarc_policy, dmarc_sub_policy = dnutils.get_dmarc_stats(result[4])
     dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=dmarc_policy).scalar()
     sub_dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=dmarc_sub_policy).scalar()
     issue_count, wildcard_count, has_reporting, allows_wildcard, has_caa = dnutils.caa_stats(result[3])
     is_spf, spf_record, spf_policy = spfutils.get_spf_stats(result[6])
     spf_db = db_session.query(models.SpfPolicy).filter_by(qualifier=spf_policy).scalar()
+    mx_db = mxutils.get_provider_from_mx_records(result[5], site.domain)
     sr = models.SiteRun(site_id=result[0], run_id=result[2], run_rank=result[1], caa_record=result[3], has_caa=has_caa,
                         has_caa_reporting=has_reporting, caa_issue_count=issue_count, caa_wildcard_count=wildcard_count,
                         has_dmarc=has_dmarc, dmarc_policy_id=dmarc_policy_db.id,
                         dmarc_sub_policy_id=sub_dmarc_policy_db.id, has_dmarc_aggregate_reporting=has_dmarc_aggregate,
                         has_dmarc_forensic_reporting=has_dmarc_forensic, dmarc_record=result[4], has_spf=is_spf,
                         spf_policy_id=spf_db.id, txt_records=result[6], ds_records=result[7], mx_records=result[5],
-                        ns_records=result[8])
+                        ns_records=result[8], email_provider_id=mx_db)
     db_session.add(sr)
     db_session.commit()
     return

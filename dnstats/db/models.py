@@ -52,6 +52,7 @@ class SiteRun(Base):
     ds_records = Column(Text)
     mx_records = Column(Text)
     ns_records = Column(Text)
+    email_provider_id = Column(BigInteger, ForeignKey('email_provider.id'))
     UniqueConstraint('site_id', 'run_id')
 
     def has_dmarc_reporting(self):
@@ -65,3 +66,11 @@ class SpfPolicy(Base):
     display_name = Column(String, nullable=False)
     color = Column(String, nullable=False)
     UniqueConstraint('policy_string')
+
+
+class EmailProvider(Base):
+    __tablename__ = 'email_provider'
+    id = Column(BigInteger, primary_key=True)
+    display_name = Column(String, nullable=False)
+    search_regex = Column(String, nullable=False)
+    is_regex = Column(Boolean, nullable=False, default=True)
