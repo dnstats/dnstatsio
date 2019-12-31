@@ -53,8 +53,8 @@ def get_categories_from_adoption_query(run_id: int, query: str) -> [()]:
         for row in result_set:
             yes = row[0]
         no = total_count - yes
-        categories.append({'value': yes, 'name': 'Yes', 'color': 'green'})
-        categories.append({'value': no, 'name': 'No', 'color': 'red'})
+        categories.append({'value': yes, 'name': 'Yes', 'color': '#72e572'})
+        categories.append({'value': no, 'name': 'No', 'color': '#FF8080'})
         return categories
 
 
@@ -98,6 +98,8 @@ def create_reports(run_id: int):
                             "join dmarc_policy dp on sr.dmarc_sub_policy_id = dp.id where sr.run_id = {} " \
                             "group by dp.display_name, dp.color, dp.display_name".format(run_id)
 
+    dnssec_adoption = "select count(*) from site_runs where run_id = 15 and ds_records is not null"
+
     filenames = [run_report(spf_adoption_query, 'SPF Adoption', True, run_id),
                  run_report(spf_reports_query, 'SPF Policy', False, run_id),
                  run_report(dmarc_adoption_query, 'DMARC Adaption', True, run_id),
@@ -106,20 +108,24 @@ def create_reports(run_id: int):
                  run_report(dmarc_subpolicy_query, 'DMARC Subdomain Policy', False, run_id),
                  run_report(mx_query, 'Has MX Records', True, run_id),
                  run_report(caa_adoption_query, 'CAA Adoption', True, run_id),
-                 run_report(caa_reporting, 'CAA Reporting', True, run_id), ]
+                 run_report(caa_reporting, 'CAA Reporting', True, run_id),
+                 run_report(dnssec_adoption, 'DNSSEC Adoption', True, run_id)]
     js_filename = _create_timedate_filename('charts')
     _render_piejs(filenames, js_filename)
     create_html(filenames, run_id, js_filename)
 
 
 def create_html(filenames: [()], run_id: int, js_filename: str):
-    print(filenames)
+    for filename in filenames:
+        print(filename[1], filename[2])
     file_loader = FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates'))
     env = Environment(loader=file_loader)
-    template = env.get_template('index.html.j2')
+    template = env.get_template('index.html')
     run = db_session.query(models.Run).filter_by(id=run_id).one()
     report_date = run.start_time.strftime('%B %d, %Y')
-    result = template.render(charts=filenames, report_date=report_date, end_rank=run.end_rank, js_filename=js_filename)
+    js_sha = calculate_sri_hash(js_filename+'.js')
+    result = template.render(charts=filenames, report_date=report_date, end_rank=run.end_rank, js_filename=js_filename,
+                             js_sha=js_sha)
     filename = _create_timedate_filename('index') + '.html'
     with open(filename, 'w') as file:
         file.write(result)
@@ -140,8 +146,11 @@ def _slugify(input_str: str) -> str:
 
 
 def calculate_sri_hash(filename: str):
-    hashing = hashlib.sha3_384()
+    hashing = hashlib.sha384()
     with open(filename, 'rb') as file:
-        chunk = file.read(hashing.block_size)
-        hashing.update(chunk)
-    return base64.b64encode(hashing.hexdigest())
+        while True:
+            chunk = file.read(hashing.block_size)
+            hashing.update(chunk)
+            if not chunk:
+                break
+    return str(base64.encodebytes(hashing.digest()), 'utf-8').replace('\n', '')

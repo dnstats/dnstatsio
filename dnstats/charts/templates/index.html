@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>dnstats.io - {{ report_date }}</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <h1>dnstats.io</h1>
+        <p>
+        Data for this report was collected on {{ report_date }} and it contains data for the domains the of the top
+        {{ end_rank }} sites as defined by <a href="https://majestic.com/reports/majestic-million">Majestic</a> under the
+        <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0 License</a>.
+        </p>
+        <h2>SPF</h2>
+        <div class="section group">
+            <div class="col span_1_of_2">
+                <h3>SPF Adoption</h3>
+                <hr />
+                <div class="chart" id="spf_adoption"></div>
+            </div>
+            <div class="col span_1_of_2">
+                <h3>SPF Policy</h3>
+                <hr />
+                <div class="chart" id="spf_policy"></div>
+            </div>
+        </div>
+        <h2>DMARC</h2>
+        <div class="section group">
+            <div class="col span_1_of_2">
+                <h3>DMARC Adoption</h3>
+                <hr />
+                <div class="chart" id="dmarc_adaption"></div>
+            </div>
+            <div class="col span_1_of_2">
+                <h3>DMARC Policy</h3>
+                <hr />
+                <div class="chart" id="dmarc_policy"></div>
+            </div>
+        </div>
+        <h2>CAA</h2>
+        <div class="section group">
+            <div class="col span_1_of_2">
+                <h3>CAA Adoption</h3>
+                <hr />
+                <div class="chart" id="caa_adoption"></div>
+            </div>
+            <div class="col span_1_of_2">
+                <h3>CAA Reporting</h3>
+                <hr />
+                <div class="chart" id="caa_reporting"></div>
+            </div>
+        </div>
+        <h2>Others</h2>
+        <div class="section group">
+            <div class="col span_1_of_2">
+                <h3>Has MX Records</h3>
+                <hr />
+                <div class="chart" id="has_mx_records"></div>
+            </div>
+            <div class="col span_1_of_2">
+                <h3>DNSSEC Adoption</h3>
+                <hr />
+                <div class="chart" id="dnssec_adoption"></div>
+            </div>
+        </div>
+        <hr />
+        <p>This work is licensed under a
+        <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">
+        Creative Commons Attribution 4.0 International License</a>.</p>
+    </body>
+    <script integrity="sha384-A753X7DKbqixyg9PJac76aNkFtPsX0ycrZTWbtFasXq1cWjTruFWwrvspVjmKQIZ" crossorigin="anonymous"  src="d3.js"></script>
+    <script integrity="sha384-IzZrBY9y4c5KyD9O8fQVdEyyfuEBx6+E+ysTIO3QZRgkOkstdCW4ewps7fms2zbF" crossorigin="anonymous" src="d3pie.js"></script>
+    <script integrity="sha384-{{ js_sha }}" src="{{ js_filename }}.js"></script>
+</html>

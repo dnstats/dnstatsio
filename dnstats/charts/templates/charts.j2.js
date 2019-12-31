@@ -8,7 +8,7 @@ let options =  {
                     backgroundColor: "#e5e5e5",
                     backgroundOpacity: 0.8,
                     color: "#ffffcc",
-                    borderRadius: 4,
+                    borderRadius: 2,
                     fontSize: 20,
                     padding: 3
                 }
@@ -19,14 +19,15 @@ let options =  {
                     fontSize: 25
                 },
                 percentage: {
-                    decimalPlaces: 3,
-                    fontSize: 25
+                    decimalPlaces: 2,
+                    fontSize: 14,
+                    color: '#f2f2f2',
                 }
             },
             size: {
-                canvasHeight: 800,
-                canvasWidth: 800,
-                pieOuterRadius: "90%"
+                canvasHeight: 500,
+                canvasWidth: 500,
+                pieOuterRadius: "85%"
             },
             effect: {
                 load: {
@@ -40,7 +41,7 @@ let options =  {
     let {{ category[2] }}_id = document.getElementById('{{ category[2] }}');
     let {{ category[2] }}_data = {data: {
                 content: [
-    {% for data_point in category[3] %}{label: "{{ data_point['name'] }}", value: {{ data_point['value'] }},},
+    {% for data_point in category[3] %}{label: "{{ data_point['name'] }}", value: {{ data_point['value'] }}, color: "{{ data_point['color'] }}",},
 {% endfor %}
     ]}};
     let  {{ category[2] }}_chartOpts = Object.assign({{ category[2] }}_data, options);
