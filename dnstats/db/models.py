@@ -5,7 +5,7 @@ Base = declarative_base()
 
 
 class DmarcPolicy(Base):
-    __tablename__ = 'dmarc_policy'
+    __tablename__ = 'dmarc_policies'
     id = Column(BigInteger, primary_key=True)
     policy_string = Column(String, nullable=False)
     display_name = Column(String, nullable=False)
@@ -43,16 +43,16 @@ class SiteRun(Base):
     has_dmarc = Column(Boolean, nullable=False)
     has_dmarc_aggregate_reporting = Column(Boolean, nullable=False)
     has_dmarc_forensic_reporting = Column(Boolean, nullable=False)
-    dmarc_policy_id = Column(BigInteger, ForeignKey('dmarc_policy.id'))
-    dmarc_sub_policy_id = Column(BigInteger, ForeignKey('dmarc_policy.id'))
+    dmarc_policy_id = Column(BigInteger, ForeignKey('dmarc_policies.id'))
+    dmarc_sub_policy_id = Column(BigInteger, ForeignKey('dmarc_policies.id'))
     dmarc_record = Column(Text)
     has_spf = Column(Boolean, nullable=False)
-    spf_policy_id = Column(BigInteger, ForeignKey('spf_policy.id'), nullable=False)
+    spf_policy_id = Column(BigInteger, ForeignKey('spf_policies.id'), nullable=False)
     txt_records = Column(Text)
     ds_records = Column(Text)
     mx_records = Column(Text)
     ns_records = Column(Text)
-    email_provider_id = Column(BigInteger, ForeignKey('email_provider.id'))
+    email_provider_id = Column(BigInteger, ForeignKey('email_providers.id'))
     UniqueConstraint('site_id', 'run_id')
 
     def has_dmarc_reporting(self):
@@ -60,7 +60,7 @@ class SiteRun(Base):
 
 
 class SpfPolicy(Base):
-    __tablename__ = 'spf_policy'
+    __tablename__ = 'spf_policies'
     id = Column(BigInteger, primary_key=True)
     qualifier = Column(String, nullable=False)
     display_name = Column(String, nullable=False)
@@ -69,7 +69,7 @@ class SpfPolicy(Base):
 
 
 class EmailProvider(Base):
-    __tablename__ = 'email_provider'
+    __tablename__ = 'email_providers'
     id = Column(BigInteger, primary_key=True)
     display_name = Column(String, nullable=False)
     search_regex = Column(String, nullable=False)
