@@ -5,13 +5,16 @@ from dnstats.dnsutils import safe_query
 
 def get_provider_from_mx_records(ans: list, site: str):
     if ans:
-        mx_string = ''.join(ans)
+        mx_string = ''.join(ans).lower()
         providers = db_session.query(models.EmailProvider).filter_by(is_regex=True).all()
         if mx_string.endswith(site + '.'):
-            return db_session.query(models.EmailProvider).filter_by(display_name='Self-Hosted').one().id
+            return db_session.query(models.EmailProvider).filter_by(search_regex='domain.').one().id
         for provider in providers:
             if provider.search_regex in mx_string:
                 return provider.id
+    else:
+        return db_session.query(models.EmailProvider).filter_by(search_regex='nxdomain.').one().id
+
 
 def test(site: str):
     ans = safe_query(site, 'mx')
