@@ -5,7 +5,7 @@ Base = declarative_base()
 
 
 class DmarcPolicy(Base):
-    __tablename__ = 'dmarc_policy'
+    __tablename__ = 'dmarc_policies'
     id = Column(BigInteger, primary_key=True)
     policy_string = Column(String, nullable=False)
     display_name = Column(String, nullable=False)
@@ -60,7 +60,7 @@ class SiteRun(Base):
 
 
 class SpfPolicy(Base):
-    __tablename__ = 'spf_policy'
+    __tablename__ = 'spf_policies'
     id = Column(BigInteger, primary_key=True)
     qualifier = Column(String, nullable=False)
     display_name = Column(String, nullable=False)
@@ -69,7 +69,7 @@ class SpfPolicy(Base):
 
 
 class EmailProvider(Base):
-    __tablename__ = 'email_provider'
+    __tablename__ = 'email_providers'
     id = Column(BigInteger, primary_key=True)
     display_name = Column(String, nullable=False)
     search_regex = Column(String, nullable=False)
