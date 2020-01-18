@@ -76,13 +76,13 @@ def _create_timedate_filename(basefilename: str) -> str:
 def create_reports(run_id: int):
     spf_adoption_query = "select count(*) from site_runs sr where sr.run_id = {} and sr.has_spf is true".format(run_id)
 
-    spf_reports_query = "select count(*), sp.display_name, sp.color from site_runs sr join spf_policy sp on sr.spf_policy_id = sp.id " \
+    spf_reports_query = "select count(*), sp.display_name, sp.color from site_runs sr join spf_policies sp on sr.spf_policy_id = sp.id " \
                         "where sr.run_id = {} group by sp.display_name, sp.color".format(run_id)
 
     dmarc_adoption_query = "select count(*) from site_runs where run_id = {} and has_dmarc is true".format(run_id)
 
     dmarc_policy_query = "select count(*), dp.display_name, dp.color from site_runs sr " \
-                         "join dmarc_policy dp on sr.dmarc_policy_id = dp.id where sr.run_id = {} " \
+                         "join dmarc_policies dp on sr.dmarc_policy_id = dp.id where sr.run_id = {} " \
                          "group by dp.display_name, dp.color, dp.display_name".format(run_id)
 
     caa_adoption_query = 'select count(*) from site_runs where run_id = {} and has_caa is true'.format(run_id)
@@ -95,7 +95,7 @@ def create_reports(run_id: int):
                                 'and (dmarc_sub_policy_id != 4 or dmarc_sub_policy_id = 5)'.format(run_id)
 
     dmarc_subpolicy_query = "select count(*), dp.display_name, dp.color from site_runs sr " \
-                            "join dmarc_policy dp on sr.dmarc_sub_policy_id = dp.id where sr.run_id = {} " \
+                            "join dmarc_policies dp on sr.dmarc_sub_policy_id = dp.id where sr.run_id = {} " \
                             "group by dp.display_name, dp.color, dp.display_name".format(run_id)
 
     dnssec_adoption = "select count(*) from site_runs where run_id = 15 and ds_records is not null"
