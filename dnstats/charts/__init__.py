@@ -1,27 +1,11 @@
 import os
-import subprocess
 import datetime
-import hashlib
-import base64
 
 from jinja2 import Environment, FileSystemLoader
 
 from dnstats.db import db_session, engine
 from dnstats.db import models as models
-
-
-def _render_pie(categories, filename: str):
-    # This method assumes that there is no file extension
-    file_loader = FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates'))
-    env = Environment(loader=file_loader)
-    template = env.get_template('pie_charts.tex.j2')
-    result = template.render(categories=categories)
-    with open('{}.tex'.format(filename), 'w') as f:
-        f.write(result)
-    subprocess.run(['latex', '{}.tex'.format(filename)])
-    subprocess.run(['dvisvgm', '{}.dvi'.format(filename)])
-    os.rename('{}-1.svg'.format(filename), '{}.svg'.format(filename))
-    _replace_black('{}.svg'.format(filename))
+from dnstats.charts.asset_utils import slugify, calculate_sri_hash
 
 
 def _render_piejs(categories, filename: str):
@@ -33,7 +17,7 @@ def _render_piejs(categories, filename: str):
         f.write(result)
 
 
-def get_categories_from_query(run_id: int, query: str) -> [()]:
+def _get_categories_from_query(run_id: int, query: str) -> [()]:
     # This method assumes that the count is in column 0, name of the group is in column 1, and color is in column 2
     categories = []
     with engine.connect() as connection:
@@ -45,7 +29,7 @@ def get_categories_from_query(run_id: int, query: str) -> [()]:
     return categories
 
 
-def get_categories_from_adoption_query(run_id: int, query: str) -> [()]:
+def _get_categories_from_adoption_query(run_id: int, query: str) -> [()]:
     categories = []
     with engine.connect() as connection:
         total_count = db_session.query(models.SiteRun).filter_by(run_id=run_id).count()
@@ -58,14 +42,13 @@ def get_categories_from_adoption_query(run_id: int, query: str) -> [()]:
         return categories
 
 
-def run_report(query: str, report: str, adoption: bool, run_id: int):
+def _run_report(query: str, report: str, adoption: bool, run_id: int):
     if adoption:
-        categories = get_categories_from_adoption_query(run_id, query)
+        categories = _get_categories_from_adoption_query(run_id, query)
     else:
-        categories = get_categories_from_query(run_id, query)
+        categories = _get_categories_from_query(run_id, query)
     filename = _create_timedate_filename(report)
-    # _render_pie(categories, filename)
-    return filename, report, _slugify(report),  categories
+    return filename, report, slugify(report), categories
 
 
 def _create_timedate_filename(basefilename: str) -> str:
@@ -74,10 +57,13 @@ def _create_timedate_filename(basefilename: str) -> str:
 
 
 def create_reports(run_id: int):
-    spf_adoption_query = "select count(*) from site_runs sr where sr.run_id = {} and sr.has_spf is true".format(run_id)
+    spf_adoption_query = "select count(*) from site_runs sr " \
+                         "where sr.run_id = {} and sr.has_spf is true".format(run_id)
 
-    spf_reports_query = "select count(*), sp.display_name, sp.color from site_runs sr join spf_policies sp on sr.spf_policy_id = sp.id " \
-                        "where sr.run_id = {} group by sp.display_name, sp.color".format(run_id)
+    spf_reports_query = "select count(*), sp.display_name, sp.color from site_runs sr " \
+                        "join spf_policies sp on sr.spf_policy_id = sp.id " \
+                        "where sr.run_id = {} " \
+                        "group by sp.display_name, sp.color".format(run_id)
 
     dmarc_adoption_query = "select count(*) from site_runs where run_id = {} and has_dmarc is true".format(run_id)
 
@@ -85,37 +71,43 @@ def create_reports(run_id: int):
                          "join dmarc_policies dp on sr.dmarc_policy_id = dp.id where sr.run_id = {} " \
                          "group by dp.display_name, dp.color, dp.display_name".format(run_id)
 
-    caa_adoption_query = 'select count(*) from site_runs where run_id = {} and has_caa is true'.format(run_id)
+    caa_adoption_query = 'select count(*) from site_runs ' \
+                         'where run_id = {} and has_caa is true'.format(run_id)
 
-    caa_reporting = "select count(*) from site_runs where run_id = {} and has_caa_reporting is true".format(run_id)
+    caa_reporting = "select count(*) from site_runs " \
+                    "where run_id = {} and has_caa_reporting is true".format(run_id)
 
-    mx_query = 'select count(*) from site_runs where run_id = {} and mx_records is not null'.format(run_id)
+    mx_query = 'select count(*) from site_runs ' \
+               'where run_id = {} and mx_records is not null'.format(run_id)
 
-    dmarc_sub_policy_adoption = 'select count(*) from site_runs sr where run_id = {} ' \
+    # TODO Get ids from database
+    dmarc_sub_policy_adoption = 'select count(*) from site_runs sr ' \
+                                'where run_id = {} ' \
                                 'and (dmarc_sub_policy_id != 4 or dmarc_sub_policy_id = 5)'.format(run_id)
 
     dmarc_subpolicy_query = "select count(*), dp.display_name, dp.color from site_runs sr " \
                             "join dmarc_policies dp on sr.dmarc_sub_policy_id = dp.id where sr.run_id = {} " \
                             "group by dp.display_name, dp.color, dp.display_name".format(run_id)
 
-    dnssec_adoption = "select count(*) from site_runs where run_id = 15 and ds_records is not null"
+    dnssec_adoption = "select count(*) from site_runs " \
+                      "where run_id = {} and ds_records is not null".format(run_id)
 
-    filenames = [run_report(spf_adoption_query, 'SPF Adoption', True, run_id),
-                 run_report(spf_reports_query, 'SPF Policy', False, run_id),
-                 run_report(dmarc_adoption_query, 'DMARC Adaption', True, run_id),
-                 run_report(dmarc_sub_policy_adoption, 'DMARC Subdomain Policy Adaption', True, run_id),
-                 run_report(dmarc_policy_query, 'DMARC Policy', False, run_id),
-                 run_report(dmarc_subpolicy_query, 'DMARC Subdomain Policy', False, run_id),
-                 run_report(mx_query, 'Has MX Records', True, run_id),
-                 run_report(caa_adoption_query, 'CAA Adoption', True, run_id),
-                 run_report(caa_reporting, 'CAA Reporting', True, run_id),
-                 run_report(dnssec_adoption, 'DNSSEC Adoption', True, run_id)]
+    filenames = [_run_report(spf_adoption_query, 'SPF Adoption', True, run_id),
+                 _run_report(spf_reports_query, 'SPF Policy', False, run_id),
+                 _run_report(dmarc_adoption_query, 'DMARC Adaption', True, run_id),
+                 _run_report(dmarc_sub_policy_adoption, 'DMARC Subdomain Policy Adaption', True, run_id),
+                 _run_report(dmarc_policy_query, 'DMARC Policy', False, run_id),
+                 _run_report(dmarc_subpolicy_query, 'DMARC Subdomain Policy', False, run_id),
+                 _run_report(mx_query, 'Has MX Records', True, run_id),
+                 _run_report(caa_adoption_query, 'CAA Adoption', True, run_id),
+                 _run_report(caa_reporting, 'CAA Reporting', True, run_id),
+                 _run_report(dnssec_adoption, 'DNSSEC Adoption', True, run_id)]
     js_filename = _create_timedate_filename('charts')
     _render_piejs(filenames, js_filename)
-    create_html(filenames, run_id, js_filename)
+    _create_html(filenames, run_id, js_filename)
 
 
-def create_html(filenames: [()], run_id: int, js_filename: str):
+def _create_html(filenames: [()], run_id: int, js_filename: str):
     for filename in filenames:
         print(filename[1], filename[2])
     file_loader = FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates'))
@@ -129,28 +121,3 @@ def create_html(filenames: [()], run_id: int, js_filename: str):
     filename = _create_timedate_filename('index') + '.html'
     with open(filename, 'w') as file:
         file.write(result)
-
-
-def _replace_black(filename: str):
-    with open(filename, 'r') as file:
-        svgdata = file.read()
-
-    svgdata = svgdata.replace("stroke='#000'", "stroke='#fff'")
-
-    with open(filename, 'w') as file:
-        file.write(svgdata)
-
-
-def _slugify(input_str: str) -> str:
-    return input_str.replace(' ', '_').lower()
-
-
-def calculate_sri_hash(filename: str):
-    hashing = hashlib.sha384()
-    with open(filename, 'rb') as file:
-        while True:
-            chunk = file.read(hashing.block_size)
-            hashing.update(chunk)
-            if not chunk:
-                break
-    return str(base64.encodebytes(hashing.digest()), 'utf-8').replace('\n', '')
