@@ -12,11 +12,11 @@ def seed_db() -> None:
 
 def _seed_spf():
     spf_policies = [
-        ('+all', 'Pass', 'magenta'),
-        ('?all', 'Neutral', 'orange'),
-        ('~all', 'Soft-fail', 'green'),
-        ('-all', 'Fail', 'blue'),
-        ('no_policy', 'No Policy', 'red')
+        ('+all', 'Pass', '#FF00FF'),
+        ('?all', 'Neutral', '#FFBF7F'),
+        ('~all', 'Soft-fail', '#72e572'),
+        ('-all', 'Fail', '#8080FF'),
+        ('no_policy', 'No Policy', '#FF8080')
     ]
 
     for spf_pol in spf_policies:
@@ -37,10 +37,11 @@ def _seed_sites(filename):
 
 def _seed_dmarc_policy():
     dmarc_policies = [
-        ('none', 'None', 'orange'),
-        ('quarantine', 'Quarantine', 'green'),
-        ('reject', 'Reject', 'blue'),
-        ('no_policy', 'No Policy', 'red')
+        ('none', 'None', '#FFBF7F'),
+        ('quarantine', 'Quarantine', '#FFBF7F'),
+        ('reject', 'Reject', '#8080FF'),
+        ('no_policy', 'No Policy', '#FF8080'),
+        ('invalid', 'Invalid', '#FF00FF')
     ]
     for dmarc_pol in dmarc_policies:
         dmarc_policy = models.DmarcPolicy(policy_string=dmarc_pol[0], display_name=dmarc_pol[1], color=dmarc_pol[2])
@@ -60,7 +61,7 @@ def _seed_email_providers():
         ("Cisco Cloud Email Security", "iphmx.com.", True),
         ("Self-Hosted", "domain.", False),
         ("Symantec Messaging Security", "messagelabs.com.", True),
-        ("FireEyeCloud", "Fireeyecloud.com.",True),
+        ("FireEyeCloud", "fireeyecloud.com.",True),
         ("ProofPoint Essentials", "ppe-hosted.com.", True),
         ("Amazon Web Services", "amazonaws.com.", True),
         ("DreamHost", "dreamhost.com.", True),
