@@ -38,15 +38,16 @@ def _seed_sites(filename):
 def _seed_dmarc_policy():
     dmarc_policies = [
         ('none', 'None', '#FFBF7F'),
-        ('quarantine', 'Quarantine', '#FFBF7F'),
+        ('quarantine', 'Quarantine', '#72e572'),
         ('reject', 'Reject', '#8080FF'),
         ('no_policy', 'No Policy', '#FF8080'),
         ('invalid', 'Invalid', '#FF00FF')
     ]
-    for dmarc_pol in dmarc_policies:
-        dmarc_policy = models.DmarcPolicy(policy_string=dmarc_pol[0], display_name=dmarc_pol[1], color=dmarc_pol[2])
+    for dmarc_policy in dmarc_policies:
+        dmarc_policy = models.DmarcPolicy(policy_string=dmarc_policy[0], display_name=dmarc_policy[1], color=dmarc_policy[2])
         db_session.add(dmarc_policy)
         db_session.commit()
+
 
 def _seed_email_providers():
     email_providers = [
