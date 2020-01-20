@@ -74,3 +74,10 @@ class EmailProvider(Base):
     display_name = Column(String, nullable=False)
     search_regex = Column(String, nullable=False)
     is_regex = Column(Boolean, nullable=False, default=True)
+
+class DnsProvider(Base):
+    __tablename__ = 'dns_providers'
+    display_name = Column(String, nullable=False)
+    search_regex = Column(String, nullable=False)
+    is_regex = Column(Boolean, nullable=False, default=True)
+
