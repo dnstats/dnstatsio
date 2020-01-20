@@ -45,9 +45,11 @@ def process_result(result):
     site = db_session.query(models.Site).filter_by(id=result[0]).one()
     has_dmarc_aggregate, has_dmarc_forensic, has_dmarc, dmarc_policy, dmarc_sub_policy = dnutils.get_dmarc_stats(result[4])
     dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=dmarc_policy).scalar()
-    if dmarc_policy_db is null:
+    if dmarc_policy_db is None:
         dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string='invalid').scalar()
     sub_dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=dmarc_sub_policy).scalar()
+    if sub_dmarc_policy_db is None:
+        sub_dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string='invalid').scalar()
     issue_count, wildcard_count, has_reporting, allows_wildcard, has_caa = dnutils.caa_stats(result[3])
     is_spf, spf_record, spf_policy = spfutils.get_spf_stats(result[6])
     spf_db = db_session.query(models.SpfPolicy).filter_by(qualifier=spf_policy).scalar()
