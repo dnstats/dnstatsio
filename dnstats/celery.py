@@ -2,6 +2,9 @@ from celery import Celery, Task
 from celery.canvas import group, chain
 from celery.utils.log import get_task_logger
 from sqlalchemy import and_
+import sentry_sdk
+from sentry_sdk.integrations.celery import CeleryIntegration
+
 
 import dnstats.dnsutils as dnutils
 import dnstats.dnsutils.spf as spfutils
@@ -13,6 +16,7 @@ app = Celery('dnstats', broker='amqp://guest@localhost//')
 
 logger = get_task_logger('dnstats.scans')
 
+sentry_sdk.init("https://f4e01754fca64c1f99ebf3e1a354284a@sentry.io/1889319", integrations=[CeleryIntegration()])
 
 class SqlAlchemyTask(Task):
     """An abstract Celery Task that ensures that the connection the the
