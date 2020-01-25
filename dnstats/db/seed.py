@@ -85,3 +85,36 @@ def _seed_email_providers():
                                              is_regex=email_provider[2])
         db_session.add(email_provide)
         db_session.commit()
+
+
+def _seed_ns_providers():
+    ns_providers = [
+        ('DNSimple', 'dnsimple.com.', True),
+        ('Hurricane Electric', 'he.net.', True),
+        ('OVH', 'ovh.net.', True),
+        ('CloudFlare', 'ns.cloudflare.com.', True),
+        ('Amazon Web Services', '.awsdns-', True),
+        ('DigitalOcean', 'digitalocean.com.', True),
+        ('Inmotion Hosting', 'inmotionhosting.com.', True),
+        ('GoDaddy', 'domaincontrol.com.', True),
+        ('Hostgator', 'hostgator.com.', True),
+        ('Wordpress', 'wordpress.com.', True),
+        ('Linode', 'linode.com.', True),
+        ('NameCheap', 'registrar-servers.com.', True),
+        ('FastMail', 'messagingengine.com.', True),
+        ('DNS Made Easy', 'dnsmadeeasy.com.', True),
+        ('Gandi', 'gandi.net.', True),
+        ('UltraDNS', 'ultradns.com.', True),
+        ('Azure', '.azure-dns.com.', True),
+        ('Alfa Hosting', '.alfahosting.info.', True),
+        ('Google DNS', '.googledomains.com.', True),
+        ('Mark Monitor', 'markmonitor.com.', True)
+    ]
+    for ns_provider in ns_providers:
+        nsp_s = db_session.query(models.DnsProvider).filter_by(search_regex=ns_provider[1])
+
+        if not nsp_s:
+            nsp = models.DnsProvider(display_name=ns_provider[0], search_regex=ns_provider[1], is_regex=ns_provider[2])
+
+            db_session.add(nsp)
+            db_session.commit()
