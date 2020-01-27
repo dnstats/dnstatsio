@@ -1,7 +1,13 @@
+import datetime
+import os
+
 from celery import Celery, Task
 from celery.canvas import group, chain
+from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from sqlalchemy import and_
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 import sentry_sdk
 from sentry_sdk.integrations.celery import CeleryIntegration
 
@@ -12,11 +18,12 @@ import dnstats.dnsutils.mx as mxutils
 import dnstats.db.models as models
 from dnstats.db import db_session
 
-app = Celery('dnstats', broker='amqp://guest@localhost//')
+app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('AMQP'))
 
 logger = get_task_logger('dnstats.scans')
 
 sentry_sdk.init("https://f4e01754fca64c1f99ebf3e1a354284a@sentry.io/1889319", integrations=[CeleryIntegration()])
+
 
 class SqlAlchemyTask(Task):
     """An abstract Celery Task that ensures that the connection the the
@@ -30,9 +37,14 @@ class SqlAlchemyTask(Task):
         db_session.remove()
 
 
+@app.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    sender.add_periodic_task(crontab(hour=0, minute=1), do_run.s())
+
+
 @app.task()
 def site_stat(site_id: int, run_id: int):
-    site = db_session.query(models.Site).filter(models.Site.id==site_id).scalar()
+    site = db_session.query(models.Site).filter(models.Site.id == site_id).scalar()
     mail = dnutils.safe_query(site.domain, 'mx')
     txt = dnutils.safe_query(site.domain, 'txt')
     caa = dnutils.safe_query(site.domain, 'caa')
@@ -73,5 +85,68 @@ def process_result(result):
 @app.task()
 def launch_run(run_id):
     run = db_session.query(models.Run).filter(models.Run.id == run_id).scalar()
-    sites = db_session.query(models.Site).filter(and_(models.Site.current_rank >= run.start_rank, models.Site.current_rank <= run.end_rank))
+    sites = db_session.query(models.Site).filter(and_(models.Site.current_rank >= run.start_rank,
+                                                      models.Site.current_rank <= run.end_rank))
     group(chain(site_stat.s(site.id, run.id), process_result.s()) for site in sites).apply_async()
+    _send_eoq(run_id)
+
+
+@app.task()
+def do_run():
+    date = datetime.datetime.now()
+    _send_start_email(date)
+    run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
+    db_session.add(run)
+    db_session.commit()
+    run = db_session.query(models.Run).filter_by(start_time=date).first()
+    res = launch_run.apply_async(args=[run.id])
+    res.get()
+    _send_eos(run.id)
+
+
+def _send_message(email):
+    try:
+        sendgrid = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+        response = sendgrid.send(email)
+    except Exception as e:
+        print(e.message)
+        print(response.status_code)
+        print(response.body)
+        print(response.headers)
+
+
+def _send_start_email(date):
+    subject = 'DNStats Scan Starting'
+    body = '''
+    Starting time: {starting_time}
+    DNStats scan is starting to queue sites.
+    '''.format(starting_time=date.strftime('%c'))
+    message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
+                   plain_text_content=body)
+    _send_message(message)
+
+
+def _send_eos(run_id):
+    subject = 'DNStats Scan Ending'
+    result_count = db_session.query(models.SiteRun).filter_by(run_id).count()
+    body = '''
+    End time: {starting_time}
+    Number results: {result_count}
+    DNStats scan has ended.
+    '''.format(starting_time=datetime.datetime.now().strftime('%c'), result_count=result_count)
+    message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
+                   plain_text_content=body)
+    _send_message(message)
+
+
+def _send_eoq(run_id):
+    run = db_session.query(models.Run).filter_by(id=run_id).first()
+    subject = 'DNStats All Scans In Queue'
+    body = '''
+    Run start time: {starting_time}
+    Run id: {run_id}
+    DNStats scan is in progress and the queuing process is done.
+    '''.format(starting_time=run.start_time, run_id=run.id)
+    message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
+                   plain_text_content=body)
+    _send_message(message)
