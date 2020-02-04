@@ -18,7 +18,7 @@ import dnstats.dnsutils.mx as mxutils
 import dnstats.db.models as models
 from dnstats.db import db_session
 
-app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('AMQP'))
+app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('REDIS'))
 
 logger = get_task_logger('dnstats.scans')
 
