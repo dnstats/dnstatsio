@@ -18,7 +18,7 @@ import dnstats.dnsutils.mx as mxutils
 import dnstats.db.models as models
 from dnstats.db import db_session
 
-app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('REDIS'))
+app = Celery('dnstats', broker=os.environ.get('AMQP'))
 
 logger = get_task_logger('dnstats.scans')
 
@@ -94,14 +94,14 @@ def launch_run(run_id):
 @app.task()
 def do_run():
     date = datetime.datetime.now()
-    _send_start_email(date)
-    run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
-    db_session.add(run)
-    db_session.commit()
-    run = db_session.query(models.Run).filter_by(start_time=date).first()
-    res = launch_run.apply_async(args=[run.id])
-    res.get()
-    _send_eos(run.id)
+    #_send_start_email(date)
+    #run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
+    #db_session.add(run)
+    #db_session.commit()
+    #run = db_session.query(models.Run).filter_by(start_time=date).first()
+    #res = launch_run.apply_async(args=[run.id])
+    #res.get()
+    #_send_eos(run.id)
 
 
 def _send_message(email):
