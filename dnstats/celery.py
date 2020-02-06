@@ -2,7 +2,7 @@ import datetime
 import os
 
 from celery import Celery, Task
-from celery.canvas import group, chain
+from celery.canvas import group, chain, chord
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from sqlalchemy import and_
@@ -18,7 +18,7 @@ import dnstats.dnsutils.mx as mxutils
 import dnstats.db.models as models
 from dnstats.db import db_session
 
-app = Celery('dnstats', broker=os.environ.get('AMQP'))
+app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('CELERY_BACKEND'))
 
 logger = get_task_logger('dnstats.scans')
 
@@ -35,6 +35,7 @@ class SqlAlchemyTask(Task):
 
     def after_return(self, status, retval, task_id, args, kwargs, einfo):
         db_session.remove()
+        super(SqlAlchemyTask, self).after_return(status, retval, task_id, args, kwargs, einfo)
 
 
 @app.on_after_configure.connect
@@ -42,7 +43,7 @@ def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(crontab(hour=0, minute=1), do_run.s())
 
 
-@app.task()
+@app.task(time_limit=60, soft_time_limit=54)
 def site_stat(site_id: int, run_id: int):
     site = db_session.query(models.Site).filter(models.Site.id == site_id).scalar()
     mail = dnutils.safe_query(site.domain, 'mx')
@@ -55,7 +56,7 @@ def site_stat(site_id: int, run_id: int):
     return [site.id, site.current_rank, run_id, caa, dmarc, mail, txt, ds, ns]
 
 
-@app.task(base=SqlAlchemyTask)
+@app.task(time_limit=60, soft_time_limit=54)
 def process_result(result):
     logger.warn(result[0])
     site = db_session.query(models.Site).filter_by(id=result[0]).one()
@@ -87,21 +88,20 @@ def launch_run(run_id):
     run = db_session.query(models.Run).filter(models.Run.id == run_id).scalar()
     sites = db_session.query(models.Site).filter(and_(models.Site.current_rank >= run.start_rank,
                                                       models.Site.current_rank <= run.end_rank))
-    group(chain(site_stat.s(site.id, run.id), process_result.s()) for site in sites).apply_async()
+
+    chord(chain(site_stat.s(site.id, run.id), process_result.s()) for site in sites)(_send_eos(run_id))
     _send_eoq(run_id)
 
 
 @app.task()
 def do_run():
     date = datetime.datetime.now()
-    #_send_start_email(date)
-    #run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
-    #db_session.add(run)
-    #db_session.commit()
-    #run = db_session.query(models.Run).filter_by(start_time=date).first()
-    #res = launch_run.apply_async(args=[run.id])
-    #res.get()
-    #_send_eos(run.id)
+    run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
+    db_session.add(run)
+    db_session.commit()
+    run = db_session.query(models.Run).filter_by(start_time=date).first()
+    _send_start_email(date, run.id)
+    launch_run(run.id)
 
 
 def _send_message(email):
@@ -115,25 +115,41 @@ def _send_message(email):
         print(response.headers)
 
 
-def _send_start_email(date):
+def _send_start_email(date, run_id):
     subject = 'DNStats Scan Starting'
     body = '''
     Starting time: {starting_time}
+    Run id: {run_id}
     DNStats scan is starting to queue sites.
-    '''.format(starting_time=date.strftime('%c'))
+
+
+
+
+    
+    
+    '''.format(starting_time=date.strftime('%c'), run_id=run_id)
     message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
                    plain_text_content=body)
     _send_message(message)
 
 
+@app.task()
 def _send_eos(run_id):
     subject = 'DNStats Scan Ending'
-    result_count = db_session.query(models.SiteRun).filter_by(run_id).count()
+    print(run_id)
+    result_count = db_session.query(models.SiteRun).filter_by(run_id=run_id).count()
     body = '''
     End time: {starting_time}
     Number results: {result_count}
+    Run id: {run_id}
     DNStats scan has ended.
-    '''.format(starting_time=datetime.datetime.now().strftime('%c'), result_count=result_count)
+    
+    
+    
+    
+    
+    
+    '''.format(starting_time=datetime.datetime.now().strftime('%c'), result_count=result_count, run_id=run_id)
     message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
                    plain_text_content=body)
     _send_message(message)
@@ -146,7 +162,15 @@ def _send_eoq(run_id):
     Run start time: {starting_time}
     Run id: {run_id}
     DNStats scan is in progress and the queuing process is done.
+    
+
+    
+    
+    
+    
+    
     '''.format(starting_time=run.start_time, run_id=run.id)
     message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
                    plain_text_content=body)
     _send_message(message)
+
