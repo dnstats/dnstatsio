@@ -89,14 +89,14 @@ def launch_run(run_id):
     sites = db_session.query(models.Site).filter(and_(models.Site.current_rank >= run.start_rank,
                                                       models.Site.current_rank <= run.end_rank))
 
-    chord(chain(site_stat.s(site.id, run.id), process_result.s()) for site in sites)(_send_eos(run_id))
+    chord(chain(site_stat.s(site.id, run.id), process_result.s()) for site in sites)(_send_eos.s(run_id))
     _send_eoq(run_id)
 
 
 @app.task()
 def do_run():
     date = datetime.datetime.now()
-    run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
+    run = models.Run(start_time=date, start_rank=1, end_rank=150)
     db_session.add(run)
     db_session.commit()
     run = db_session.query(models.Run).filter_by(start_time=date).first()
@@ -133,11 +133,13 @@ def _send_start_email(date, run_id):
     _send_message(message)
 
 
-@app.task()
-def _send_eos(run_id):
+@app.task
+def _send_eos(results, run_time):
     subject = 'DNStats Scan Ending'
-    print(run_id)
-    result_count = db_session.query(models.SiteRun).filter_by(run_id=run_id).count()
+    print("taco")
+    print(run_time)
+    result_count = db_session.query(models.SiteRun).filter_by(run_id=run_time).count()
+    print("result_count: "+str(result_count))
     body = '''
     End time: {starting_time}
     Number results: {result_count}
@@ -149,10 +151,11 @@ def _send_eos(run_id):
     
     
     
-    '''.format(starting_time=datetime.datetime.now().strftime('%c'), result_count=result_count, run_id=run_id)
+    '''.format(starting_time=datetime.datetime.now().strftime('%c'), result_count=result_count, run_id=run_time)
     message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
                    plain_text_content=body)
     _send_message(message)
+    print("body: " + body)
 
 
 def _send_eoq(run_id):
