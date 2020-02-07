@@ -96,7 +96,7 @@ def launch_run(run_id):
 @app.task()
 def do_run():
     date = datetime.datetime.now()
-    run = models.Run(start_time=date, start_rank=1, end_rank=150)
+    run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
     db_session.add(run)
     db_session.commit()
     run = db_session.query(models.Run).filter_by(start_time=date).first()
