@@ -2,7 +2,7 @@ import datetime
 import os
 
 from celery import Celery, Task
-from celery.canvas import group, chain, chord
+from celery.canvas import chain, chord
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from sqlalchemy import and_
@@ -25,6 +25,10 @@ logger = get_task_logger('dnstats.scans')
 sentry_sdk.init("https://f4e01754fca64c1f99ebf3e1a354284a@sentry.io/1889319", integrations=[CeleryIntegration()])
 
 
+@app.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    sender.add_periodic_task(crontab(hour=18, minute=0), do_run.s())
+
 class SqlAlchemyTask(Task):
     """An abstract Celery Task that ensures that the connection the the
     database is closed on task completion
@@ -43,7 +47,7 @@ def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(crontab(hour=0, minute=1), do_run.s())
 
 
-@app.task(time_limit=60, soft_time_limit=54)
+@app.task(time_limit=320, soft_time_limit=300)
 def site_stat(site_id: int, run_id: int):
     site = db_session.query(models.Site).filter(models.Site.id == site_id).scalar()
     mail = dnutils.safe_query(site.domain, 'mx')
