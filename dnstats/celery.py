@@ -29,6 +29,7 @@ sentry_sdk.init("https://f4e01754fca64c1f99ebf3e1a354284a@sentry.io/1889319", in
 def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(crontab(hour=18, minute=0), do_run.s())
 
+
 class SqlAlchemyTask(Task):
     """An abstract Celery Task that ensures that the connection the the
     database is closed on task completion
@@ -60,7 +61,7 @@ def site_stat(site_id: int, run_id: int):
     return [site.id, site.current_rank, run_id, caa, dmarc, mail, txt, ds, ns]
 
 
-@app.task(time_limit=60, soft_time_limit=54)
+@app.task(time_limit=120, soft_time_limit=110)
 def process_result(result):
     logger.warn(result[0])
     site = db_session.query(models.Site).filter_by(id=result[0]).one()
