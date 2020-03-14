@@ -48,7 +48,7 @@ def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(crontab(hour=0, minute=1), do_run.s())
 
 
-@app.task(time_limit=320, soft_time_limit=300)
+@app.task(time_limit=450, soft_time_limit=400)
 def site_stat(site_id: int, run_id: int):
     site = db_session.query(models.Site).filter(models.Site.id == site_id).scalar()
     mail = dnutils.safe_query(site.domain, 'mx')
