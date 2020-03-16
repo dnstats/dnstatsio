@@ -7,3 +7,6 @@ sqlalchemy
 psycopg2-binary
 Jinja2
 sqlalchemy-utils
+sentry_sdk
+sendgrid
+redis
