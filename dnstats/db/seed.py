@@ -108,7 +108,17 @@ def _seed_ns_providers():
         ('Azure', '.azure-dns.com.', True),
         ('Alfa Hosting', '.alfahosting.info.', True),
         ('Google DNS', '.googledomains.com.', True),
-        ('Mark Monitor', 'markmonitor.com.', True)
+        ('Mark Monitor', 'markmonitor.com.', True),
+        ('Comcast Business', '.comcastbusiness.net.', True),
+        ('DreamHost', '.dreamhost.com.', True),
+        ('Akamai', '.akam.net.', True)
+        ('Liquid Web', '.sourcedns.com.', True),
+        ('Media Temple', 'mediatemple.net.', True),
+        ('XSERVER', '.xserver.jp.', True),
+        ('Internet Invest', '.srv53.net.', True),
+        ('Flex Web Hosting', '.flexwebhosting.nl.', True),
+        ('HostGator', '.hostgator.com.', True),
+        ('NameCheap', '.namecheaphosting.com.', True)
     ]
     for ns_provider in ns_providers:
         nsp_s = db_session.query(models.DnsProvider).filter_by(search_regex=ns_provider[1])
