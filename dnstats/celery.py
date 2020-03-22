@@ -2,7 +2,7 @@ import datetime
 import os
 
 from celery import Celery, Task
-from celery.canvas import chain, chord
+from celery.canvas import chain, group
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from sqlalchemy import and_
@@ -17,6 +17,7 @@ import dnstats.dnsutils.spf as spfutils
 import dnstats.dnsutils.mx as mxutils
 import dnstats.db.models as models
 from dnstats.db import db_session
+from dnstats.utils import chunks
 
 app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('CELERY_BACKEND'))
 
@@ -48,7 +49,7 @@ def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(crontab(hour=0, minute=1), do_run.s())
 
 
-@app.task(time_limit=450, soft_time_limit=400)
+@app.task(time_limit=450, soft_time_limit=400, ignore_result=False)
 def site_stat(site_id: int, run_id: int):
     site = db_session.query(models.Site).filter(models.Site.id == site_id).scalar()
     mail = dnutils.safe_query(site.domain, 'mx')
@@ -61,7 +62,7 @@ def site_stat(site_id: int, run_id: int):
     return [site.id, site.current_rank, run_id, caa, dmarc, mail, txt, ds, ns]
 
 
-@app.task(time_limit=120, soft_time_limit=110)
+@app.task(time_limit=120, soft_time_limit=110, ignore_result=False)
 def process_result(result):
     logger.warn(result[0])
     site = db_session.query(models.Site).filter_by(id=result[0]).one()
@@ -94,11 +95,13 @@ def launch_run(run_id):
     sites = db_session.query(models.Site).filter(and_(models.Site.current_rank >= run.start_rank,
                                                       models.Site.current_rank <= run.end_rank))
 
-    chord(chain(site_stat.s(site.id, run.id), process_result.s()) for site in sites)(_send_eos.s(run_id))
+    sites_all_chunked = list(chunks(sites.all(), 10000))
+    for sites in sites_all_chunked:
+        group(chain(site_stat.s(site.id, run.id), process_result.s()) for site in sites).apply_async()
     _send_eoq(run_id)
 
 
-@app.task()
+@app.task(ignore_result=False)
 def do_run():
     date = datetime.datetime.now()
     run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
