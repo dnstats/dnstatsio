@@ -105,6 +105,7 @@ def create_reports(run_id: int):
     js_filename = _create_timedate_filename('charts')
     _render_piejs(filenames, js_filename)
     _create_html(filenames, run_id, js_filename)
+    return js_filename
 
 
 def _create_html(filenames: [()], run_id: int, js_filename: str):
