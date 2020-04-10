@@ -1,0 +1,8 @@
+drop temporary table temp_sites;
+
+CREATE TEMPORARY TABLE temp_sites(
+	current_rank bigint,
+	domain	varchar
+);
+
+COPY temp_sites FROM 'top1.csv' CSV

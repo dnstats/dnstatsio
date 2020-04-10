@@ -1,6 +1,7 @@
 import csv
 
 import dnstats.db.models as models
+from dnstats.utils import chunks
 from dnstats.db import db_session
 
 
@@ -28,10 +29,15 @@ def _seed_spf():
 def _seed_sites(filename):
     with open(filename, 'r') as file:
         csv_reader = csv.DictReader(file)
-
-        for row in csv_reader:
-            site = models.Site(current_rank=row['rank'], domain=row['site'])
-            db_session.add(site)
+        csv_readers = chunks(csv_reader, 10000)
+        for csv_reader_i in csv_readers:
+            for row in csv_reader_i:
+                site = db_session.query(models.Site).filter_by(domain=row['site']).scalar()
+                if site:
+                    site.current_rank = row['rank']
+                else:
+                    site = models.Site(current_rank=row['rank'], domain=row['site'])
+                    db_session.add(site)
             db_session.commit()
 
 
