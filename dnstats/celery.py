@@ -68,8 +68,9 @@ def do_charts(run_id: int):
 
 
 @app.task()
-def do_charts():
-    run = db_session.query(func.Max(models.Run.start_time)).scalar()
+def do_charts_latest():
+    the_time = db_session.query(func.Max(models.Run.start_time)).scalar()
+    run = db_session.query(models.Run).filter_by(start_time=the_time).scalar()
     do_charts.s(run.id)
 
 
