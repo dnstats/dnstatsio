@@ -6,6 +6,7 @@ from celery.canvas import chain, group
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from sqlalchemy import and_
+from sqlalchemy.sql.expression import func
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 import sentry_sdk
@@ -16,6 +17,7 @@ import dnstats.dnsutils as dnutils
 import dnstats.dnsutils.spf as spfutils
 import dnstats.dnsutils.mx as mxutils
 import dnstats.db.models as models
+import dnstats.charts
 from dnstats.db import db_session
 from dnstats.utils import chunks
 
@@ -28,7 +30,8 @@ sentry_sdk.init("https://f4e01754fca64c1f99ebf3e1a354284a@sentry.io/1889319", in
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(crontab(hour=18, minute=0), do_run.s())
+    sender.add_periodic_task(crontab(hour=17, minute=0), do_run.s())
+    sender.add_periodic_task(crontab(hour=21, minute=0), do_charts.s())
 
 
 class SqlAlchemyTask(Task):
@@ -49,7 +52,28 @@ def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(crontab(hour=0, minute=1), do_run.s())
 
 
-@app.task(time_limit=450, soft_time_limit=400, ignore_result=False)
+@app.task()
+def do_charts(run_id: int):
+    run = db_session.query(models.Run).filter_by(id=run_id).scalar()
+    folder_name = run.start_time.strftime("%Y-%m-%d")
+    filename = dnstats.charts.create_reports(run_id)
+    print(filename)
+    os.system("ssh dnstatsio@www.dnstats.io 'mkdir /home/dnstatsio/public_html/{}'".format(folder_name))
+    os.system('scp {filename}charts.js  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}charts.js'.format(filename=filename, folder_name=folder_name))
+    os.system('scp {filename}index.html  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/index.html'.format(filename=filename, folder_name=folder_name))
+    os.system("ssh dnstatsio@www.dnstats.io 'rm /home/dnstatsio/public_html/index.html'")
+    os.system("ssh dnstatsio@www.dnstats.io 'rm /home/dnstatsio/public_html/{filename}charts.js'".format(folder_name=folder_name, filename=filename))
+    os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/index.html /home/dnstatsio/public_html/index.html'".format(folder_name=folder_name, filename=filename))
+    os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/{filename}charts.js /home/dnstatsio/public_html/'".format(folder_name=folder_name, filename=filename))
+
+
+@app.task()
+def do_charts():
+    run = db_session.query(func.Max(models.Run.start_time)).scalar()
+    do_charts.s(run.id)
+
+
+@app.task(time_limit=320, soft_time_limit=300)
 def site_stat(site_id: int, run_id: int):
     site = db_session.query(models.Site).filter(models.Site.id == site_id).scalar()
     mail = dnutils.safe_query(site.domain, 'mx')
@@ -62,7 +86,7 @@ def site_stat(site_id: int, run_id: int):
     return [site.id, site.current_rank, run_id, caa, dmarc, mail, txt, ds, ns]
 
 
-@app.task(time_limit=120, soft_time_limit=110, ignore_result=False)
+@app.task(time_limit=60, soft_time_limit=54)
 def process_result(result):
     logger.warn(result[0])
     site = db_session.query(models.Site).filter_by(id=result[0]).one()
@@ -101,7 +125,7 @@ def launch_run(run_id):
     _send_eoq(run_id)
 
 
-@app.task(ignore_result=False)
+@app.task()
 def do_run():
     date = datetime.datetime.now()
     run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
