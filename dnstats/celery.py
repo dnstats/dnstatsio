@@ -56,15 +56,15 @@ def setup_periodic_tasks(sender, **kwargs):
 def do_charts(run_id: int):
     run = db_session.query(models.Run).filter_by(id=run_id).scalar()
     folder_name = run.start_time.strftime("%Y-%m-%d")
-    filename = dnstats.charts.create_reports(run_id)
-    print(filename)
+    js_filename, html_filename = dnstats.charts.create_reports(run_id)
+    print(js_filename)
+    print(html_filename)
     os.system("ssh dnstatsio@www.dnstats.io 'mkdir /home/dnstatsio/public_html/{}'".format(folder_name))
-    os.system('scp {filename}charts.js  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}charts.js'.format(filename=filename, folder_name=folder_name))
-    os.system('scp {filename}index.html  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/index.html'.format(filename=filename, folder_name=folder_name))
+    os.system('scp {filename}  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}'.format(filename=js_filename, folder_name=folder_name))
+    os.system('scp {filename}  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/index.html'.format(filename=html_filename, folder_name=folder_name))
     os.system("ssh dnstatsio@www.dnstats.io 'rm /home/dnstatsio/public_html/index.html'")
-    os.system("ssh dnstatsio@www.dnstats.io 'rm /home/dnstatsio/public_html/{filename}charts.js'".format(folder_name=folder_name, filename=filename))
-    os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/index.html /home/dnstatsio/public_html/index.html'".format(folder_name=folder_name, filename=filename))
-    os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/{filename}charts.js /home/dnstatsio/public_html/'".format(folder_name=folder_name, filename=filename))
+    os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/index.html /home/dnstatsio/public_html/index.html'".format(folder_name=folder_name, filename=html_filename))
+    os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/{filename}charts.js /home/dnstatsio/public_html/'".format(folder_name=folder_name, filename=js_filename))
 
 
 @app.task()

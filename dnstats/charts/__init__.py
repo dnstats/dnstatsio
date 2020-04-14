@@ -104,8 +104,8 @@ def create_reports(run_id: int):
                  _run_report(dnssec_adoption, 'DNSSEC Adoption', True, run_id)]
     js_filename = _create_timedate_filename('charts')
     _render_piejs(filenames, js_filename)
-    _create_html(filenames, run_id, js_filename)
-    return js_filename
+    html_filename = _create_html(filenames, run_id, js_filename)
+    return js_filename, html_filename
 
 
 def _create_html(filenames: [()], run_id: int, js_filename: str):
@@ -122,3 +122,4 @@ def _create_html(filenames: [()], run_id: int, js_filename: str):
     filename = _create_timedate_filename('index') + '.html'
     with open(filename, 'w') as file:
         file.write(result)
+    return filename
