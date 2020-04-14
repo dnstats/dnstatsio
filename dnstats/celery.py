@@ -47,11 +47,6 @@ class SqlAlchemyTask(Task):
         super(SqlAlchemyTask, self).after_return(status, retval, task_id, args, kwargs, einfo)
 
 
-@app.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(crontab(hour=0, minute=1), do_run.s())
-
-
 @app.task()
 def do_charts(run_id: int):
     run = db_session.query(models.Run).filter_by(id=run_id).scalar()
