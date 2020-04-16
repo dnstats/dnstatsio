@@ -60,6 +60,7 @@ def do_charts(run_id: int):
     os.system("ssh dnstatsio@www.dnstats.io 'rm /home/dnstatsio/public_html/index.html'")
     os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/index.html /home/dnstatsio/public_html/index.html'".format(folder_name=folder_name, filename=html_filename))
     os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/{filename}.js /home/dnstatsio/public_html/'".format(folder_name=folder_name, filename=js_filename))
+    _send_published_email(run_id)
 
 
 @app.task()
@@ -205,3 +206,20 @@ def _send_eoq(run_id):
                    plain_text_content=body)
     _send_message(message)
 
+
+def _send_published_email(run_id: int):
+    subject = 'DNStats scan id {} has been published'.format(run_id)
+    body = '''
+    The stats are now published at https://dnstats.io.
+    
+    
+    
+    
+    
+    
+    
+    
+    '''
+    message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
+                   plain_text_content=body)
+    _send_message(message)
