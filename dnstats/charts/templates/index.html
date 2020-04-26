@@ -3,13 +3,13 @@
     <head>
         <meta charset="utf-8" />
         <title>dnstats.io - {{ report_date }}</title>
-        <link rel="stylesheet" href="style.css" />
+        <link rel="stylesheet" href="/style.css" />
     </head>
     <body>
         <h1>dnstats.io</h1>
         <p>
         Data for this report was collected on {{ report_date }} and it contains data for the domains the of the top
-        {{ end_rank }} sites as defined by <a href="https://tranco-list.eu/">Tranco</a>.
+        {{ end_rank }} sites as defined by <a href="https://tranco-list.eu/" target="_blank">Tranco</a>.
         </p>
         <h2>SPF</h2>
         <div class="section group">
@@ -67,8 +67,9 @@
         <p>This work is licensed under a
         <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">
         Creative Commons Attribution 4.0 International License</a>.</p>
+        <p>Created by <a href="https://matthewburket.com" target="_blank">Matthew Burket</a>.</p>
     </body>
-    <script integrity="sha384-A753X7DKbqixyg9PJac76aNkFtPsX0ycrZTWbtFasXq1cWjTruFWwrvspVjmKQIZ" crossorigin="anonymous"  src="d3.js"></script>
-    <script integrity="sha384-IzZrBY9y4c5KyD9O8fQVdEyyfuEBx6+E+ysTIO3QZRgkOkstdCW4ewps7fms2zbF" crossorigin="anonymous" src="d3pie.js"></script>
+    <script integrity="sha384-A753X7DKbqixyg9PJac76aNkFtPsX0ycrZTWbtFasXq1cWjTruFWwrvspVjmKQIZ" crossorigin="anonymous"  src="/d3.js"></script>
+    <script integrity="sha384-6f95350df9b5bb65e2b1a326f60105e962614584a14806a8b3dd2ed60acf5c59d1f58f0ee1058370531dea2aef2ad63b" crossorigin="anonymous" src="/d3pie.min.js"></script>
     <script integrity="sha384-{{ js_sha }}" src="{{ js_filename }}.js"></script>
 </html>
