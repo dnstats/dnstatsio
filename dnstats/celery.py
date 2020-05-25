@@ -2,10 +2,11 @@ import datetime
 import os
 
 from celery import Celery, Task
-from celery.canvas import chain, chord
+from celery.canvas import chain, group
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from sqlalchemy import and_
+from sqlalchemy.sql.expression import func
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 import sentry_sdk
@@ -16,7 +17,9 @@ import dnstats.dnsutils as dnutils
 import dnstats.dnsutils.spf as spfutils
 import dnstats.dnsutils.mx as mxutils
 import dnstats.db.models as models
+import dnstats.charts
 from dnstats.db import db_session
+from dnstats.utils import chunks
 
 app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('CELERY_BACKEND'))
 
@@ -27,7 +30,8 @@ sentry_sdk.init("https://f4e01754fca64c1f99ebf3e1a354284a@sentry.io/1889319", in
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(crontab(hour=18, minute=0), do_run.s())
+    sender.add_periodic_task(crontab(hour=8, minute=0), do_run.s())
+    sender.add_periodic_task(crontab(hour=11, minute=0), do_charts_latest.s())
 
 
 class SqlAlchemyTask(Task):
@@ -43,12 +47,30 @@ class SqlAlchemyTask(Task):
         super(SqlAlchemyTask, self).after_return(status, retval, task_id, args, kwargs, einfo)
 
 
-@app.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(crontab(hour=0, minute=1), do_run.s())
+@app.task()
+def do_charts(run_id: int):
+    run = db_session.query(models.Run).filter_by(id=run_id).scalar()
+    folder_name = run.start_time.strftime("%Y-%m-%d")
+    js_filename, html_filename = dnstats.charts.create_reports(run_id)
+    print(js_filename)
+    print(html_filename)
+    os.system("ssh dnstatsio@www.dnstats.io 'mkdir /home/dnstatsio/public_html/{}'".format(folder_name))
+    os.system('scp {filename}.js  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}.js'.format(filename=js_filename, folder_name=folder_name))
+    os.system('scp {filename}  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/index.html'.format(filename=html_filename, folder_name=folder_name))
+    os.system("ssh dnstatsio@www.dnstats.io 'rm /home/dnstatsio/public_html/index.html'")
+    os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/index.html /home/dnstatsio/public_html/index.html'".format(folder_name=folder_name, filename=html_filename))
+    os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/{filename}.js /home/dnstatsio/public_html/'".format(folder_name=folder_name, filename=js_filename))
+    _send_published_email(run_id)
 
 
-@app.task(time_limit=450, soft_time_limit=400)
+@app.task()
+def do_charts_latest():
+    the_time = db_session.query(func.Max(models.Run.start_time)).scalar()
+    run = db_session.query(models.Run).filter_by(start_time=the_time).scalar()
+    do_charts.s(run.id).apply_async()
+
+
+@app.task(time_limit=320, soft_time_limit=300)
 def site_stat(site_id: int, run_id: int):
     site = db_session.query(models.Site).filter(models.Site.id == site_id).scalar()
     mail = dnutils.safe_query(site.domain, 'mx')
@@ -61,7 +83,7 @@ def site_stat(site_id: int, run_id: int):
     return [site.id, site.current_rank, run_id, caa, dmarc, mail, txt, ds, ns]
 
 
-@app.task(time_limit=120, soft_time_limit=110)
+@app.task(time_limit=60, soft_time_limit=54)
 def process_result(result):
     logger.warn(result[0])
     site = db_session.query(models.Site).filter_by(id=result[0]).one()
@@ -94,7 +116,9 @@ def launch_run(run_id):
     sites = db_session.query(models.Site).filter(and_(models.Site.current_rank >= run.start_rank,
                                                       models.Site.current_rank <= run.end_rank))
 
-    chord(chain(site_stat.s(site.id, run.id), process_result.s()) for site in sites)(_send_eos.s(run_id))
+    sites_all_chunked = list(chunks(sites.all(), 10000))
+    for sites in sites_all_chunked:
+        group(chain(site_stat.s(site.id, run.id), process_result.s()) for site in sites).apply_async()
     _send_eoq(run_id)
 
 
@@ -182,3 +206,20 @@ def _send_eoq(run_id):
                    plain_text_content=body)
     _send_message(message)
 
+
+def _send_published_email(run_id: int):
+    subject = 'DNStats scan id {} has been published'.format(run_id)
+    body = '''
+    The stats are now published at https://dnstats.io.
+    
+    
+    
+    
+    
+    
+    
+    
+    '''
+    message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
+                   plain_text_content=body)
+    _send_message(message)
