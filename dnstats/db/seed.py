@@ -111,20 +111,20 @@ def _seed_ns_providers():
         ('Mark Monitor', 'markmonitor.com.', True),
         ('Comcast Business', '.comcastbusiness.net.', True),
         ('DreamHost', '.dreamhost.com.', True),
-        ('Akamai', '.akam.net.', True)
+        ('Akamai', '.akam.net.', True),
         ('Liquid Web', '.sourcedns.com.', True),
         ('Media Temple', 'mediatemple.net.', True),
         ('XSERVER', '.xserver.jp.', True),
         ('Internet Invest', '.srv53.net.', True),
         ('Flex Web Hosting', '.flexwebhosting.nl.', True),
         ('HostGator', '.hostgator.com.', True),
-        ('NameCheap', '.namecheaphosting.com.', True)
+        ('NameCheap', '.namecheaphosting.com.', True),
+        ('Self-Hosted', 'domain.', False),
+        ('Unknown', 'Unknown.', False)
     ]
     for ns_provider in ns_providers:
         nsp_s = db_session.query(models.DnsProvider).filter_by(search_regex=ns_provider[1])
-
         if not nsp_s:
             nsp = models.DnsProvider(display_name=ns_provider[0], search_regex=ns_provider[1], is_regex=ns_provider[2])
-
             db_session.add(nsp)
             db_session.commit()
