@@ -103,6 +103,12 @@ def create_reports(run_id: int):
                       "group by display_name " \
                       "order by count asc;".format(run_id)
 
+    dns_providers = "select count(*), display_name from site_runs sr" \
+                    "join dns_providers dp on sr.dns_provider_id = dp.id" \
+                    "where run_id={}"
+                    "group by display_name " \
+                    "order by count asc;".format(run_id)
+
     category_data = [_run_report(spf_adoption_query, 'SPF Adoption', True, run_id),
                      _run_report(spf_reports_query, 'SPF Policy', False, run_id),
                      _run_report(dmarc_adoption_query, 'DMARC Adaption', True, run_id),
@@ -114,6 +120,7 @@ def create_reports(run_id: int):
                      _run_report(caa_reporting, 'CAA Reporting', True, run_id),
                      _run_report(dnssec_adoption, 'DNSSEC Adoption', True, run_id),
                      _run_report(email_providers, 'Email Providers', False, run_id, True)
+                     _run_report(dns_providers, 'DNS Providers', False, run_id, True)
                      ]
     js_filename = _create_time_date_filename('charts')
     _render_piejs(category_data, js_filename)
