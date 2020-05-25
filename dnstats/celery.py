@@ -30,8 +30,8 @@ sentry_sdk.init("https://f4e01754fca64c1f99ebf3e1a354284a@sentry.io/1889319", in
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(crontab(hour=17, minute=0), do_run.s())
-    sender.add_periodic_task(crontab(hour=21, minute=0), do_charts_latest.s())
+    sender.add_periodic_task(crontab(hour=8, minute=0), do_run.s())
+    sender.add_periodic_task(crontab(hour=11, minute=0), do_charts_latest.s())
 
 
 class SqlAlchemyTask(Task):
