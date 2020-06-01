@@ -7,7 +7,7 @@
         <meta name="keywords" content="dns,dnstats,stats,statistics,daily,scan,million,top,websites,sites,dmarc,spf" />
         <meta name="description" content="A daily scan of the top million websites for DNS, Email and other security settings" />
         <title>dnstats.io - {{ report_date }}</title>
-        <link rel="stylesheet" href="/style.css" />
+        <link rel="stylesheet" href="/style.css" crossorigin="anonymous" />
     </head>
     <body>
         <h1>dnstats.io</h1>
@@ -90,5 +90,5 @@
     </body>
     <script integrity="sha384-A753X7DKbqixyg9PJac76aNkFtPsX0ycrZTWbtFasXq1cWjTruFWwrvspVjmKQIZ" crossorigin="anonymous"  src="/d3.js"></script>
     <script integrity="sha384-hChw8ZV0Iwp7ETExPFldu4PYtFKfWwWBZRiYW/ZvQqWDSsZ33fUS9reU6+gnTvB0" crossorigin="anonymous" src="/d3pie.min.js"></script>
-    <script integrity="sha384-{{ js_sha }}" src="{{ js_filename }}.js"></script>
+    <script integrity="sha384-{{ js_sha }}" src="{{ js_filename }}.js" crossorigin="anonymous"></script>
 </html>
