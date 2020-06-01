@@ -54,6 +54,8 @@ def do_charts(run_id: int):
     js_filename, html_filename = dnstats.charts.create_reports(run_id)
     print(js_filename)
     print(html_filename)
+    if os.environ.get('DNSTATS_ENV') == 'Development':
+        return
     os.system("ssh dnstatsio@www.dnstats.io 'mkdir /home/dnstatsio/public_html/{}'".format(folder_name))
     os.system('scp {filename}.js  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}.js'.format(filename=js_filename, folder_name=folder_name))
     os.system('scp {filename}  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/index.html'.format(filename=html_filename, folder_name=folder_name))
@@ -125,7 +127,7 @@ def launch_run(run_id):
 @app.task()
 def do_run():
     date = datetime.datetime.now()
-    run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
+    run = models.Run(start_time=date, start_rank=1, end_rank=50)
     db_session.add(run)
     db_session.commit()
     run = db_session.query(models.Run).filter_by(start_time=date).first()
