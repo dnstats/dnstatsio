@@ -10,12 +10,21 @@
         <link rel="stylesheet" href="/style.css" crossorigin="anonymous" />
     </head>
     <body>
-        <h1>dnstats.io</h1>
+        <h1 id="top">dnstats.io</h1>
         <p>
         Data for this report was collected on {{ report_date }} and it contains data for the domains the of the top
         {{ end_rank }} sites as defined by <a href="https://tranco-list.eu/" target="_blank">Tranco</a>.
         </p>
-        <h2>SPF</h2>
+        <nav>
+            <p>Jump to:</p>
+            <p>
+                <a href="#spf">SPF</a> |
+                <a href="#dmarc">DMARC</a> |
+                <a href="#caa">CAA</a> |
+                <a href="#others">Others</a>
+            </p>
+        </nav>
+        <h2 id="spf">SPF</h2>
         <div class="section group">
             <div class="col span_1_of_2">
                 <h3>SPF Adoption</h3>
@@ -28,7 +37,7 @@
                 <div class="chart" id="spf_policy"></div>
             </div>
         </div>
-        <h2>DMARC</h2>
+        <h2 id="dmarc">DMARC</h2>
         <div class="section group">
             <div class="col span_1_of_2">
                 <h3>DMARC Adoption</h3>
@@ -48,7 +57,7 @@
 			<div class="chart" id="dmarc_subdomain_policy"></div>
 		</div>
 	</div>
-        <h2>CAA</h2>
+        <h2 id="caa">CAA</h2>
         <div class="section group">
             <div class="col span_1_of_2">
                 <h3>CAA Adoption</h3>
@@ -61,7 +70,7 @@
                 <div class="chart" id="caa_reporting"></div>
             </div>
         </div>
-        <h2>Others</h2>
+        <h2 id="others">Others</h2>
         <div class="section group">
             <div class="col span_1_of_2">
                 <h3>Has MX Records</h3>
