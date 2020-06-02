@@ -115,10 +115,10 @@ def create_reports(run_id: int):
                                          when caa_issue_count > 1 and caa_issue_count <= 5 then '2-5'
                                          when caa_issue_count > 5 and caa_issue_count <= 10 then '6-10'
                                          when caa_issue_count < 10 then '11+' end as range
-                              from site_runs sr) as sr
+                              from site_runs sr where run_id = {}) as sr
                         group by sr.range
 
-                """
+                """.format(run_id)
 
     caa_wildcard_issue_count = """
                     select count(*), sr.range
@@ -128,10 +128,11 @@ def create_reports(run_id: int):
                                          when caa_wildcard_count > 1 and caa_wildcard_count <= 5 then '2-5'
                                          when caa_wildcard_count > 5 and caa_wildcard_count <= 10 then '6-10'
                                          when caa_wildcard_count < 10 then '11+' end as range
-                              from site_runs sr) as sr
+                              from site_runs sr
+                              where run_id = {}) as sr
                         group by sr.range
 
-                """
+                """.format(run_id)
 
     category_data = [_run_report(spf_adoption_query, 'SPF Adoption', True, run_id),
                      _run_report(spf_reports_query, 'SPF Policy', False, run_id),
