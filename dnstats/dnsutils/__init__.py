@@ -84,13 +84,14 @@ def _parse_dmarc(record) -> []:
     return policy
 
 
-def get_provider_from_ns_records(ans: list, site: str):
+def get_provider_from_ns_records(ans: list, site: str) -> int:
     if ans:
         ns_string = ''.join(ans).lower()
         providers = db_session.query(models.DnsProvider).filter_by(is_regex=True).all()
         if ns_string.endswith(site + '.'):
-            return db_session.query(models.EmailProvider).filter_by(search_regex='domain.').one().id
+            return db_session.query(models.DnsProvider).filter_by(search_regex='Self-hosted').one().id
         for provider in providers:
             if provider.search_regex in ns_string:
+                print(provider.id)
                 return provider.id
-        return db_session.query(models.EmailProvider).filter_by(search_regex='Unknown.').one().id
+        return db_session.query(models.DnsProvider).filter_by(search_regex='Unknown.').one().id

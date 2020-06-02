@@ -100,7 +100,7 @@ def process_result(result):
     is_spf, spf_record, spf_policy = spfutils.get_spf_stats(result[6])
     spf_db = db_session.query(models.SpfPolicy).filter_by(qualifier=spf_policy).scalar()
     mx_db = mxutils.get_provider_from_mx_records(result[5], site.domain)
-    dns_db = dnstats.get_provider_from_ns_records(result[8], site.domain)
+    dns_db = dnutils.get_provider_from_ns_records(result[8], site.domain)
     sr = models.SiteRun(site_id=result[0], run_id=result[2], run_rank=result[1], caa_record=result[3], has_caa=has_caa,
                         has_caa_reporting=has_reporting, caa_issue_count=issue_count, caa_wildcard_count=wildcard_count,
                         has_dmarc=has_dmarc, dmarc_policy_id=dmarc_policy_db.id,
@@ -115,6 +115,7 @@ def process_result(result):
 
 @app.task()
 def launch_run(run_id):
+    logger.debug("Lauching run {}".format(run_id))
     run = db_session.query(models.Run).filter(models.Run.id == run_id).scalar()
     sites = db_session.query(models.Site).filter(and_(models.Site.current_rank >= run.start_rank,
                                                       models.Site.current_rank <= run.end_rank))
@@ -128,7 +129,12 @@ def launch_run(run_id):
 @app.task()
 def do_run():
     date = datetime.datetime.now()
-    run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
+    if os.environ.get('DNSTATS_ENV') == 'Development':
+        run = models.Run(start_time=date, start_rank=1, end_rank=150)
+        logger.error("[DO RUN]: Running a Debug top 50 sites runs")
+    else:
+        run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
+        logger.error("[DO RUN]: Running a normal run of top 1,000,000 sites runs")
     db_session.add(run)
     db_session.commit()
     run = db_session.query(models.Run).filter_by(start_time=date).first()
