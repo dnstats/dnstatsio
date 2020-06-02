@@ -31,7 +31,7 @@ def _seed_sites(filename):
         csv_reader = csv.DictReader(file)
 
         for row in csv_reader:
-            site = models.Site(current_rank=row['rank'], domain=row['site'])
+            site = models.Site(current_rank=int(row['rank']), domain=row['site'])
             db_session.add(site)
             db_session.commit()
 
