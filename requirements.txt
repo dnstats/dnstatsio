@@ -10,3 +10,4 @@ sqlalchemy-utils
 sentry_sdk
 sendgrid
 redis
+alembic
