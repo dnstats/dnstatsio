@@ -83,10 +83,13 @@ def _seed_email_providers():
     ]
 
     for email_provider in email_providers:
-        email_provide = models.EmailProvider(display_name=email_provider[0], search_regex=email_provider[1],
-                                             is_regex=email_provider[2])
-        db_session.add(email_provide)
-        db_session.commit()
+        email_provider_s =  db_session.query(models.EmailProvider).filter_by(search_regex=email_providers[1]).scalar()
+
+        if not email_provider_s:
+            email_provider = models.EmailProvider(display_name=email_provider[0], search_regex=email_provider[1],
+                                                 is_regex=email_provider[2])
+            db_session.add(email_provider)
+            db_session.commit()
 
 
 def _seed_ns_providers():
