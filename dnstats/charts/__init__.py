@@ -1,4 +1,5 @@
 import os
+import socket
 import datetime
 
 from jinja2 import Environment, FileSystemLoader
@@ -7,6 +8,7 @@ from dnstats.db import db_session, engine
 from dnstats.db import models as models
 from dnstats.charts.asset_utils import slugify, calculate_sri_hash
 from dnstats.charts.colors import get_color
+
 
 def _render_piejs(categories, filename: str):
     file_loader = FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates'))
@@ -82,6 +84,8 @@ def create_reports(run_id: int):
     caa_reporting = "select count(*) from site_runs " \
                     "where run_id = {} and has_caa_reporting is true".format(run_id)
 
+    caa_has_wilcard = "select count(*) from site_runs where run_id = {} and caa_wildcard_count > 0".format(run_id)
+
     mx_query = 'select count(*) from site_runs ' \
                'where run_id = {} and mx_records is not null'.format(run_id)
 
@@ -103,11 +107,32 @@ def create_reports(run_id: int):
                       "group by display_name " \
                       "order by count asc;".format(run_id)
 
-    dns_providers = "select count(*), display_name from site_runs sr" \
-                    "join dns_providers dp on sr.dns_provider_id = dp.id" \
-                    "where run_id={}"
-                    "group by display_name " \
-                    "order by count asc;".format(run_id)
+    caa_issue_count = """
+                    select count(*), sr.range
+                        from (select case
+                                         when caa_issue_count = 0 then '0'
+                                         when caa_issue_count = 1 then '1'
+                                         when caa_issue_count > 1 and caa_issue_count <= 5 then '2-5'
+                                         when caa_issue_count > 5 and caa_issue_count <= 10 then '6-10'
+                                         when caa_issue_count < 10 then '11+' end as range
+                              from site_runs sr where run_id = {}) as sr
+                        group by sr.range
+
+                """.format(run_id)
+
+    caa_wildcard_issue_count = """
+                    select count(*), sr.range
+                        from (select case
+                                         when caa_wildcard_count = 0 then '0'
+                                         when caa_wildcard_count = 1 then '1'
+                                         when caa_wildcard_count > 1 and caa_wildcard_count <= 5 then '2-5'
+                                         when caa_wildcard_count > 5 and caa_wildcard_count <= 10 then '6-10'
+                                         when caa_wildcard_count < 10 then '11+' end as range
+                              from site_runs sr
+                              where run_id = {}) as sr
+                        group by sr.range
+
+                """.format(run_id)
 
     category_data = [_run_report(spf_adoption_query, 'SPF Adoption', True, run_id),
                      _run_report(spf_reports_query, 'SPF Policy', False, run_id),
@@ -119,8 +144,9 @@ def create_reports(run_id: int):
                      _run_report(caa_adoption_query, 'CAA Adoption', True, run_id),
                      _run_report(caa_reporting, 'CAA Reporting', True, run_id),
                      _run_report(dnssec_adoption, 'DNSSEC Adoption', True, run_id),
-                     _run_report(email_providers, 'Email Providers', False, run_id, True)
-                     _run_report(dns_providers, 'DNS Providers', False, run_id, True)
+                     _run_report(email_providers, 'Email Providers', False, run_id, True),
+                     _run_report(caa_issue_count, 'CAA Issue Count', False, run_id, True),
+                     _run_report(caa_wildcard_issue_count, 'CAA Wildcard Issue Count', False, run_id, True)
                      ]
     js_filename = _create_time_date_filename('charts')
     _render_piejs(category_data, js_filename)
@@ -131,15 +157,17 @@ def create_reports(run_id: int):
 def _create_html(category_data: [()], run_id: int, js_filename: str):
     for filename in category_data:
         print(filename[1], filename[2])
+    hostname = socket.gethostname()
     file_loader = FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates'))
     env = Environment(loader=file_loader)
     template = env.get_template('index.html')
     run = db_session.query(models.Run).filter_by(id=run_id).one()
     report_date = run.start_time.strftime('%B %d, %Y')
     js_sha = calculate_sri_hash(js_filename + '.js')
-    result = template.render(charts=category_data, report_date=report_date, end_rank=run.end_rank,
+    end_rank = '{:,}'.format(run.end_rank)
+    result = template.render(charts=category_data, report_date=report_date, end_rank=end_rank,
                              js_filename=js_filename,
-                             js_sha=js_sha)
+                             js_sha=js_sha, hostname=hostname)
     filename = _create_time_date_filename('index') + '.html'
     with open(filename, 'w') as file:
         file.write(result)
