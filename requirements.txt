@@ -10,3 +10,5 @@ sqlalchemy-utils
 sentry_sdk
 sendgrid
 redis
+sphinx
+sphinx_rtd_theme
