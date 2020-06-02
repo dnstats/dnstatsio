@@ -8,6 +8,7 @@ def seed_db() -> None:
     _seed_dmarc_policy()
     _seed_spf()
     _seed_email_providers()
+    _seed_ns_providers()
 
 
 def _seed_spf():
@@ -78,6 +79,7 @@ def _seed_email_providers():
         ("NoMail", '{"0."}', True),
         ("QQ", "qq.com.", True),
         ("No mail", "nxdomain.", False),
+        ('Unknown', 'Unknown.', False)
     ]
 
     for email_provider in email_providers:
@@ -119,11 +121,21 @@ def _seed_ns_providers():
         ('Flex Web Hosting', '.flexwebhosting.nl.', True),
         ('HostGator', '.hostgator.com.', True),
         ('NameCheap', '.namecheaphosting.com.', True),
-        ('Self-Hosted', 'domain.', False),
-        ('Unknown', 'Unknown.', False)
+        ('Self-hosted', 'Self-hosted', False),
+        ('Unknown', 'Unknown.', False),
+        ('Self-hosted', '.google.com', True),
+        ('Self-hosted', 'twtrdns.net.', True),
+        ('DynDNS', 'dynect.net', True),
+        ('Self-hosted', '.msft.net.', True),
+        ('Self-hosted', '.taobao.com.', True),
+        ('Self-hosted', '.wikimedia.org.', True),
+        ('360Safe', '.360safe.com.', True),
+        ('Self-hosted', '.sina.com.', True),
+        ('CDNS.CN', '.cdns.cn.', True),
+        ('Self-hosted', '.vkontakte.ru.', True)
     ]
     for ns_provider in ns_providers:
-        nsp_s = db_session.query(models.DnsProvider).filter_by(search_regex=ns_provider[1])
+        nsp_s = db_session.query(models.DnsProvider).filter_by(search_regex=ns_provider[1]).scalar()
         if not nsp_s:
             nsp = models.DnsProvider(display_name=ns_provider[0], search_regex=ns_provider[1], is_regex=ns_provider[2])
             db_session.add(nsp)
