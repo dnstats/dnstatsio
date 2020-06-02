@@ -137,6 +137,9 @@ def do_run():
 
 
 def _send_message(email):
+    if os.environ.get('DNSTATS_ENV') == 'Development':
+        print(email)
+        return
     try:
         sendgrid = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
         response = sendgrid.send(email)
