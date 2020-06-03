@@ -79,11 +79,11 @@ def _seed_email_providers():
         ("NoMail", '{"0."}', True),
         ("QQ", "qq.com.", True),
         ("No mail", "nxdomain.", False),
-        ('Unknown', 'Unknown.', False)
+        ('Unknown', 'Unknown.', False),
     ]
 
     for email_provider in email_providers:
-        email_provider_s =  db_session.query(models.EmailProvider).filter_by(search_regex=email_providers[1]).scalar()
+        email_provider_s = db_session.query(models.EmailProvider).filter_by(search_regex=email_provider[1]).scalar()
 
         if not email_provider_s:
             email_provider = models.EmailProvider(display_name=email_provider[0], search_regex=email_provider[1],
@@ -135,7 +135,29 @@ def _seed_ns_providers():
         ('360Safe', '.360safe.com.', True),
         ('Self-hosted', '.sina.com.', True),
         ('CDNS.CN', '.cdns.cn.', True),
-        ('Self-hosted', '.vkontakte.ru.', True)
+        ('Self-hosted', '.vkontakte.ru.', True),
+        ('Alibaba DNS', 'alibabadns.com.', True),
+        ('Self-hosted', '.dig.com.', True),
+        ('Self-hosted', '.automattic.com.', True),
+        ('SURFnet', '.surfnet.nl.', True),
+        ('No-IP (Vitalwerks LLC)', '.no-ip.com.', True),
+        ('NS1.', '.nsone.net.', True),
+        ('EasyDNS', '.easydns.com.', True),
+        ('Self-hosted', '.apple.com.', True),
+        ('Self-hosted', '.bbc.co.uk.', True),
+        ('AliDNS', '.alidns.com.', True),
+        ('Self-hosted', '.whatsapp.net.', True),
+        ('Self-hosted', '.facebook.com.', True),
+        ('Move', '.move.com.', True),
+        ('MasterWeb', '.masterweb.net.', True),
+        ('JD.com (Jingdong)', '.jd.com.', True),
+        ('JD.com (Jingdong)', '.jdcache.com.', True),
+        ('Internet Systems Consortium', '.isc.org.', True),
+        ('Duodecad ITS', '.dditservices.com.', True),
+        ('Self-hosted', 'bkngs.com.', True),
+        ('Self-hosted', '.thomsonreuters.net.', True),
+        ('Self-hosted', '.bng-ns.com.', True)
+
     ]
     for ns_provider in ns_providers:
         nsp_s = db_session.query(models.DnsProvider).filter_by(search_regex=ns_provider[1]).scalar()
