@@ -114,7 +114,7 @@ def create_reports(run_id: int):
                                          when caa_issue_count = 1 then '1'
                                          when caa_issue_count > 1 and caa_issue_count <= 5 then '2-5'
                                          when caa_issue_count > 5 and caa_issue_count <= 10 then '6-10'
-                                         when caa_issue_count < 10 then '11+' end as range
+                                         when caa_issue_count > 10 then '11+' end as range
                               from site_runs sr where run_id = {}) as sr
                         group by sr.range
 
@@ -127,7 +127,7 @@ def create_reports(run_id: int):
                                          when caa_wildcard_count = 1 then '1'
                                          when caa_wildcard_count > 1 and caa_wildcard_count <= 5 then '2-5'
                                          when caa_wildcard_count > 5 and caa_wildcard_count <= 10 then '6-10'
-                                         when caa_wildcard_count < 10 then '11+' end as range
+                                         when caa_wildcard_count > 10 then '11+' end as range
                               from site_runs sr
                               where run_id = {}) as sr
                         group by sr.range
