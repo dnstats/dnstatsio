@@ -100,13 +100,14 @@ def process_result(result):
     is_spf, spf_record, spf_policy = spfutils.get_spf_stats(result[6])
     spf_db = db_session.query(models.SpfPolicy).filter_by(qualifier=spf_policy).scalar()
     mx_db = mxutils.get_provider_from_mx_records(result[5], site.domain)
+    dns_db = dnutils.get_provider_from_ns_records(result[8], site.domain)
     sr = models.SiteRun(site_id=result[0], run_id=result[2], run_rank=result[1], caa_record=result[3], has_caa=has_caa,
                         has_caa_reporting=has_reporting, caa_issue_count=issue_count, caa_wildcard_count=wildcard_count,
                         has_dmarc=has_dmarc, dmarc_policy_id=dmarc_policy_db.id,
                         dmarc_sub_policy_id=sub_dmarc_policy_db.id, has_dmarc_aggregate_reporting=has_dmarc_aggregate,
                         has_dmarc_forensic_reporting=has_dmarc_forensic, dmarc_record=result[4], has_spf=is_spf,
                         spf_policy_id=spf_db.id, txt_records=result[6], ds_records=result[7], mx_records=result[5],
-                        ns_records=result[8], email_provider_id=mx_db)
+                        ns_records=result[8], email_provider_id=mx_db, dns_provider_id=dns_db)
     db_session.add(sr)
     db_session.commit()
     return
@@ -114,6 +115,7 @@ def process_result(result):
 
 @app.task()
 def launch_run(run_id):
+    logger.debug("Lauching run {}".format(run_id))
     run = db_session.query(models.Run).filter(models.Run.id == run_id).scalar()
     sites = db_session.query(models.Site).filter(and_(models.Site.current_rank >= run.start_rank,
                                                       models.Site.current_rank <= run.end_rank))
@@ -127,7 +129,12 @@ def launch_run(run_id):
 @app.task()
 def do_run():
     date = datetime.datetime.now()
-    run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
+    if os.environ.get('DNSTATS_ENV') == 'Development':
+        run = models.Run(start_time=date, start_rank=1, end_rank=150)
+        logger.error("[DO RUN]: Running a Debug top 50 sites runs")
+    else:
+        run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
+        logger.error("[DO RUN]: Running a normal run of top 1,000,000 sites runs")
     db_session.add(run)
     db_session.commit()
     run = db_session.query(models.Run).filter_by(start_time=date).first()
@@ -136,6 +143,9 @@ def do_run():
 
 
 def _send_message(email):
+    if os.environ.get('DNSTATS_ENV') == 'Development':
+        print(email)
+        return
     try:
         sendgrid = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
         response = sendgrid.send(email)

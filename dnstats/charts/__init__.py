@@ -107,6 +107,12 @@ def create_reports(run_id: int):
                       "group by display_name " \
                       "order by count asc;".format(run_id)
 
+    dns_providers = "select count(*), display_name from site_runs sr " \
+                      "join dns_providers dp on sr.dns_provider_id=dp.id " \
+                      "where run_id={} " \
+                      "group by display_name " \
+                      "order by count asc;".format(run_id)
+
     caa_issue_count = """
                     select count(*), sr.range
                         from (select case
@@ -145,6 +151,7 @@ def create_reports(run_id: int):
                      _run_report(caa_reporting, 'CAA Reporting', True, run_id),
                      _run_report(dnssec_adoption, 'DNSSEC Adoption', True, run_id),
                      _run_report(email_providers, 'Email Providers', False, run_id, True),
+                     _run_report(dns_providers, 'DNS Providers', False, run_id, True),
                      _run_report(caa_issue_count, 'CAA Issue Count', False, run_id, True),
                      _run_report(caa_wildcard_issue_count, 'CAA Wildcard Issue Count', False, run_id, True)
                      ]

@@ -1,5 +1,8 @@
 import dns.resolver
 
+from dnstats.db import models
+from dnstats.db import db_session
+
 
 def safe_query(site: str, type: str):
     r = None
@@ -79,3 +82,16 @@ def _parse_dmarc(record) -> []:
         if len(subs) == 2:
             policy[subs[0].strip()] = subs[1].strip()
     return policy
+
+
+def get_provider_from_ns_records(ans: list, site: str) -> int:
+    if ans:
+        ns_string = ''.join(ans).lower()
+        providers = db_session.query(models.DnsProvider).filter_by(is_regex=True).all()
+        if ns_string.endswith(site + '.'):
+            return db_session.query(models.DnsProvider).filter_by(search_regex='Self-hosted').one().id
+        for provider in providers:
+            if provider.search_regex in ns_string:
+                print(provider.id)
+                return provider.id
+        return db_session.query(models.DnsProvider).filter_by(search_regex='Unknown.').one().id

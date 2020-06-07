@@ -1,9 +1,12 @@
 # DNS Stats
 Stats on DNS and email security feature usage
 
-# Data
-Majestic Million CSV by Majestic 12 is licensed under a Creative Commons Attribution 3.0 Unported License.
-## Get the data (80 MB)
-http://downloads.majestic.com/majestic_million.csv
+## Setup
+You will need python3.6+, pip and virtualenv installed.
 
-
+1. `git clone git@git.assignitapp.com:dnstats/dnstats.git`
+1. `cd dnstats`
+1. `virtualenv venv -p python3`
+1. `pip install -r requirements.txt'
+1.  Import sites from https://tranco-list.eu
+1. Seed db by running `dnstats.db.seed.seed_db()`

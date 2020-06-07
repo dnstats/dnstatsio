@@ -53,6 +53,7 @@ class SiteRun(Base):
     mx_records = Column(Text)
     ns_records = Column(Text)
     email_provider_id = Column(BigInteger, ForeignKey('email_providers.id'))
+    dns_provider_id = Column(BigInteger, ForeignKey('dns_providers.id'))
     UniqueConstraint('site_id', 'run_id')
 
     def has_dmarc_reporting(self):
@@ -74,3 +75,13 @@ class EmailProvider(Base):
     display_name = Column(String, nullable=False)
     search_regex = Column(String, nullable=False)
     is_regex = Column(Boolean, nullable=False, default=True)
+    UniqueConstraint('search_regex')
+
+
+class DnsProvider(Base):
+    __tablename__ = 'dns_providers'
+    id = Column(BigInteger, primary_key=True)
+    display_name = Column(String, nullable=False)
+    search_regex = Column(String, nullable=False)
+    is_regex = Column(Boolean, nullable=False, default=True)
+    UniqueConstraint('search_regex')
