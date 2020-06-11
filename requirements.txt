@@ -13,3 +13,4 @@ redis
 sphinx
 sphinx_rtd_theme
 alembic
+requests

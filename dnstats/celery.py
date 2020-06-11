@@ -1,10 +1,13 @@
 import datetime
+import io
 import os
+import zipfile
 
 from celery import Celery, Task
 from celery.canvas import chain, group
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
+import requests
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import func
 from sendgrid import SendGridAPIClient
@@ -140,6 +143,36 @@ def do_run():
     run = db_session.query(models.Run).filter_by(start_time=date).first()
     _send_start_email(date, run.id)
     launch_run(run.id)
+
+
+@app.task
+def import_list():
+    url = "https://tranco-list.eu/top-1m.csv.zip"
+    r = requests.get(url)
+    content = zipFile.ZipFile(io.BytesIO(r.content)).read('top-1m.csv')
+    csv_reader = csv.reader(content)
+    new_site_ranked = Dict()
+    new_sites = set()
+    old_sites = set()
+    for row in csv_reader:
+        new_site_ranked[row[1]] = row[0]
+        new_sites.add(row[1])
+    with engine.connect() as connection:
+        result = connection.execute("select domain from sites")
+        for row in result:
+            old_sites.add(row)
+        unranked_sites = old_sites - new_sites
+        for site in unranked_sites:
+            connection.execute("update set current_rank = 0 where domain = {}".format(site)
+    for site in new_sites:
+        site = db_session.query(models.Site).filter_by(domian=site).first()
+        if site:
+            pass
+            # Update Site
+        else:
+            pass
+            # Add iste
+
 
 
 def _send_message(email):
