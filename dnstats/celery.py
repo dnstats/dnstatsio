@@ -1,3 +1,4 @@
+import csv
 import datetime
 import io
 import os
@@ -22,6 +23,7 @@ import dnstats.dnsutils.mx as mxutils
 import dnstats.db.models as models
 import dnstats.charts
 from dnstats.db import db_session
+from dnstats.db import engine
 from dnstats.utils import chunks
 
 app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('CELERY_BACKEND'))
@@ -149,9 +151,9 @@ def do_run():
 def import_list():
     url = "https://tranco-list.eu/top-1m.csv.zip"
     r = requests.get(url)
-    content = zipFile.ZipFile(io.BytesIO(r.content)).read('top-1m.csv')
-    csv_reader = csv.reader(content)
-    new_site_ranked = Dict()
+    content = zipfile.ZipFile(io.BytesIO(r.content)).read('top-1m.csv')
+    csv_reader = csv.reader(io.StringIO(content.decode(encoding='utf-8')))
+    new_site_ranked = dict()
     new_sites = set()
     old_sites = set()
     for row in csv_reader:
@@ -160,19 +162,18 @@ def import_list():
     with engine.connect() as connection:
         result = connection.execute("select domain from sites")
         for row in result:
-            old_sites.add(row)
+            old_sites.add(row[0])
         unranked_sites = old_sites - new_sites
         for site in unranked_sites:
-            connection.execute("update set current_rank = 0 where domain = {}".format(site)
-    for site in new_sites:
-        site = db_session.query(models.Site).filter_by(domian=site).first()
+            connection.execute("update sites set current_rank = 0 where domain = {}".format(site))
+    for domain in new_sites:
+        site = db_session.query(models.Site).filter_by(domain=domain).first()
         if site:
-            pass
-            # Update Site
+            site.current_rank = new_site_ranked[domain]
         else:
-            pass
-            # Add iste
-
+            site = models.Site(domain=domain, current_rank=new_site_ranked[domain])
+            db_session.add(site)
+        db_session.commit()
 
 
 def _send_message(email):
