@@ -80,6 +80,9 @@ def _seed_email_providers():
         ("QQ", "qq.com.", True),
         ("No mail", "nxdomain.", False),
         ('Unknown', 'Unknown.', False),
+        ("Namecheap", ".web-hosting.com.", True),
+        ("Google Apps", ".googlemail.com.", True)
+
     ]
 
     for email_provider in email_providers:
