@@ -159,8 +159,26 @@ def _seed_ns_providers():
         ('Duodecad ITS', '.dditservices.com.', True),
         ('Self-hosted', 'bkngs.com.', True),
         ('Self-hosted', '.thomsonreuters.net.', True),
-        ('Self-hosted', '.bng-ns.com.', True)
-
+        ('Self-hosted', '.bng-ns.com.', True),
+        ('HiChina', '.hichina.com.', True),
+        ('DNSPod', '.dnspod.net.', True),
+        ('DNS.com', '.dns.com.', True),
+        ('Network Solutions', '.worldnic.com.', True),
+        ('Fast24', '.fastdns24.com.', True),
+        ('Fast24', '.fastdns24.eu.', True),
+        ('CSC', '.cscdns.net', True),
+        ('Domain.com', '.domain.com.', True),
+        ('Wix', 'wixdns.net.', True),
+        ('Cafe24', '.cafe24.com.', True),
+        ('LightEdge', '.lightedge.com.', True),
+        ('BlueHost', '.bluehost.com.', True),
+        ('dinahosting', '.dinahosting.com.', True),
+        ('MyHostAdmin', '.myhostadmin.net.', True),
+        ('eNom', 'name-services.com.', True),
+        ('RU-center', '.nic.ru.', True),
+        ('ClouDNS', '.cloudns.net.', True),
+        ('Name', '.name.com.', True),
+        ('XinNet', '.xincache.com.', True)
     ]
     for ns_provider in ns_providers:
         nsp_s = db_session.query(models.DnsProvider).filter_by(search_regex=ns_provider[1]).scalar()
