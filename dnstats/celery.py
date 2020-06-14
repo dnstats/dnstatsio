@@ -15,13 +15,12 @@ from sendgrid.helpers.mail import Mail
 import sentry_sdk
 from sentry_sdk.integrations.celery import CeleryIntegration
 
-
 import dnstats.dnsutils as dnutils
 import dnstats.dnsutils.spf as spfutils
 import dnstats.dnsutils.mx as mxutils
 import dnstats.db.models as models
 import dnstats.charts
-from dnstats.db import db_session
+from dnstats.db import db_session, engine
 from dnstats.utils import chunks
 
 if not os.environ.get('DB'):
@@ -32,6 +31,8 @@ if not os.environ.get('AMQP'):
 
 if not os.environ.get('CELERY_BACKEND'):
     raise EnvironmentError("Celery CELERY_BACKEND connection is not setup.")
+
+
 app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('CELERY_BACKEND'))
 
 logger = get_task_logger('dnstats.scans')
@@ -41,8 +42,9 @@ sentry_sdk.init("https://f4e01754fca64c1f99ebf3e1a354284a@sentry.io/1889319", in
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
+    sender.add_periodic_task(crontab(hour=0, minute=58))
     sender.add_periodic_task(crontab(hour=8, minute=0), do_run.s())
-    sender.add_periodic_task(crontab(hour=11, minute=0), do_charts_latest.s())
+    sender.add_periodic_task(crontab(hour=13, minute=0), do_charts_latest.s())
 
 
 class SqlAlchemyTask(Task):
@@ -68,11 +70,18 @@ def do_charts(run_id: int):
     if os.environ.get('DNSTATS_ENV') == 'Development':
         return
     os.system("ssh dnstatsio@www.dnstats.io 'mkdir /home/dnstatsio/public_html/{}'".format(folder_name))
-    os.system('scp {filename}.js  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}.js'.format(filename=js_filename, folder_name=folder_name))
-    os.system('scp {filename}  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/index.html'.format(filename=html_filename, folder_name=folder_name))
+    os.system(
+        'scp {filename}.js  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}.js'.format(
+            filename=js_filename, folder_name=folder_name))
+    os.system('scp {filename}  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/index.html'.format(
+        filename=html_filename, folder_name=folder_name))
     os.system("ssh dnstatsio@www.dnstats.io 'rm /home/dnstatsio/public_html/index.html'")
-    os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/index.html /home/dnstatsio/public_html/index.html'".format(folder_name=folder_name, filename=html_filename))
-    os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/{filename}.js /home/dnstatsio/public_html/'".format(folder_name=folder_name, filename=js_filename))
+    os.system(
+        "ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/index.html /home/dnstatsio/public_html/index.html'".format(
+            folder_name=folder_name, filename=html_filename))
+    os.system(
+        "ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/{filename}.js /home/dnstatsio/public_html/'".format(
+            folder_name=folder_name, filename=js_filename))
     _send_published_email(run_id)
 
 
@@ -100,7 +109,8 @@ def site_stat(site_id: int, run_id: int):
 def process_result(result):
     logger.warn(result[0])
     site = db_session.query(models.Site).filter_by(id=result[0]).one()
-    has_dmarc_aggregate, has_dmarc_forensic, has_dmarc, dmarc_policy, dmarc_sub_policy = dnutils.get_dmarc_stats(result[4])
+    has_dmarc_aggregate, has_dmarc_forensic, has_dmarc, dmarc_policy, dmarc_sub_policy = dnutils.get_dmarc_stats(
+        result[4])
     dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=dmarc_policy).scalar()
     if dmarc_policy_db is None:
         dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string='invalid').scalar()
@@ -155,46 +165,59 @@ def do_run():
 
 @app.task
 def import_list():
+    _send_sites_updated_started()
     url = "https://tranco-list.eu/top-1m.csv.zip"
     r = requests.get(url)
-    content = zipFile.ZipFile(io.BytesIO(r.content)).read('top-1m.csv')
-    csv_reader = csv.reader(content)
-    new_site_ranked = Dict()
+    csv_content = zipfile.ZipFile(io.BytesIO(r.content)).read('top-1m.csv').splitlines()
+    new_site_ranked = dict()
     new_sites = set()
-    old_sites = set()
-    for row in csv_reader:
-        new_site_ranked[row[1]] = row[0]
-        new_sites.add(row[1])
+    existing_sites = set()
+    for row in csv_content:
+        row = row.split(b',')
+        new_site_ranked[str(row[1], 'utf-8')] = int(row[0])
+        new_sites.add(str(row[1], 'utf-8'))
+
     with engine.connect() as connection:
+        logger.warn("Getting sites")
         result = connection.execute("select domain from sites")
         for row in result:
-            old_sites.add(row)
-        unranked_sites = old_sites - new_sites
+            existing_sites.add(row[0])
+        unranked_sites = existing_sites - new_sites
         for site in unranked_sites:
-            connection.execute("update set current_rank = 0 where domain = {}".format(site)
-    for site in new_sites:
-        site = db_session.query(models.Site).filter_by(domian=site).first()
-        if site:
-            pass
-            # Update Site
-        else:
-            pass
-            # Add iste
+            _unrank_domain.s(str(site)).apply_async()
+            logger.warn("Unranking site: {}".format(site))
+        for site in new_sites:
+            _process_new_site.s(str(site), str(new_site_ranked[site])).apply_async()
 
+    _send_sites_updated_done()
+
+@app.task()
+def _unrank_domain(domain: str):
+    site = db_session.query(models.Site).filter_by(domian=domain).first()
+    if site:
+        site.current_rank = 0
+        db_session.commit()
+
+
+@app.task()
+def _process_new_site(domain: bytes, new_rank: int):
+    site = db_session.query(models.Site).filter_by(domain=domain).first()
+    if site:
+        site.current_rank = new_rank
+    else:
+        site = models.Site(domain=str(domain), current_rank=new_rank)
+        db_session.add(site)
+        logger.warn("Adding site: {}".format(domain))
+    db_session.commit()
 
 
 def _send_message(email):
     if os.environ.get('DNSTATS_ENV') == 'Development':
         print(email)
         return
-    try:
-        sendgrid = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
-        response = sendgrid.send(email)
-    except Exception as e:
-        print(e.message)
-        print(response.status_code)
-        print(response.body)
-        print(response.headers)
+
+    sendgrid = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+    sendgrid.send(email)
 
 
 def _send_start_email(date, run_id):
@@ -221,13 +244,12 @@ def _send_eos(results, run_time):
     print("taco")
     print(run_time)
     result_count = db_session.query(models.SiteRun).filter_by(run_id=run_time).count()
-    print("result_count: "+str(result_count))
+    print("result_count: " + str(result_count))
     body = '''
     End time: {starting_time}
     Number results: {result_count}
     Run id: {run_id}
     DNStats scan has ended.
-    
     
     
     
@@ -273,6 +295,44 @@ def _send_published_email(run_id: int):
     
     
     '''
+    message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
+                   plain_text_content=body)
+    _send_message(message)
+
+
+def _send_sites_updated_started():
+    subject = 'DNStats Site List Update Started'
+    body ="""
+        Started site list upgrade at: {}
+        
+        
+        
+        
+        
+        
+        
+        
+    """.format(datetime.datetime.now().strftime('%c'))
+    message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
+                   plain_text_content=body)
+    _send_message(message)
+
+
+def _send_sites_updated_done():
+    subject = 'DNStats Site List Update Is Done'
+    body ="""
+        Ended site list upgrade at: {}
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    """.format(datetime.datetime.now().strftime('%c'))
     message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
                    plain_text_content=body)
     _send_message(message)
