@@ -15,6 +15,7 @@ from sendgrid.helpers.mail import Mail
 import sentry_sdk
 from sentry_sdk.integrations.celery import CeleryIntegration
 
+
 import dnstats.dnsutils as dnutils
 import dnstats.dnsutils.spf as spfutils
 import dnstats.dnsutils.mx as mxutils
@@ -70,18 +71,11 @@ def do_charts(run_id: int):
     if os.environ.get('DNSTATS_ENV') == 'Development':
         return
     os.system("ssh dnstatsio@www.dnstats.io 'mkdir /home/dnstatsio/public_html/{}'".format(folder_name))
-    os.system(
-        'scp {filename}.js  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}.js'.format(
-            filename=js_filename, folder_name=folder_name))
-    os.system('scp {filename}  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/index.html'.format(
-        filename=html_filename, folder_name=folder_name))
+    os.system('scp {filename}.js  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}.js'.format(filename=js_filename, folder_name=folder_name))
+    os.system('scp {filename}  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/index.html'.format(filename=html_filename, folder_name=folder_name))
     os.system("ssh dnstatsio@www.dnstats.io 'rm /home/dnstatsio/public_html/index.html'")
-    os.system(
-        "ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/index.html /home/dnstatsio/public_html/index.html'".format(
-            folder_name=folder_name, filename=html_filename))
-    os.system(
-        "ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/{filename}.js /home/dnstatsio/public_html/'".format(
-            folder_name=folder_name, filename=js_filename))
+    os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/index.html /home/dnstatsio/public_html/index.html'".format(folder_name=folder_name, filename=html_filename))
+    os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/{filename}.js /home/dnstatsio/public_html/'".format(folder_name=folder_name, filename=js_filename))
     _send_published_email(run_id)
 
 
@@ -109,8 +103,7 @@ def site_stat(site_id: int, run_id: int):
 def process_result(result):
     logger.warn(result[0])
     site = db_session.query(models.Site).filter_by(id=result[0]).one()
-    has_dmarc_aggregate, has_dmarc_forensic, has_dmarc, dmarc_policy, dmarc_sub_policy = dnutils.get_dmarc_stats(
-        result[4])
+    has_dmarc_aggregate, has_dmarc_forensic, has_dmarc, dmarc_policy, dmarc_sub_policy = dnutils.get_dmarc_stats(result[4])
     dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=dmarc_policy).scalar()
     if dmarc_policy_db is None:
         dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string='invalid').scalar()
@@ -250,6 +243,7 @@ def _send_eos(results, run_time):
     Number results: {result_count}
     Run id: {run_id}
     DNStats scan has ended.
+    
     
     
     
