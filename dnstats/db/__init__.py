@@ -5,6 +5,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
 from sqlalchemy_utils import database_exists, create_database
 
+if not os.environ.get('DB'):
+    raise EnvironmentError("Database connection is not setup.")
 
 engine = create_engine(os.environ.get('DB'), pool_recycle=3600, pool_size=250,
                        isolation_level='AUTOCOMMIT')

@@ -24,6 +24,14 @@ import dnstats.charts
 from dnstats.db import db_session
 from dnstats.utils import chunks
 
+if not os.environ.get('DB'):
+    raise EnvironmentError("Database connection is not setup.")
+
+if not os.environ.get('AMQP'):
+    raise EnvironmentError("Celery AMQP connection is not setup.")
+
+if not os.environ.get('CELERY_BACKEND'):
+    raise EnvironmentError("Celery CELERY_BACKEND connection is not setup.")
 app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('CELERY_BACKEND'))
 
 logger = get_task_logger('dnstats.scans')
