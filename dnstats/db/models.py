@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Boolean, String, DateTime, ForeignKey, BigInteger, Text, UniqueConstraint
+from sqlalchemy import Column, Boolean, String, DateTime, ForeignKey, BigInteger, Text, UniqueConstraint, SmallInteger
 
 Base = declarative_base()
 
@@ -54,6 +54,10 @@ class SiteRun(Base):
     ns_records = Column(Text)
     email_provider_id = Column(BigInteger, ForeignKey('email_providers.id'))
     dns_provider_id = Column(BigInteger, ForeignKey('dns_providers.id'))
+    dnssec_ds_algorithm = Column(SmallInteger)
+    dnssec_digest_type = Column(SmallInteger)
+    dnssec_dnskey_algorithm = Column(SmallInteger)
+
     UniqueConstraint('site_id', 'run_id')
 
     def has_dmarc_reporting(self):
