@@ -19,6 +19,7 @@ from sentry_sdk.integrations.celery import CeleryIntegration
 import dnstats.dnsutils as dnutils
 import dnstats.dnsutils.spf as spfutils
 import dnstats.dnsutils.mx as mxutils
+from dnstats.dnsutils.dnssec import parse_ds, parse_dnskey
 import dnstats.db.models as models
 import dnstats.charts
 from dnstats.db import db_session, engine
@@ -93,10 +94,11 @@ def site_stat(site_id: int, run_id: int):
     txt = dnutils.safe_query(site.domain, 'txt')
     caa = dnutils.safe_query(site.domain, 'caa')
     ds = dnutils.safe_query(site.domain, 'ds')
+    dnskey = dnutils.safe_query(site.domain, 'dnskey')
     ns = dnutils.safe_query(site.domain, 'ns')
     dmarc = dnutils.safe_query('_dmarc.' + site.domain, 'txt')
 
-    return [site.id, site.current_rank, run_id, caa, dmarc, mail, txt, ds, ns]
+    return [site.id, site.current_rank, run_id, caa, dmarc, mail, txt, ds, ns, dnskey]
 
 
 @app.task(time_limit=60, soft_time_limit=54)
@@ -115,13 +117,17 @@ def process_result(result):
     spf_db = db_session.query(models.SpfPolicy).filter_by(qualifier=spf_policy).scalar()
     mx_db = mxutils.get_provider_from_mx_records(result[5], site.domain)
     dns_db = dnutils.get_provider_from_ns_records(result[8], site.domain)
+    ds_algorithm, ds_digest_type = parse_ds(result[7])
+    dnssec_dnskey_algorithm = parse_dnskey(result[9])
     sr = models.SiteRun(site_id=result[0], run_id=result[2], run_rank=result[1], caa_record=result[3], has_caa=has_caa,
                         has_caa_reporting=has_reporting, caa_issue_count=issue_count, caa_wildcard_count=wildcard_count,
                         has_dmarc=has_dmarc, dmarc_policy_id=dmarc_policy_db.id,
                         dmarc_sub_policy_id=sub_dmarc_policy_db.id, has_dmarc_aggregate_reporting=has_dmarc_aggregate,
                         has_dmarc_forensic_reporting=has_dmarc_forensic, dmarc_record=result[4], has_spf=is_spf,
                         spf_policy_id=spf_db.id, txt_records=result[6], ds_records=result[7], mx_records=result[5],
-                        ns_records=result[8], email_provider_id=mx_db, dns_provider_id=dns_db)
+                        ns_records=result[8], email_provider_id=mx_db, dns_provider_id=dns_db,
+                        dnssec_ds_algorithm=ds_algorithm, dnssec_digest_type=ds_digest_type,
+                        dnssec_dnskey_algorithm=dnssec_dnskey_algorithm)
     db_session.add(sr)
     db_session.commit()
     return
