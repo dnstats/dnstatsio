@@ -57,7 +57,8 @@ class SiteRun(Base):
     dnssec_ds_algorithm = Column(SmallInteger)
     dnssec_digest_type = Column(SmallInteger)
     dnssec_dnskey_algorithm = Column(SmallInteger)
-    has_dnssec = Column(Boolean)
+    has_securitytxt = Column(Boolean)
+
 
     UniqueConstraint('site_id', 'run_id')
 
