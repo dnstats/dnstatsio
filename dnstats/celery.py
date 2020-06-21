@@ -24,6 +24,7 @@ import dnstats.db.models as models
 import dnstats.charts
 from dnstats.db import db_session, engine
 from dnstats.utils import chunks
+from dnstats.httputils import has_security_txt
 
 if not os.environ.get('DB'):
     raise EnvironmentError("Database connection is not setup.")
@@ -44,7 +45,7 @@ sentry_sdk.init("https://f4e01754fca64c1f99ebf3e1a354284a@sentry.io/1889319", in
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(crontab(hour=0, minute=58))
+    sender.add_periodic_task(crontab(hour=0, minute=58), import_list.s())
     sender.add_periodic_task(crontab(hour=8, minute=0), do_run.s())
     sender.add_periodic_task(crontab(hour=13, minute=0), do_charts_latest.s())
 
@@ -97,8 +98,9 @@ def site_stat(site_id: int, run_id: int):
     dnskey = dnutils.safe_query(site.domain, 'dnskey')
     ns = dnutils.safe_query(site.domain, 'ns')
     dmarc = dnutils.safe_query('_dmarc.' + site.domain, 'txt')
+    has_dnssec = has_security_txt(site.domain)
 
-    return [site.id, site.current_rank, run_id, caa, dmarc, mail, txt, ds, ns, dnskey]
+    return [site.id, site.current_rank, run_id, caa, dmarc, mail, txt, ds, ns, dnskey, has_dnssec]
 
 
 @app.task(time_limit=60, soft_time_limit=54)
@@ -119,6 +121,7 @@ def process_result(result):
     dns_db = dnutils.get_provider_from_ns_records(result[8], site.domain)
     ds_algorithm, ds_digest_type = parse_ds(result[7])
     dnssec_dnskey_algorithm = parse_dnskey(result[9])
+    has_dnssec = result[10]
     sr = models.SiteRun(site_id=result[0], run_id=result[2], run_rank=result[1], caa_record=result[3], has_caa=has_caa,
                         has_caa_reporting=has_reporting, caa_issue_count=issue_count, caa_wildcard_count=wildcard_count,
                         has_dmarc=has_dmarc, dmarc_policy_id=dmarc_policy_db.id,
@@ -127,7 +130,7 @@ def process_result(result):
                         spf_policy_id=spf_db.id, txt_records=result[6], ds_records=result[7], mx_records=result[5],
                         ns_records=result[8], email_provider_id=mx_db, dns_provider_id=dns_db,
                         dnssec_ds_algorithm=ds_algorithm, dnssec_digest_type=ds_digest_type,
-                        dnssec_dnskey_algorithm=dnssec_dnskey_algorithm)
+                        dnssec_dnskey_algorithm=dnssec_dnskey_algorithm, has_securitytxt=has_dnssec)
     db_session.add(sr)
     db_session.commit()
     return
@@ -199,7 +202,7 @@ def _unrank_domain(domain: str):
 
 
 @app.task()
-def _process_new_site(domain: bytes, new_rank: int):
+def _process_new_site(domain: bytes, new_rank: int) -> None:
     site = db_session.query(models.Site).filter_by(domain=domain).first()
     if site:
         site.current_rank = new_rank
