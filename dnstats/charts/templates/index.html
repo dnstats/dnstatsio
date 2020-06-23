@@ -4,8 +4,8 @@
         <meta charset="utf-8" />
         <meta name="author" content="Matthew Burket" />
         <meta name="generator" content="DNStats - {{ hostname }}" />
-        <meta name="keywords" content="dns,dnstats,stats,statistics,daily,scan,million,top,websites,sites,dmarc,spf" />
-        <meta name="description" content="A daily scan of the top million websites for DNS, Email and other security settings" />
+        <meta name="keywords" content="dns,dnstats,stats,statistics,statistic,daily,scan,million,top,websites,sites,dmarc,spf,caa,email" />
+        <meta name="description" content="A daily scan of the top million websites for DNS, Email and other security settings." />
         <title>dnstats.io - {{ report_date }}</title>
         <link rel="stylesheet" href="/style.css" crossorigin="anonymous" />
     </head>
@@ -26,6 +26,12 @@
             </p>
         </nav>
         <h2 id="spf">SPF</h2>
+        <p>
+            Sender Policy Framework (SPF) defined in <a href="https://tools.ietf.org/html/rfc7208" target="_blank">RFC 7208</a> is
+            protocol to help prevent email spoofing. SPF works by authorizing hosts to send email on behalf of domains
+            and receivers of email check if the sending host is authorized. SPF checks the
+            <span class="code">HELO</span> and/or the <span class="code">MAIL FROM</span> during the SMTP connection.
+        </p>
         <div class="section group">
             <div class="col span_1_of_2">
                 <h3>SPF Adoption</h3>
@@ -39,6 +45,14 @@
             </div>
         </div>
         <h2 id="dmarc">DMARC</h2>
+        <p>
+            Domain-based Message Authentication, Reporting, and Conformance (DMARC) is a email protocol defined in
+            <a href="https://tools.ietf.org/html/rfc7489" target="_blank">RFC 7489</a> is protocol to help domain owner's protect and
+            get reporting for email. DMARC works with Sender Policy Framework (SPF) and DomainKeys Identified Mail
+            (DKIM) to authenticate mail messages. DMARC also provides a facility for domain owners to get reports about
+            how their domain is used to receive email. DMARC matches on the <span class="code">From</span> field on the mail message as
+            defined in <a href="https://tools.ietf.org/html/rfc5322" target="_blank">RFC 5322</a>.
+        </p>
         <div class="section group">
             <div class="col span_1_of_2">
                 <h3>DMARC Adoption</h3>
@@ -60,11 +74,18 @@
             </div>
             <div class="col span_1_of_2">
                 <h3>Subdomain DMARC Policy</h3>
-                <hr />
+                <hr />f
                 <div class="chart" id="dmarc_subdomain_policy"></div>
             </div>
         </div>
         <h2 id="caa">CAA</h2>
+        <p>
+            DNS Certification Authority Authorization (CAA) Resource Records defined in
+            <a href="https://tools.ietf.org/html/rfc8659">RFC 8659</a> allow a domain owner to specify which
+            <a href="/glossary#ca">certificate authorities</a> can issue certificates for a domain. The goal of CAA
+            is to reduce the number of mis-issued certificates. CAA also provides mechanism for CAs to report attempted
+            mis-issuance.
+        </p>
         <div class="section group">
             <div class="col span_1_of_2">
                 <h3>CAA Adoption</h3>
@@ -98,6 +119,15 @@
             </div>
             <div class="col span_1_of_2">
                 <h3>DNSSEC Adoption</h3>
+                <p>
+                    Domain Name System Security Extensions DNSSEC as defined in
+                    <a href="https://tools.ietf.org/html/rfc4033">RFC 4033</a>,
+                    <a href="https://tools.ietf.org/html/rfc4034">RFC 4034</a>,
+                    and <a href="https://tools.ietf.org/html/rfc4034">RFC 4036</a>
+                    adds a chain of trust. From the root zone to the requested zone.
+                    For more information see <a target="_blank" href="https://www.cloudflare.com/dns/dnssec/how-dnssec-works/">this
+                    blog post</a> from <a href="https://www.cloudflare.com/">CloudFlare</a>.
+                </p>
                 <hr />
                 <div class="chart" id="dnssec_adoption"></div>
             </div>
