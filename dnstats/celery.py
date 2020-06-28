@@ -195,7 +195,7 @@ def import_list():
 
 @app.task()
 def _unrank_domain(domain: str):
-    site = db_session.query(models.Site).filter_by(domian=domain).first()
+    site = db_session.query(models.Site).filter_by(domain=domain).first()
     if site:
         site.current_rank = 0
         db_session.commit()
