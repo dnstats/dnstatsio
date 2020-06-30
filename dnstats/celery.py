@@ -88,7 +88,7 @@ def do_charts_latest():
     do_charts.s(run.id).apply_async()
 
 
-@app.task(time_limit=320, soft_time_limit=300)
+@app.task(time_limit=420, soft_time_limit=400)
 def site_stat(site_id: int, run_id: int):
     site = db_session.query(models.Site).filter(models.Site.id == site_id).scalar()
     mail = dnutils.safe_query(site.domain, 'mx')
@@ -195,7 +195,7 @@ def import_list():
 
 @app.task()
 def _unrank_domain(domain: str):
-    site = db_session.query(models.Site).filter_by(domian=domain).first()
+    site = db_session.query(models.Site).filter_by(domain=domain).first()
     if site:
         site.current_rank = 0
         db_session.commit()
