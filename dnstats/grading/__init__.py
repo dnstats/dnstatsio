@@ -44,3 +44,16 @@ class Grade(Enum):
     D = 11
     D_MINUS = 12
     F = 13
+
+def half_reduce(grade: Grade) -> Grade:
+    if Grade != Grade.F:
+        return Grade + 1
+    else:
+        return Grade.F
+
+def full_reduce(grade: Grade) -> Grade:
+    if Grade < Grade.D:
+        return Grade + 1
+    else:
+        return Grade.F
+
