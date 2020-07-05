@@ -29,7 +29,6 @@ def get_spf_stats(ans):
 
 def spf_final_qualifier(record: str) -> str:
     m = re.search(r"[+?~-]all", record)
-
     if m:
         return m[0]
     else:
@@ -50,39 +49,3 @@ def _get_redirect_record(record):
                             return r
     return ''
 
-
-def get_dns_count(record: str) -> [int, bool, list[SPFErrors]]:
-    parts = record.split(' ')
-    parts_to_look_at = parts
-    count = 0
-    valid = True
-    errors = list()
-    for part in parts_to_look_at:
-        if count > 20:
-            valid = False
-            errors.append(SPFErrors.TOO_MANY_LOOKUPS)
-            break
-        if part.startswith('include:'):
-            count += 1
-            include = part.split(':')
-            records = safe_query(include[1], 'txt')
-            include_parts = None
-            for record in records:
-                if record.startswith('v=spf1'):
-                    include_parts = record.split()
-                parts_to_look_at.append(include_parts)
-        if part.startswith('a:'):
-            count += 1
-        if part.startswith('mx'):
-            count += 1
-            mx_parts = part.split(':')
-            ans = safe_query(mx_parts[1], 'mx')
-            if len(ans) > 10:
-                valid = False
-                errors.append(SPFErrors.TOO_MANY_MX_RECORDS_RETURNED)
-        if part.startswith('exists:'):
-            count += 1
-
-        parts_to_look_at.remove(part)
-
-    return count, valid, errors
