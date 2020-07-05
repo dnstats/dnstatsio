@@ -25,20 +25,19 @@ class SpfError(Enum):
     INVALID_MECHANISM = 16
 
 
-
-def grade(spf: str) -> [Grade, list[SpfError]]:
+def grade(spf: str, domain: str):
+    errors = list()
     current_grade = Grade.F
     if not spf.startswith('v=spf1 '):
-        return current_grade, list(SpfError.INVALID_RECORD_START)
+        errors.append(SpfError.INVALID_RECORD_START)
+        return current_grade, errors
 
     parts = spf.split(' ')
-    ptr = parts.__contains__(' ptr ')
+    ptr = parts.__contains__('ptr')
     final = spf_final_qualifier(spf)
     count = 0
-    parts_to_consider = list[str]
-    parts_to_consider.append(parts)
-
-    errors = list[SpfError]
+    parts_to_consider = list()
+    parts_to_consider.extend(parts)
 
     current_grade = grade_final_qualifer(current_grade, errors, final)
 
@@ -58,24 +57,17 @@ def grade(spf: str) -> [Grade, list[SpfError]]:
                 break
         if part.startswith('a'):
             count += 1
-            sub_parts = part.split(':')
-            if len(sub_parts) == 2:
-                # TODO check if part 2 is valid name
-                a_result = safe_query(sub_parts[1], 'a')
-                if len(a_result) < 10:
-                    errors.add(SpfError.TOO_MANY_A_RECORDS_RETURNED)
-                    break
+            a_result = safe_query(domain, 'a')
+            if len(a_result) < 10:
+                errors.append(SpfError.TOO_MANY_A_RECORDS_RETURNED)
+                break
             else:
-                errors.add(SpfError.INVALID_A_MECHANISM)
+                errors.append(SpfError.INVALID_A_MECHANISM)
         if part.startswith('mx'):
             count += 1
-            sub_parts = part.split(':')
-            if len(sub_parts) == 2:
-                mx_result = safe_query(sub_parts[1], 'a')
-                if len(mx_result) < 10:
-                    errors.append(SpfError.TOO_MANY_MX_RECORDS_RETURNED)
-            else:
-                errors.append(SpfError.INVALID_MX_MECHANISM)
+            mx_result = safe_query(domain, 'a')
+            if len(mx_result) > 10:
+                errors.append(SpfError.TOO_MANY_MX_RECORDS_RETURNED)
 
         if part.startswith('ptr'):
             # Count as one DNS query. No way to valid this without an email
@@ -136,13 +128,13 @@ def grade_include(errors, parts_to_consider, sub_parts):
 
 
 def grade_final_qualifer(current_grade, errors, final):
-    if final == '-':
+    if final == '-all':
         current_grade = Grade.A
-    elif final == '~':
+    elif final == '~all':
         current_grade = Grade.B
-    elif final == '?':
+    elif final == '?all':
         current_grade = Grade.C
-    elif final == '+':
+    elif final == '+all':
         current_grade = Grade.D
     else:
         errors.append(SpfError.DEFAULT_ALL_QUALIFIER)
