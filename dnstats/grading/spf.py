@@ -34,7 +34,7 @@ def grade(spf: str, domain: str):
 
     parts = spf.split(' ')
     ptr = parts.__contains__('ptr')
-    final = get_spf_stats(spf)[2]
+    final = get_spf_stats([spf])[2]
     count = 1
     parts_to_consider = list()
     parts_to_consider.extend(parts)

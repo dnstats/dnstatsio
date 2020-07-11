@@ -11,7 +11,7 @@ class SPFErrors(Enum):
     TOO_MANY_MX_RECORDS_RETURNED = 2
 
 
-def get_spf_stats(ans):
+def get_spf_stats(ans: list):
     """
 
     :param ans:
