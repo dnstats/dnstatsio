@@ -20,7 +20,7 @@ config = context.config
 
 # https://stackoverflow.com/a/55190497
 section = config.config_ini_section
-config.set_section_option(section, 'sqlalchemy.url', os.environ.GET('DB'))
+config.set_section_option(section, 'sqlalchemy.url', os.environ.get('DB'))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
