@@ -19,6 +19,7 @@ def get_spf_stats(ans: list):
     """
     if ans:
         for r in ans:
+            r = r.replace('"', '')
             if 'redirect=' in r:
                 r = _get_redirect_record(r)
 
