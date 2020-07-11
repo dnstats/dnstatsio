@@ -9,10 +9,8 @@ cache:
     - .cache/pip
     - venv/
 
-
 services:
   - postgres:12
-  - rabbitmq
 
 before_script:
   - python -V  # Print out python version for debugging
@@ -20,7 +18,8 @@ before_script:
   - virtualenv venv
   - source venv/bin/activate
   - pip install -r requirements.txt
-  - export DB=postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost/$POSTGRES_DB
+  - export DB=postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB
+  - alembic upgrade head
 
 test:
   script:
