@@ -1,8 +1,8 @@
 from enum import Enum
 
 from dnstats.grading import Grade, half_reduce
-from dnsutils.spf import spf_final_qualifier
-from dnsutils import safe_query
+from dnsutils.spf import get_spf_stats
+from dnstats.dnsutils import safe_query
 
 
 class SpfError(Enum):
@@ -34,14 +34,16 @@ def grade(spf: str, domain: str):
 
     parts = spf.split(' ')
     ptr = parts.__contains__('ptr')
-    final = spf_final_qualifier(spf)
-    count = 0
+    final = get_spf_stats(spf)[2]
+    count = 1
     parts_to_consider = list()
     parts_to_consider.extend(parts)
 
     current_grade = grade_final_qualifer(current_grade, errors, final)
 
+    inter = 0
     for part in parts_to_consider:
+        inter += 1
         if count >= 10:
             current_grade = half_reduce(current_grade)
             errors.append(SpfError.TOO_MANY_DNS_LOOKUPS)
@@ -58,11 +60,9 @@ def grade(spf: str, domain: str):
         if part.startswith('a'):
             count += 1
             a_result = safe_query(domain, 'a')
-            if len(a_result) < 10:
+            if len(a_result) > 10:
                 errors.append(SpfError.TOO_MANY_A_RECORDS_RETURNED)
                 break
-            else:
-                errors.append(SpfError.INVALID_A_MECHANISM)
         if part.startswith('mx'):
             count += 1
             mx_result = safe_query(domain, 'a')
@@ -79,14 +79,16 @@ def grade(spf: str, domain: str):
             sub_parts = part.split('=')
             # TODO: check if valid DNS Name
             if len(sub_parts) == 2:
-                redirect_query = safe_query(sub_parts[1])
+                redirect_query = safe_query(sub_parts[1], 'txt')
                 if redirect_query is None or len(redirect_query):
                     errors.append(SpfError.INVALID_REDIRECT_MECHANISM)
                 has_spf = False
                 for record in redirect_query:
+                    record = record.replace('"', '')
                     if record.startswith('v=spf1 '):
                         if not has_spf:
-                            parts_to_consider.append(record.split(' '))
+                            for spf_part in record.split(' '):
+                                parts_to_consider.append(spf_part)
                             has_spf = True
                 if not has_spf:
                     errors.append(SpfError.NO_RECORD_AT_REDIRECT)
@@ -119,15 +121,18 @@ def grade_include(errors, parts_to_consider, sub_parts):
     include_result = safe_query(sub_parts[1], 'txt')
     has_spf = False
     for record in include_result:
+        record = record.replace('"', '')
         if record.startswith('v=spf1'):
             if has_spf is False:
-                parts_to_consider.append(record)
+                for spf_part in record.split(' '):
+                    parts_to_consider.append(spf_part)
             else:
                 errors.append(SpfError.INCLUDE_RETURNED_MANY_SPF)
             has_spf = True
 
 
 def grade_final_qualifer(current_grade, errors, final):
+    # TODO: account for only redirect records
     if final == '-all':
         current_grade = Grade.A
     elif final == '~all':
