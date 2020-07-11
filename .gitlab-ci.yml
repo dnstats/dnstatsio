@@ -3,6 +3,10 @@ default:
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  POSTGRES_DB: dnstats
+  POSTGRES_USER: dnstats_ci
+  POSTGRES_PASSWORD: ""
+  POSTGRES_HOST_AUTH_METHOD: trust
 
 cache:
   paths:
@@ -18,8 +22,9 @@ before_script:
   - virtualenv venv
   - source venv/bin/activate
   - pip install -r requirements.txt
-  - export DB=postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres/$POSTGRES_DB
+  - export DB=postgres://$POSTGRES_USER@postgres/$POSTGRES_DB
   - alembic upgrade head
+  - python -m dnstats.db.seed
 
 test:
   script:
