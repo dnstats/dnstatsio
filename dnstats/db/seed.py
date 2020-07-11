@@ -186,3 +186,7 @@ def _seed_ns_providers():
             nsp = models.DnsProvider(display_name=ns_provider[0], search_regex=ns_provider[1], is_regex=ns_provider[2])
             db_session.add(nsp)
             db_session.commit()
+
+
+if __name__ == '__main__':
+    seed_db()
