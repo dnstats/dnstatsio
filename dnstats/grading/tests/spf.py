@@ -41,9 +41,6 @@ class TestSpf(unittest.TestCase):
         grade = grade_spf('v=spf1 include:spf.messagingengine.com -all', 'dnstats.io')
         self.assertEqual(Grade.A.value, grade[0].value)
 
-    def test_adhoc(self):
-        grade = grade_spf('v=spf1 ip4:12.110.244.192/26 ip4:216.81.144.160/27 ip4:216.161.126.32/27 a mx ptr include:378546.spf07.hubspotemail.net include:mg-spf.greenhouse.io include:spf.protection.outlook.com ip4:52.38.191.241 ip4:72.164.247.78 ip4:136.147.62.224/28 ~all', 'businessolver.com')
-        self.assertEqual(Grade.B_MINUS.value, grade[0].value)
 
 if __name__ == '__main__':
     unittest.main()
