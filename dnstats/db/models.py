@@ -1,5 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Boolean, String, DateTime, ForeignKey, BigInteger, Text, UniqueConstraint, SmallInteger
+from sqlalchemy import Column, Boolean, String, DateTime, ForeignKey, BigInteger, Text, UniqueConstraint, SmallInteger, Enum
+
+from dnstats.grading import Grade
 
 Base = declarative_base()
 
@@ -57,9 +59,10 @@ class SiteRun(Base):
     dnssec_ds_algorithm = Column(SmallInteger)
     dnssec_digest_type = Column(SmallInteger)
     dnssec_dnskey_algorithm = Column(SmallInteger)
-    has_securitytxt = Column(Boolean)
+    has_securitytxt = Column(Boolean)D
     has_msdc = Column(Boolean)
-
+    spf_grade = Column(Enum(Grade))
+    dmarc_grade = Column(Enum(Grade))
     UniqueConstraint('site_id', 'run_id')
 
     def has_dmarc_reporting(self):
@@ -91,3 +94,25 @@ class DnsProvider(Base):
     search_regex = Column(String, nullable=False)
     is_regex = Column(Boolean, nullable=False, default=True)
     UniqueConstraint('search_regex')
+
+
+class RemarkTypes(Base):
+    __tablename__ = 'remark_types'
+    id = Column(SmallInteger, primary_key=True)
+    name = Column(String, nullable=False)
+    UniqueConstraint('name')
+
+
+class Remark(Base):
+    __tablename__ = 'remarks'
+    id = Column(SmallInteger, primary_key=True)
+    name = Column(String, nullable=False)
+    remark_type_id = Column(SmallInteger, ForeignKey('remark_types.id'))
+    remark_level = Column(SmallInteger)
+
+
+class SiteRunRemark(Base):
+    __tablename__ = 'siterun_remarks'
+    id = Column(BigInteger, primary_key=True)
+    site_run_id = Column(BigInteger, ForeignKey('site_runs.id'))
+    remark_id = Column(SmallInteger, ForeignKey('remarks.id'))
