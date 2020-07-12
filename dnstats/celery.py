@@ -138,7 +138,7 @@ def process_result(result):
 
 @app.task()
 def launch_run(run_id):
-    logger.debug("Lauching run {}".format(run_id))
+    logger.warning("Launching run {}".format(run_id))
     run = db_session.query(models.Run).filter(models.Run.id == run_id).scalar()
     sites = db_session.query(models.Site).filter(and_(models.Site.current_rank >= run.start_rank,
                                                       models.Site.current_rank <= run.end_rank))
@@ -157,7 +157,7 @@ def do_run():
         logger.error("[DO RUN]: Running a Debug top 50 sites runs")
     else:
         run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
-        logger.error("[DO RUN]: Running a normal run of top 1,000,000 sites runs")
+        logger.warning("[DO RUN]: Running a normal run of top 1,000,000 sites runs")
     db_session.add(run)
     db_session.commit()
     run = db_session.query(models.Run).filter_by(start_time=date).first()
