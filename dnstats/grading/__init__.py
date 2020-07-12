@@ -52,8 +52,26 @@ def half_reduce(grade: Grade) -> Grade:
         return Grade.F
 
 def full_reduce(grade: Grade) -> Grade:
-    if Grade < Grade.D:
-        return Grade(grade.value + 2)
+    if grade.value < Grade.D_PLUS.value:
+        return Grade(grade.value + 3)
     else:
         return Grade.F
 
+def half_raise(grade: Grade) -> Grade:
+    if grade != Grade.A_PLUS:
+        return Grade(Grade.value - 1)
+    else:
+        return Grade.A_PLUS
+
+def full_raise(grade: Grade) -> Grade:
+    if grade.value > Grade.B_PLUS.value:
+        return Grade(grade.value - 3)
+    else:
+        return Grade.A_PLUS
+
+
+def update_count_dict(d: Dict, key: str):
+    if key in d:
+        d[key] += 1
+    else:
+        d[key] = 1
