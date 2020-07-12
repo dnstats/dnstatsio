@@ -9,6 +9,30 @@ def seed_db() -> None:
     _seed_spf()
     _seed_email_providers()
     _seed_ns_providers()
+    _seed_remark_types()
+
+"""
+Remark Levels
+0 - Fatal
+1 - Error, assuming default
+2 - Warning, value should be used
+3 - Depercation Warning - Value was once valid, no longer
+4 - Info - No action need. Just addional data
+"""
+def _seed_remarks():
+    dmarc = [
+        (1, 'Invalid ADKIM Value'),
+        (1, 'Invalid ')
+    ]
+
+
+def _seed_remark_types():
+    remark_types = ['spf', 'dmarc']
+
+    for remark_type in remark_types:
+        remark_type_db = models.RemarkTypes(name=remark_type)
+        db_session.add(remark_type_db)
+        db_session.commit()
 
 
 def _seed_spf():
