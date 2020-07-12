@@ -1,6 +1,6 @@
 import unittest
 
-from grading import percent_to_letter, half_reduce, full_reduce, Grade
+from grading import percent_to_letter, half_reduce, full_reduce, Grade, full_raise, half_raise
 
 
 class Tests(unittest.TestCase):
@@ -22,10 +22,18 @@ class Tests(unittest.TestCase):
     def test_reduce_a_plus_by_half(self):
         self.assertEqual(Grade.A, half_reduce(Grade.A_PLUS))
 
+    def test_reduce_a_by_full(self):
+        self.assertEqual(Grade.B, full_reduce(Grade.A))
+
+    def test_raise_b_by_full(self):
+        self.assertEqual(Grade.A, full_raise(Grade.B))
+
+    def test_raise_a_by_full(self):
+        self.assertEqual(Grade.A_PLUS, full_raise(Grade.A))
+
+    def test_raise_a_plus_by_full(self):
+        self.assertEqual(Grade.A_PLUS, full_raise(Grade.A_PLUS))
+
     def _grade_helper(self, percent: float, expected_letter: str):
         grade = percent_to_letter(percent)
         self.assertEqual(expected_letter, grade)
-
-if __name__ == '__main__':
-    unittest.main()
-
