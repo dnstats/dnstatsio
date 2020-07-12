@@ -1,10 +1,11 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Boolean, String, DateTime, ForeignKey, BigInteger, Text, UniqueConstraint, SmallInteger, Enum
+from sqlalchemy import Column, Boolean, String, DateTime, ForeignKey, BigInteger, Text, UniqueConstraint, SmallInteger
 
 from dnstats.grading import Grade
 
-Base = declarative_base()
+import Enum
 
+Base = declarative_base()
 
 class DmarcPolicy(Base):
     __tablename__ = 'dmarc_policies'
@@ -63,6 +64,7 @@ class SiteRun(Base):
     has_msdc = Column(Boolean)
     spf_grade = Column(Enum(Grade))
     dmarc_grade = Column(Enum(Grade))
+
     UniqueConstraint('site_id', 'run_id')
 
     def has_dmarc_reporting(self):
