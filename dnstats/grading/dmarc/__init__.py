@@ -7,8 +7,9 @@ class DmarcErrors(Enum):
     INVALID_ADKIM_VALUE = 1
     INVALID_ASPF_VALIE = 2
 
-def grade(dmarc: str, domain: str) -> Grade:
-    current_grade = 0
+
+def grade(dmarc: str, domain: str):
+    current_grade = Grade.F
     has_policy = False
     tag_count = dict()
     adkim = 'r'
