@@ -70,7 +70,7 @@ def full_raise(grade: Grade) -> Grade:
         return Grade.A_PLUS
 
 
-def update_count_dict(d: Dict, key: str):
+def update_count_dict(d: dict, key: str):
     if key in d:
         d[key] += 1
     else:
