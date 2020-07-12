@@ -24,6 +24,10 @@ import dnstats.charts
 from dnstats.db import db_session, engine
 from dnstats.utils import chunks
 from dnstats.httputils import has_security_txt
+from dnstats.grading.spf import grade as grade_spf_record
+from dnsstats.grading.dmarc import grade as grade_dmarc_record
+from dnstats.grading import Grade
+
 
 if not os.environ.get('DB'):
     raise EnvironmentError("Database connection is not setup.")
@@ -153,7 +157,29 @@ def process_result(result: dict):
                         dnssec_dnskey_algorithm=processed['dnssec_dnskey_algorithm'], has_securitytxt=result['has_dnssec'], has_msdc=result['is_msdcs'])
     db_session.add(sr)
     db_session.commit()
+    grade_spf.s(sr.id).apply_async()
+    grade_dmarc.s(sr.id).apply_async()
     return
+
+@app.task(time_limit=320, soft_time_limit=300)
+def grade_spf(site_run_id: int):
+    site_run = db_session.query(models.SiteRun).filter_by(id == site_run_id).include('site')
+    records = site_run.txt_records.replace('"', '').split(',')
+    grade = Grade.F
+    for record in records:
+        if record.startswith('v=spf1'):
+            grade = grade_spf_record(record, site_run.site.domain)
+            break
+    site_run.spf_grade = grade
+    db_session.commit()
+
+
+@app.task(time_limit=80, soft_time_limit=75)
+def grade_dmarc(site_run_id: int):
+    site_run = db_session.query(models.SiteRun).filter_by(id == site_run_id).include('site')
+    grade = grade_dmarc_record(site_run.dmarc_record, site_run.site.domain)
+    site_run.dmarc_grade = grade
+    db_session.commit()
 
 
 @app.task()
