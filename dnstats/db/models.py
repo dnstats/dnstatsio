@@ -1,8 +1,6 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Boolean, String, DateTime, ForeignKey, BigInteger, Text, UniqueConstraint, SmallInteger
 
-from dnstats.grading import Grade
-
 Base = declarative_base()
 
 
@@ -60,6 +58,7 @@ class SiteRun(Base):
     dnssec_digest_type = Column(SmallInteger)
     dnssec_dnskey_algorithm = Column(SmallInteger)
     has_securitytxt = Column(Boolean)
+    has_msdc = Column(Boolean)
     spf_grade = Column(SmallInteger)
     dmarc_grade = Column(SmallInteger)
 
