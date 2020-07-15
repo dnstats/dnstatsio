@@ -99,8 +99,9 @@ def site_stat(site_id: int, run_id: int):
     ns = dnutils.safe_query(site.domain, 'ns')
     dmarc = dnutils.safe_query('_dmarc.' + site.domain, 'txt')
     has_dnssec = has_security_txt(site.domain)
+    msdcs = dnstats.dnsutils.is_a_msft_dc(site.domain)
 
-    return [site.id, site.current_rank, run_id, caa, dmarc, mail, txt, ds, ns, dnskey, has_dnssec]
+    return [site.id, site.current_rank, run_id, caa, dmarc, mail, txt, ds, ns, dnskey, has_dnssec, msdcs]
 
 
 @app.task(time_limit=60, soft_time_limit=54)
@@ -122,6 +123,7 @@ def process_result(result):
     ds_algorithm, ds_digest_type = parse_ds(result[7])
     dnssec_dnskey_algorithm = parse_dnskey(result[9])
     has_dnssec = result[10]
+    has_msdc = result[11]
     sr = models.SiteRun(site_id=result[0], run_id=result[2], run_rank=result[1], caa_record=result[3], has_caa=has_caa,
                         has_caa_reporting=has_reporting, caa_issue_count=issue_count, caa_wildcard_count=wildcard_count,
                         has_dmarc=has_dmarc, dmarc_policy_id=dmarc_policy_db.id,
@@ -130,7 +132,7 @@ def process_result(result):
                         spf_policy_id=spf_db.id, txt_records=result[6], ds_records=result[7], mx_records=result[5],
                         ns_records=result[8], email_provider_id=mx_db, dns_provider_id=dns_db,
                         dnssec_ds_algorithm=ds_algorithm, dnssec_digest_type=ds_digest_type,
-                        dnssec_dnskey_algorithm=dnssec_dnskey_algorithm, has_securitytxt=has_dnssec)
+                        dnssec_dnskey_algorithm=dnssec_dnskey_algorithm, has_securitytxt=has_dnssec, has_msdc=has_msdc)
     db_session.add(sr)
     db_session.commit()
     return
@@ -192,6 +194,7 @@ def import_list():
             _process_new_site.s(str(site), str(new_site_ranked[site])).apply_async()
 
     _send_sites_updated_done()
+
 
 @app.task()
 def _unrank_domain(domain: str):

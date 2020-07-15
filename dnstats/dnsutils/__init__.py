@@ -95,3 +95,15 @@ def get_provider_from_ns_records(ans: list, site: str) -> int:
                 print(provider.id)
                 return provider.id
         return db_session.query(models.DnsProvider).filter_by(search_regex='Unknown.').one().id
+
+
+def is_a_msft_dc(domain: str) -> bool:
+    ans = safe_query('_msdcs.{}'.format(domain), 'soa')
+    rand_ans = safe_query('88DkwqpKw01OP7O.{}'.format(domain), 'soa')
+    result = ans and len(ans) > 0
+    rand_result = rand_ans and len(rand_ans) > 0
+    if result and not rand_result:
+        return result
+    else:
+        return False
+
