@@ -29,6 +29,10 @@ class TestDmarc(unittest.TestCase):
         grade = grade_dmarc('v=DMARC1; p=reject; pct=0', 'example.com')
         self.assertEqual(grade, 73)
 
+    def test_pct_reject_50(self):
+        grade = grade_dmarc('v=DMARC1; p=reject; pct=50', 'example.com')
+        self.assertEqual(grade, 76)
+
     def test_no_policy(self):
         grade = grade_dmarc('v=DMARC1;', 'example.com')
         self.assertEqual(grade, 0)
