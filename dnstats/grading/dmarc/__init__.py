@@ -2,6 +2,7 @@ from enum import Enum
 
 from dnstats.grading import Grade, half_reduce, update_count_dict, half_raise
 
+
 class DmarcErrors(Enum):
     INVALID_DMARC_RECORD = 0
     INVALID_ADKIM_VALUE = 1
@@ -10,58 +11,61 @@ class DmarcErrors(Enum):
     INVALID_POLICY = 4
     INVALID_SUBDOMAIN_POLICY = 5
 
+
 def grade(dmarc: str, domain: str) -> int:
     current_grade = 0
     has_policy = False
     tag_count = dict()
-    adkim = 'r'
-    aspf = 'r'
     rua = 0
     errors = list()
+    pct = False
     if dmarc and dmarc.startswith('v=DMARC1;'):
         parts = dmarc.split(';')
         for part in parts:
             sub_parts = part.split('=')
+            if len(sub_parts) != 2:
+                continue
             tag = sub_parts[0].strip()
             value = sub_parts[1].strip()
             update_count_dict(tag_count, tag)
             # TODO: verify that parts are using valid chars
-            if tag is 'adkim':
+            if tag == 'adkim':
                 if value is 's':
-                    half_raise(current_grade)
+                    current_grade += 5
                 elif value is not 'r':
                     errors.append(DmarcErrors.INVALID_ADKIM_VALUE)
-            elif tag is 'aspf':
+            elif tag == 'aspf':
                 if value is 's':
-                    aspf = 's'
+                    current_grade += 5
                 elif value is not 'r':
                     errors.append(DmarcErrors.INVALID_ASPF_VALIE)
-            elif tag is 'fo':
-                if value is '1':
-                    current_grade +=4
-                elif value is 'd':
+            elif tag == 'fo':
+                if value == '1':
+                    current_grade += 4
+                elif value == 'd':
                     current_grade += 2
-                elif value is 's':
+                elif value == 's':
                     current_grade += 2
-                elif value is not '0':
+                elif value != '0':
                     errors.append(DmarcErrors.INVALID_FAILURE_REPORTING_VALUE)
-            elif tag is 'p':
+            elif tag == 'p':
                 has_policy = True
-
-                if tag is 'none':
+                if value == 'none':
                     current_grade += 10
-                elif tag is 'quarantine':
+                elif value == 'quarantine':
                     current_grade += 30
                     rua = 10
-                elif tag is 'reject':
+                elif value == 'reject':
                     current_grade += 60
+                    rua = 15
                 else:
                     current_grade -= 5
-                    rua = 15
+                    rua = 0
                     errors.append(DmarcErrors.INVALID_POLICY)
 
-            elif tag is 'pct':
+            elif tag == 'pct':
                 pct_value = 0
+                pct = True
                 try:
                     pct_value = int(value)
                 except ValueError:
@@ -103,5 +107,8 @@ def grade(dmarc: str, domain: str) -> int:
 
     if not has_policy:
         return 0
+
+    if not pct:
+        current_grade += 5
 
     return current_grade + rua
