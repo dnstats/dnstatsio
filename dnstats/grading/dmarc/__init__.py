@@ -16,9 +16,11 @@ def grade(dmarc: str, domain: str) -> int:
     current_grade = 0
     has_policy = False
     tag_count = dict()
-    rua = 0
+    sp = 0
     errors = list()
     pct = False
+    has_rua = False
+    has_ruf = False
     if dmarc and dmarc.startswith('v=DMARC1;'):
         parts = dmarc.split(';')
         for part in parts:
@@ -30,12 +32,12 @@ def grade(dmarc: str, domain: str) -> int:
             update_count_dict(tag_count, tag)
             # TODO: verify that parts are using valid chars
             if tag == 'adkim':
-                if value is 's':
+                if value == 's':
                     current_grade += 5
                 elif value is not 'r':
                     errors.append(DmarcErrors.INVALID_ADKIM_VALUE)
             elif tag == 'aspf':
-                if value is 's':
+                if value == 's':
                     current_grade += 5
                 elif value is not 'r':
                     errors.append(DmarcErrors.INVALID_ASPF_VALIE)
@@ -54,13 +56,13 @@ def grade(dmarc: str, domain: str) -> int:
                     current_grade += 10
                 elif value == 'quarantine':
                     current_grade += 30
-                    rua = 10
+                    sp = 10
                 elif value == 'reject':
                     current_grade += 60
-                    rua = 15
+                    sp = 15
                 else:
                     current_grade -= 5
-                    rua = 0
+                    sp = 0
                     errors.append(DmarcErrors.INVALID_POLICY)
 
             elif tag == 'pct':
@@ -80,21 +82,25 @@ def grade(dmarc: str, domain: str) -> int:
                     current_grade += 5
                 else:
                     current_grade -= 5
-            elif tag is 'rf':
+            elif tag == 'rf':
                 pass
-            elif tag is 'ri':
+            elif tag == 'ri':
                 pass
-            elif tag is 'rua':
-                pass
-            elif tag is 'ruf':
-                pass
-            elif tag is 'sp':
-                if tag is 'none':
-                    rua = 0
-                elif tag is 'quarantine':
-                    rua = 10
-                elif tag is 'reject':
-                    rua = 15
+            elif tag == 'rua':
+                if not has_rua:
+                    current_grade += 5
+                    has_rua = True
+            elif tag == 'ruf':
+                if not  has_ruf:
+                    current_grade += 5
+                    has_ruf = True
+            elif tag == 'sp':
+                if tag == 'none':
+                    sp = 0
+                elif tag == 'quarantine':
+                    sp = 10
+                elif tag == 'reject':
+                    sp = 15
                 else:
                     current_grade -= 2
                     errors.append(DmarcErrors.INVALID_SUBDOMAIN_POLICY)
@@ -111,4 +117,4 @@ def grade(dmarc: str, domain: str) -> int:
     if not pct:
         current_grade += 5
 
-    return current_grade + rua
+    return current_grade + sp
