@@ -143,6 +143,7 @@ def process_result(result):
     grade_dmarc.s(sr.id).apply_async()
     return
 
+
 @app.task(time_limit=320, soft_time_limit=300)
 def grade_spf(site_run_id: int):
     site_run = db_session.query(models.SiteRun).filter_by(id == site_run_id).include('site')
