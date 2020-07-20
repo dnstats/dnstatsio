@@ -3,8 +3,7 @@ import csv
 import dnstats.db.models as models
 from dnstats.db import db_session
 
-
-def seed_db() -> None:
+def seed_db()  -> None:
     _seed_dmarc_policy()
     _seed_spf()
     _seed_email_providers()
@@ -22,8 +21,16 @@ Remark Levels
 def _seed_remarks():
     dmarc = [
         (1, 'Invalid ADKIM Value'),
-        (1, 'Invalid ')
+        (1, 'Invalid ASPF Value'),
+        (1, 'Invalid Failure Reporting Value'),
+        (1, 'Invalid Policy'),
+        (1, 'Invalid Subdomain policy')
     ]
+    remark_type_db = models.Remark(name='dmarc')
+    for remark in dmarc:
+        remark_db = db_session.query(models.Remark).filter_by(remark_type_db=1, remark_level=remark[0], name=remark[1])
+        db_session.add(remark_db)
+        db_session.commit()
 
 
 def _seed_remark_types():
