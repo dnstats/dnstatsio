@@ -98,10 +98,10 @@ def site_stat(site_id: int, run_id: int):
     dnskey = dnutils.safe_query(site.domain, 'dnskey')
     ns = dnutils.safe_query(site.domain, 'ns')
     dmarc = dnutils.safe_query('_dmarc.' + site.domain, 'txt')
-    has_dnssec = has_security_txt(site.domain)
+    has_security_txt = False # has_security_txt(site.domain)
     msdcs = dnstats.dnsutils.is_a_msft_dc(site.domain)
 
-    return [site.id, site.current_rank, run_id, caa, dmarc, mail, txt, ds, ns, dnskey, has_dnssec, msdcs]
+    return [site.id, site.current_rank, run_id, caa, dmarc, mail, txt, ds, ns, dnskey, has_security_txt, msdcs]
 
 
 @app.task(time_limit=60, soft_time_limit=54)
