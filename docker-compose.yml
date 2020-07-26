@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_DB=dnstats
+      - POSTGRES_USER=dnstats
+      - POSTGRES_PASSWORD=postgres
+  ampq:
+    image: rabbitmq
+
+  celery:
+    build: .
+    command: celery -a dnstats.celery worker
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - ampq
