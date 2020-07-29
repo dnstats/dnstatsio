@@ -11,6 +11,7 @@ Welcome to DNStats's documentation!
    :caption: Contents:
 
    info/install
+   info/postgresql
 
 .. automodule:: dnstats
 
