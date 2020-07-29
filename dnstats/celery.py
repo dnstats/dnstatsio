@@ -24,7 +24,7 @@ import dnstats.db.models as models
 import dnstats.charts
 from dnstats.db import db_session, engine
 from dnstats.utils import chunks
-from dnstats.httputils import has_security_txt
+import dnstats.httputils
 
 if not os.environ.get('DB'):
     raise EnvironmentError("Database connection is not setup.")
@@ -36,7 +36,7 @@ if not os.environ.get('CELERY_BACKEND'):
     raise EnvironmentError("Celery CELERY_BACKEND connection is not setup.")
 
 
-app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('CELERY_BACKEND'))
+app = Celery('dnstats', broker=os.environ.get('AMQP'), broker_pool_limit=100, backend=os.environ.get('CELERY_BACKEND'))
 
 logger = get_task_logger('dnstats.scans')
 
@@ -98,7 +98,7 @@ def site_stat(site_id: int, run_id: int):
     dnskey = dnutils.safe_query(site.domain, 'dnskey')
     ns = dnutils.safe_query(site.domain, 'ns')
     dmarc = dnutils.safe_query('_dmarc.' + site.domain, 'txt')
-    has_security_txt = False # has_security_txt(site.domain)
+    has_security_txt = dnstats.httputils.has_security_txt(site.domain)
     msdcs = dnstats.dnsutils.is_a_msft_dc(site.domain)
 
     return [site.id, site.current_rank, run_id, caa, dmarc, mail, txt, ds, ns, dnskey, has_security_txt, msdcs]
@@ -148,6 +148,7 @@ def launch_run(run_id):
     sites_all_chunked = list(chunks(sites.all(), 10000))
     for sites in sites_all_chunked:
         group(chain(site_stat.s(site.id, run.id), process_result.s()) for site in sites).apply_async()
+        #group(chain(site_stat.s(site.id, run.id)) for site in sites).apply_async()
     _send_eoq(run_id)
 
 
@@ -155,7 +156,7 @@ def launch_run(run_id):
 def do_run():
     date = datetime.datetime.now()
     if os.environ.get('DNSTATS_ENV') == 'Development':
-        run = models.Run(start_time=date, start_rank=1, end_rank=150)
+        run = models.Run(start_time=date, start_rank=1, end_rank=10000)
         logger.error("[DO RUN]: Running a Debug top 50 sites runs")
     else:
         run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
@@ -175,6 +176,7 @@ def import_list():
     csv_content = zipfile.ZipFile(io.BytesIO(r.content)).read('top-1m.csv').splitlines()
     new_site_ranked = dict()
     new_sites = set()
+    duplicate_sites = set()
     existing_sites = set()
     for row in csv_content:
         row = row.split(b',')
@@ -190,8 +192,39 @@ def import_list():
         for site in unranked_sites:
             _unrank_domain.s(str(site)).apply_async()
             logger.warn("Unranking site: {}".format(site))
+
+        x=0
+        i=0
+        sites_chunked = []
         for site in new_sites:
-            _process_new_site.s(str(site), str(new_site_ranked[site])).apply_async()
+            if site in existing_sites:
+                _update_site_rank.s(str(site), str(new_site_ranked[site])).apply_async()
+            else:
+                _process_new_site.s(str(site), str(new_site_ranked[site])).apply_async()
+            # sites_chunked.append(site)
+            # x += 1
+            # if(x > 100):
+            #     x = 0
+            #     i +=1
+            #     print(i)
+            #     _process_new_sites_chunked.s(list(sites_chunked), dict(new_site_ranked)).apply_async()
+            #     sites_chunked.clear()            
+
+        # for domain in new_sites:
+        #     #_process_new_site.s(str(site), str(new_site_ranked[site])).apply_async()
+        #     new_rank = new_site_ranked[domain]
+        #     site = db_session.query(models.Site).filter_by(domain=domain).first()
+        #     if site:
+        #         site.current_rank = new_rank
+        #     else:
+        #         site = models.Site(domain=str(domain), current_rank=new_rank)
+        #         db_session.add(site)
+        #         logger.warn("Adding site: {}".format(domain))
+        #         print(("Adding site: {}".format(domain)))
+        #     x+=1
+        #     if(x > 100):
+        #         x = 0
+        #         db_session.commit()
 
     _send_sites_updated_done()
 
@@ -205,14 +238,29 @@ def _unrank_domain(domain: str):
 
 
 @app.task()
-def _process_new_site(domain: bytes, new_rank: int) -> None:
+def _update_site_rank(domain: bytes, new_rank: int) -> None:
     site = db_session.query(models.Site).filter_by(domain=domain).first()
-    if site:
-        site.current_rank = new_rank
-    else:
-        site = models.Site(domain=str(domain), current_rank=new_rank)
-        db_session.add(site)
-        logger.warn("Adding site: {}".format(domain))
+    site.current_rank = new_rank
+    logger.warn("Updating site: {}".format(domain))
+    db_session.commit()
+
+@app.task()
+def _process_new_site(domain: bytes, new_rank: int) -> None:
+    site = models.Site(domain=str(domain), current_rank=new_rank)
+    db_session.add(site)
+    logger.warn("Adding site: {}".format(domain))
+    db_session.commit()
+
+@app.task()
+def _process_new_sites_chunked(domains: list, new_ranks: dict) -> None:
+    for domain in domains:
+        site = db_session.query(models.Site).filter_by(domain=domain).first()
+        if site:
+            site.current_rank = new_ranks[domain]
+        else:
+            site = models.Site(domain=str(domain), current_rank = new_ranks[domain])
+            db_session.add(site)
+            logger.warn("Adding site: {}".format(domain))
     db_session.commit()
 
 

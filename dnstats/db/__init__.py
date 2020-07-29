@@ -8,7 +8,7 @@ from sqlalchemy_utils import database_exists, create_database
 if not os.environ.get('DB'):
     raise EnvironmentError("Database connection is not setup.")
 
-engine = create_engine(os.environ.get('DB'), pool_recycle=3600, pool_size=250,
+engine = create_engine(os.environ.get('DB'), pool_recycle=3600, pool_size=500,
                        isolation_level='AUTOCOMMIT')
 
 db_session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
