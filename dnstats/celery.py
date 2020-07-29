@@ -199,7 +199,7 @@ def import_list():
                 if(len(sites_chunked_update) >= 100):
                     chunk_count +=1
                     print(chunk_count) #loop counter to monitor task creation status
-                    _update_site_rank_chunked.s(sites_chunked_update).apply_async()
+                    _update_site_rank_chunked.s(dict(sites_chunked_update)).apply_async()
                     sites_chunked_update.clear()
             else:
                 sites_chunked_new[site] = new_site_ranked[site]
@@ -247,8 +247,9 @@ def _process_new_sites_chunked(domains_ranked: dict) -> None:
 def _update_site_rank_chunked(domains_ranked: dict) -> None:
     for domain in domains_ranked.keys():
         site = db_session.query(models.Site).filter_by(domain=domain).first()
-        site.current_rank = domains_ranked[domain]
-        logger.warn("Updating site rank: {}".format(domain))
+        if site.current_rank != domains_ranked[domain]:
+            site.current_rank = domains_ranked[domain]
+            logger.warn("Updating site rank: {}".format(domain))
     db_session.commit()
 
 def _send_message(email):
