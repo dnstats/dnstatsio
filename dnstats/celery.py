@@ -190,18 +190,30 @@ def import_list():
         for site in unranked_sites:
             _unrank_domain.s(str(site)).apply_async()
             logger.warn("Unranking site: {}".format(site))
-        sites_in_chunk=0
+        sites_in_chunk_new=0
+        sites_in_chunk_update=0
         chunk_count=0
-        sites_chunked = []
+        sites_chunked_new = []
+        sites_chunked_update = []
         for site in new_sites:
-            sites_chunked.append(site)
-            sites_in_chunk += 1
-            if(sites_in_chunk > 100):
-                sites_in_chunk = 0
-                chunk_count +=1
-                print(chunk_count) #loop counter to monitor task creation status
-                _process_new_sites_chunked.s(list(sites_chunked), dict(new_site_ranked)).apply_async()
-                sites_chunked.clear()
+            if site in existing_sites:
+                sites_chunked_new.append(site)
+                sites_in_chunk_new += 1
+                if(sites_in_chunk_new > 100):
+                    sites_in_chunk_new = 0
+                    chunk_count +=1
+                    print(chunk_count) #loop counter to monitor task creation status
+                    _process_new_sites_chunked.s(list(sites_chunked_new), dict(new_site_ranked)).apply_async()
+                    sites_chunked_new.clear()
+            else:
+                sites_chunked_update.append(site)
+                sites_in_chunk_update += 1
+                if(sites_in_chunk_update > 100):
+                    sites_in_chunk_update = 0
+                    chunk_count +=1
+                    print(chunk_count) #loop counter to monitor task creation status
+                    _update_site_rank_chunked.s(list(sites_chunked_update), dict(new_site_ranked)).apply_async()
+                    sites_chunked_update.clear()
 
     _send_sites_updated_done()
 
@@ -228,13 +240,17 @@ def _process_new_site(domain: bytes, new_rank: int) -> None:
 @app.task()
 def _process_new_sites_chunked(domains: list, new_ranks: dict) -> None:
     for domain in domains:
-        site = db_session.query(models.Site).filter_by(domain=domain).first()
-        if site:
-            site.current_rank = new_ranks[domain]
-        else:
             site = models.Site(domain=str(domain), current_rank = new_ranks[domain])
             db_session.add(site)
             logger.warn("Adding site: {}".format(domain))
+    db_session.commit()
+
+@app.task()
+def _update_site_rank_chunked(domains: list, new_ranks: dict) -> None:
+    for domain in domains:
+        site = db_session.query(models.Site).filter_by(domain=domain).first()
+        site.current_rank = new_ranks[domain]
+        logger.warn("Updating site rank: {}".format(domain))
     db_session.commit()
 
 def _send_message(email):
