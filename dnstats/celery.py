@@ -191,7 +191,10 @@ def import_list():
             _unrank_domain.s(str(site)).apply_async()
             logger.warn("Unranking site: {}".format(site))
         for site in new_sites:
-            _process_new_site.s(str(site), str(new_site_ranked[site])).apply_async()
+            if site in existing_sites:
+                _update_site_rank.s(str(site), str(new_site_ranked[site])).apply_async()
+            else:
+                _process_new_site.s(str(site), str(new_site_ranked[site])).apply_async()
 
     _send_sites_updated_done()
 
@@ -206,15 +209,17 @@ def _unrank_domain(domain: str):
 
 @app.task()
 def _process_new_site(domain: bytes, new_rank: int) -> None:
-    site = db_session.query(models.Site).filter_by(domain=domain).first()
-    if site:
-        site.current_rank = new_rank
-    else:
-        site = models.Site(domain=str(domain), current_rank=new_rank)
-        db_session.add(site)
-        logger.warn("Adding site: {}".format(domain))
+    site = models.Site(domain=str(domain), current_rank=new_rank)
+    db_session.add(site)
+    logger.warn("Adding site: {}".format(domain))
     db_session.commit()
 
+@app.task()
+def _update_site_rank(domain: bytes, new_rank: int) -> None:
+    site = db_session.query(models.Site).filter_by(domain=domain).first()
+    site.current_rank = new_rank
+    logger.warn("Updating site: {}".format(domain))
+    db_session.commit()
 
 def _send_message(email):
     if os.environ.get('DNSTATS_ENV') == 'Development':
