@@ -214,6 +214,8 @@ def import_list():
                     print(chunk_count) #loop counter to monitor task creation status
                     _update_site_rank_chunked.s(list(sites_chunked_update), dict(new_site_ranked)).apply_async()
                     sites_chunked_update.clear()
+        _update_site_rank_chunked.s(list(sites_chunked_update), dict(new_site_ranked)).apply_async()
+        _process_new_sites_chunked.s(list(sites_chunked_new), dict(new_site_ranked)).apply_async()
 
     _send_sites_updated_done()
 
