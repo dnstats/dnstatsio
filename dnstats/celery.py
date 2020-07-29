@@ -195,23 +195,23 @@ def import_list():
         sites_chunked_update = {}
         for site in new_sites:
             if site in existing_sites:
-                sites_chunked_new[site] = new_site_ranked[site]
-                if(len(sites_chunked_new) > 100):
-                    chunk_count +=1
-                    print(chunk_count) #loop counter to monitor task creation status
-                    _process_new_sites_chunked.s(dict(sites_chunked_new)).apply_async()
-                    sites_chunked_new.clear()
-            else:
                 sites_chunked_update[site] = new_site_ranked[site]
-                if(len(sites_chunked_update) > 100):
+                if(len(sites_chunked_update) >= 100):
                     chunk_count +=1
                     print(chunk_count) #loop counter to monitor task creation status
                     _update_site_rank_chunked.s(sites_chunked_update).apply_async()
                     sites_chunked_update.clear()
+            else:
+                sites_chunked_new[site] = new_site_ranked[site]
+                if(len(sites_chunked_new) >= 100):
+                    chunk_count +=1
+                    print(chunk_count) #loop counter to monitor task creation status
+                    _process_new_sites_chunked.s(dict(sites_chunked_new)).apply_async()
+                    sites_chunked_new.clear()
         if len(sites_chunked_new) > 0:
-            _process_new_sites_chunked.s(sites_chunked_update).apply_async()
+            _process_new_sites_chunked.s(sites_chunked_new).apply_async()
         if len(sites_chunked_update) > 0:
-            _update_site_rank_chunked.s(sites_chunked_new).apply_async()
+            _update_site_rank_chunked.s(sites_chunked_update).apply_async()
 
     _send_sites_updated_done()
 
