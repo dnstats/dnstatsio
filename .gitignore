@@ -228,6 +228,8 @@ Temporary Items
 .apdisksendgrid.env
 # Project specific
 sendgrid.env
+dnstats.env
 /*.js
 /*.html
 /dnstats/data/*.txt
+/docs/_build/

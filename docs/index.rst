@@ -10,6 +10,8 @@ Welcome to DNStats's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   info/install
+
 .. automodule:: dnstats
 
 Indices and tables
