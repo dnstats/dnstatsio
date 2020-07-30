@@ -196,16 +196,16 @@ def import_list():
         for site in new_sites:
             if site in existing_sites:
                 sites_chunked_update[site] = new_site_ranked[site]
-                if(len(sites_chunked_update) >= 100):
-                    chunk_count +=1
-                    print(chunk_count) #loop counter to monitor task creation status
+                if len(sites_chunked_update) >= 100:
+                    chunk_count += 1
+                    print(chunk_count)  # loop counter to monitor task creation status
                     _update_site_rank_chunked.s(dict(sites_chunked_update)).apply_async()
                     sites_chunked_update.clear()
             else:
                 sites_chunked_new[site] = new_site_ranked[site]
                 if(len(sites_chunked_new) >= 100):
-                    chunk_count +=1
-                    print(chunk_count) #loop counter to monitor task creation status
+                    chunk_count += 1
+                    print(chunk_count)  # loop counter to monitor task creation status
                     _process_new_sites_chunked.s(dict(sites_chunked_new)).apply_async()
                     sites_chunked_new.clear()
         if len(sites_chunked_new) > 0:
@@ -235,6 +235,7 @@ def _process_new_site(domain: bytes, new_rank: int) -> None:
         logger.warn("Adding site: {}".format(domain))
     db_session.commit()
 
+
 @app.task()
 def _process_new_sites_chunked(domains_ranked: dict) -> None:
     for domain in domains_ranked.keys():
@@ -242,6 +243,7 @@ def _process_new_sites_chunked(domains_ranked: dict) -> None:
         db_session.add(site)
         logger.warn("Adding site: {}".format(domain))
     db_session.commit()
+
 
 @app.task()
 def _update_site_rank_chunked(domains_ranked: dict) -> None:
@@ -251,6 +253,7 @@ def _update_site_rank_chunked(domains_ranked: dict) -> None:
             site.current_rank = domains_ranked[domain]
             logger.warn("Updating site rank: {}".format(domain))
     db_session.commit()
+
 
 def _send_message(email):
     if os.environ.get('DNSTATS_ENV') == 'Development':
