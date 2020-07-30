@@ -203,7 +203,7 @@ def import_list():
                     sites_chunked_update.clear()
             else:
                 sites_chunked_new[site] = new_site_ranked[site]
-                if(len(sites_chunked_new) >= 100):
+                if len(sites_chunked_new) >= 100:
                     chunk_count += 1
                     print(chunk_count)  # loop counter to monitor task creation status
                     _process_new_sites_chunked.s(dict(sites_chunked_new)).apply_async()
