@@ -42,6 +42,13 @@ logger = get_task_logger('dnstats.scans')
 
 sentry_sdk.init("https://f4e01754fca64c1f99ebf3e1a354284a@sentry.io/1889319", integrations=[CeleryIntegration()])
 
+app.conf.task_routes = {
+                        'dnstats.celery.import_list': {'queue': 'prefork0'},
+                        'dnstats.celery._process_new_site': {'queue': 'prefork0'},
+                        'dnstats.celery._process_new_sites_chunked': {'queue': 'prefork0'},
+                        'dnstats.celery._unrank_domain': {'queue': 'prefork0'},
+                        }
+
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
