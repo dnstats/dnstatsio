@@ -25,7 +25,7 @@ from dnstats.db import db_session, engine
 from dnstats.utils import chunks
 from dnstats.httputils import has_security_txt
 from dnstats.grading.spf import grade as grade_spf_record
-from dnsstats.grading.dmarc import grade as grade_dmarc_record
+from dnstats.grading.dmarc import grade as grade_dmarc_record
 from dnstats.grading import Grade
 
 

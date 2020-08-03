@@ -1,6 +1,6 @@
 import unittest
 
-from grading.dmarc import grade as grade_dmarc
+from dnstats.grading.dmarc import grade as grade_dmarc
 
 
 class TestDmarc(unittest.TestCase):
