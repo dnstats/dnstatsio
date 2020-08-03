@@ -25,14 +25,17 @@ class SpfError(Enum):
     INVALID_MECHANISM = 16
 
 
-def grade(spf: str, domain: str):
+def grade(spfs: list, domain: str):
     errors = list()
     current_grade = Grade.F
+    if len(spfs) > 1:
+        errors.append(SpfError.MULTIPLE_SPF_RECORDS)
+        return current_grade, errors
+    spf = spfs[0]
     if not spf.startswith('v=spf1 '):
         errors.append(SpfError.INVALID_RECORD_START)
-        return current_grade, errors
-
-    parts = spf.split(' ')
+        return current_grade, 
+    parts = spf.split(' ')errors
     ptr = parts.__contains__('ptr')
     final = get_spf_stats([spf])[2]
     count = 1
