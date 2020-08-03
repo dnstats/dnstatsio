@@ -10,6 +10,7 @@ class DmarcErrors(Enum):
     INVALID_FAILURE_REPORTING_VALUE = 3
     INVALID_POLICY = 4
     INVALID_SUBDOMAIN_POLICY = 5
+    MULTIPLE_DMARC_RECORDS = 6
 
 def grade(dmarcs: str, domain: str) -> int:
     current_grade = 0

@@ -1,7 +1,7 @@
 from enum import Enum
 
 from dnstats.grading import Grade, half_reduce
-from dnsutils.spf import get_spf_stats
+from dnstats.dnsutils.spf import get_spf_stats
 from dnstats.dnsutils import safe_query
 
 
@@ -23,6 +23,7 @@ class SpfError(Enum):
     INVALID_IPV4_MECHANISM = 14
     INVALID_IPV6_MECHANISM = 15
     INVALID_MECHANISM = 16
+    MULTIPLE_SPF_RECORDS = 17
 
 
 def grade(spfs: list, domain: str):
@@ -34,8 +35,8 @@ def grade(spfs: list, domain: str):
     spf = spfs[0]
     if not spf.startswith('v=spf1 '):
         errors.append(SpfError.INVALID_RECORD_START)
-        return current_grade, 
-    parts = spf.split(' ')errors
+        return current_grade, errors
+    parts = spf.split(' ')
     ptr = parts.__contains__('ptr')
     final = get_spf_stats([spf])[2]
     count = 1
