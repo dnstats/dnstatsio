@@ -149,10 +149,12 @@ def grade_spf(site_run_id: int):
     site_run = db_session.query(models.SiteRun).filter_by(id == site_run_id).include('site')
     records = site_run.txt_records.replace('"', '').split(',')
     grade = Grade.F
+    spfs = list()
     for record in records:
         if record.startswith('v=spf1'):
-            grade = grade_spf_record(record, site_run.site.domain)
-            break
+            spfs.append(record)
+    if spfs:
+        grade = grade_spf_record(spfs, site_run.site.domain)
     site_run.spf_grade = grade
     db_session.commit()
 
@@ -160,7 +162,14 @@ def grade_spf(site_run_id: int):
 @app.task(time_limit=80, soft_time_limit=75)
 def grade_dmarc(site_run_id: int):
     site_run = db_session.query(models.SiteRun).filter_by(id == site_run_id).include('site')
-    grade = grade_dmarc_record(site_run.dmarc_record, site_run.site.domain)
+    records = site_run.txt_records.replace('"', '').split(',')
+    grade = Grade.F
+    dmarcs = list()
+    for record in records:
+        if record.startswith('v=DMARC1'):
+            dmarcs.append(record)
+    if dmarcs:
+        grade = grade_dmarc_record(dmarcs, site_run.site.domain)
     site_run.dmarc_grade = grade
     db_session.commit()
 
