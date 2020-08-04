@@ -19,7 +19,7 @@ def grade(dmarcs: list, domain: str) -> int:
     errors = list()
     if len(dmarcs) > 1:
         errors.append(DmarcErrors.MULTIPLE_DMARC_RECORDS)
-        return current_grade, errors
+        return current_grade
     dmarc = dmarcs[0]
     pct = False
     has_rua = False
