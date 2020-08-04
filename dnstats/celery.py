@@ -144,7 +144,7 @@ def process_result(result: dict):
 
 @app.task()
 def launch_run(run_id):
-    logger.debug("Lauching run {}".format(run_id))
+    logger.debug("Launching run {}".format(run_id))
     run = db_session.query(models.Run).filter(models.Run.id == run_id).scalar()
     sites = db_session.query(models.Site).filter(and_(models.Site.current_rank >= run.start_rank,
                                                       models.Site.current_rank <= run.end_rank))
@@ -180,6 +180,7 @@ def import_list():
     new_site_ranked = dict()
     new_sites = set()
     existing_sites = set()
+    existing_sites_dict = dict()
     for row in csv_content:
         row = row.split(b',')
         new_site_ranked[str(row[1], 'utf-8')] = int(row[0])
@@ -187,19 +188,21 @@ def import_list():
 
     with engine.connect() as connection:
         logger.warn("Getting sites")
-        result = connection.execute("select domain from sites")
+        result = connection.execute("select domain, current_rank from sites")
         for row in result:
             existing_sites.add(row[0])
+            existing_sites_dict[row[0]] = row[1]
         unranked_sites = existing_sites - new_sites
         for site in unranked_sites:
             _unrank_domain.s(str(site)).apply_async()
             logger.warn("Unranking site: {}".format(site))
-        chunk_count=0
+        chunk_count = 0
         sites_chunked_new = {}
         sites_chunked_update = {}
         for site in new_sites:
             if site in existing_sites:
-                sites_chunked_update[site] = new_site_ranked[site]
+                if existing_sites_dict[site] != new_site_ranked[site]:
+                    sites_chunked_update[site] = new_site_ranked[site]
                 if len(sites_chunked_update) >= 100:
                     chunk_count += 1
                     print(chunk_count)  # loop counter to monitor task creation status
