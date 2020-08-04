@@ -12,7 +12,7 @@ class DmarcErrors(Enum):
     INVALID_SUBDOMAIN_POLICY = 5
     MULTIPLE_DMARC_RECORDS = 6
 
-def grade(dmarcs: str, domain: str) -> int:
+def grade(dmarcs: list, domain: str) -> int:
     current_grade = 0
     sp = 0
     tag_count = dict()
