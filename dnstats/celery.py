@@ -177,12 +177,11 @@ def import_list():
     url = "https://tranco-list.eu/top-1m.csv.zip"
     r = requests.get(url)
     csv_content = zipfile.ZipFile(io.BytesIO(r.content)).read('top-1m.csv').splitlines()
-    new_site = dict()
-    new_sites = set()
+    new_sites = dict()
     existing_sites = dict()
     for row in csv_content:
         row = row.split(b',')
-        new_site[str(row[1], 'utf-8')] = int(row[0])
+        new_sites[str(row[1], 'utf-8')] = int(row[0])
 
     with engine.connect() as connection:
         logger.warn("Getting sites")
@@ -196,17 +195,17 @@ def import_list():
         chunk_count = 0
         sites_chunked_new = {}
         sites_chunked_update = {}
-        for site in new_sites:
+        for site in new_sites.keys():
             if site in existing_sites:
-                if existing_sites[site] != new_site[site]:
-                    sites_chunked_update[site] = new_site[site]
-                if len(sites_chunked_update) >= 100:
-                    chunk_count += 1
-                    print(chunk_count)  # loop counter to monitor task creation status
-                    _update_site_rank_chunked.s(dict(sites_chunked_update)).apply_async()
-                    sites_chunked_update.clear()
+                if existing_sites[site] != new_sites[site]:
+                    sites_chunked_update[site] = new_sites[site]
+                    if len(sites_chunked_update) >= 100:
+                        chunk_count += 1
+                        print(chunk_count)  # loop counter to monitor task creation status
+                        _update_site_rank_chunked.s(dict(sites_chunked_update)).apply_async()
+                        sites_chunked_update.clear()
             else:
-                sites_chunked_new[site] = new_site[site]
+                sites_chunked_new[site] = new_sites[site]
                 if len(sites_chunked_new) >= 100:
                     chunk_count += 1
                     print(chunk_count)  # loop counter to monitor task creation status
