@@ -44,13 +44,6 @@ if os.environ.get('DNSTATS_ENV') != 'Development':
     from sentry_sdk.integrations.celery import CeleryIntegration
     sentry_sdk.init(os.environ.get("SENTRY_URL"), integrations=[CeleryIntegration()])
 
-app.conf.task_routes = {
-                        'dnstats.celery.import_list': {'queue': 'prefork0'},
-                        'dnstats.celery._process_new_site': {'queue': 'prefork0'},
-                        'dnstats.celery._process_new_sites_chunked': {'queue': 'prefork0'},
-                        'dnstats.celery._unrank_domain': {'queue': 'prefork0'},
-                        }
-
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
@@ -97,7 +90,7 @@ def do_charts_latest():
     do_charts.s(run.id).apply_async()
 
 
-@app.task(time_limit=420, soft_time_limit=400)
+@app.task(time_limit=420, soft_time_limit=400, queue='gevent')
 def site_stat(site_id: int, run_id: int):
     result = dict()
     site = db_session.query(models.Site).filter(models.Site.id == site_id).scalar()
