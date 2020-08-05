@@ -35,7 +35,7 @@ if not os.environ.get('CELERY_BACKEND'):
     raise EnvironmentError("Celery CELERY_BACKEND connection is not setup.")
 
 
-app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('CELERY_BACKEND'))
+app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('CELERY_BACKEND'), broker_pool_limit=50)
 
 logger = get_task_logger('dnstats.scans')
 
