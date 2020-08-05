@@ -112,7 +112,7 @@ def site_stat(site_id: int, run_id: int):
 
 @app.task(time_limit=60, soft_time_limit=54)
 def process_result(result: dict):
-    logger.warn(result['site_id'])
+    logger.debug(result['site_id'])
     site = db_session.query(models.Site).filter_by(id=result['site_id']).one()
     has_dmarc_aggregate, has_dmarc_forensic, has_dmarc, dmarc_policy, dmarc_sub_policy = dnutils.get_dmarc_stats(result['dmarc'])
     dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=dmarc_policy).scalar()
@@ -144,7 +144,7 @@ def process_result(result: dict):
 
 @app.task()
 def launch_run(run_id):
-    logger.debug("Launching run {}".format(run_id))
+    logger.warning("Launching run {}".format(run_id))
     run = db_session.query(models.Run).filter(models.Run.id == run_id).scalar()
     sites = db_session.query(models.Site).filter(and_(models.Site.current_rank >= run.start_rank,
                                                       models.Site.current_rank <= run.end_rank))
@@ -160,10 +160,10 @@ def do_run():
     date = datetime.datetime.now()
     if os.environ.get('DNSTATS_ENV') == 'Development':
         run = models.Run(start_time=date, start_rank=1, end_rank=150)
-        logger.error("[DO RUN]: Running a Debug top 50 sites runs")
+        logger.warning("[DO RUN]: Running a Debug top 50 sites runs")
     else:
         run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
-        logger.error("[DO RUN]: Running a normal run of top 1,000,000 sites runs")
+        logger.warning("[DO RUN]: Running a normal run of top 1,000,000 sites runs")
     db_session.add(run)
     db_session.commit()
     run = db_session.query(models.Run).filter_by(start_time=date).first()
@@ -174,6 +174,7 @@ def do_run():
 @app.task
 def import_list():
     _send_sites_updated_started()
+    logger.warning("Downloading site list")
     url = "https://tranco-list.eu/top-1m.csv.zip"
     r = requests.get(url)
     csv_content = zipfile.ZipFile(io.BytesIO(r.content)).read('top-1m.csv').splitlines()
@@ -184,14 +185,14 @@ def import_list():
         new_sites[str(row[1], 'utf-8')] = int(row[0])
 
     with engine.connect() as connection:
-        logger.warn("Getting sites")
+        logger.warning("Getting current sites")
         result = connection.execute("select domain, current_rank from sites")
         for row in result:
             existing_sites[row[0]] = row[1]
         unranked_sites = existing_sites.keys() - new_sites.keys()
         for site in unranked_sites:
             _unrank_domain.s(str(site)).apply_async()
-            logger.warn("Unranking site: {}".format(site))
+            logger.debug("Unranking site: {}".format(site))
         chunk_count = 0
         sites_chunked_new = {}
         sites_chunked_update = {}
@@ -202,6 +203,7 @@ def import_list():
                     if len(sites_chunked_update) >= 100:
                         chunk_count += 1
                         print(chunk_count)  # loop counter to monitor task creation status
+                        logger.info("Creating update task: {}".format(chunk_count))
                         _update_site_rank_chunked.s(dict(sites_chunked_update)).apply_async()
                         sites_chunked_update.clear()
             else:
@@ -209,12 +211,14 @@ def import_list():
                 if len(sites_chunked_new) >= 100:
                     chunk_count += 1
                     print(chunk_count)  # loop counter to monitor task creation status
+                    logger.info("Creating new site task: {}".format(chunk_count))
                     _process_new_sites_chunked.s(dict(sites_chunked_new)).apply_async()
                     sites_chunked_new.clear()
         if len(sites_chunked_new) > 0:
             _process_new_sites_chunked.s(sites_chunked_new).apply_async()
         if len(sites_chunked_update) > 0:
             _update_site_rank_chunked.s(sites_chunked_update).apply_async()
+        logger.warning("Site import task creation complete")
 
     _send_sites_updated_done()
 
@@ -225,6 +229,7 @@ def _unrank_domain(domain: str):
     if site:
         site.current_rank = 0
         db_session.commit()
+        logger.debug("Unranking site: {}".format(domain))
 
 
 @app.task()
@@ -235,7 +240,7 @@ def _process_new_site(domain: bytes, new_rank: int) -> None:
     else:
         site = models.Site(domain=str(domain), current_rank=new_rank)
         db_session.add(site)
-        logger.warn("Adding site: {}".format(domain))
+        logger.debug("Adding site: {}".format(domain))
     db_session.commit()
 
 
@@ -244,8 +249,9 @@ def _process_new_sites_chunked(domains_ranked: dict) -> None:
     for domain in domains_ranked.keys():
         site = models.Site(domain=str(domain), current_rank = domains_ranked[domain])
         db_session.add(site)
-        logger.warn("Adding site: {}".format(domain))
+        logger.debug("Adding site: {}".format(domain))
     db_session.commit()
+    logger.info("New site chunk updated")
 
 
 @app.task()
@@ -254,8 +260,9 @@ def _update_site_rank_chunked(domains_ranked: dict) -> None:
         site = db_session.query(models.Site).filter_by(domain=domain).first()
         if site.current_rank != domains_ranked[domain]:
             site.current_rank = domains_ranked[domain]
-            logger.warn("Updating site rank: {}".format(domain))
+            logger.debug("Updating site rank: {}".format(domain))
     db_session.commit()
+    logger.info("Site rank chunk updated")
 
 
 def _send_message(email):
