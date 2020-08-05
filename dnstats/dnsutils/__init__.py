@@ -87,9 +87,9 @@ def _parse_dmarc(record) -> []:
 def get_provider_from_ns_records(ans: list, site: str) -> int:
     if ans:
         ns_string = ''.join(ans).lower()
-        providers = db_session.query(models.DnsProvider).filter_by(is_regex=True).all()
         if ns_string.endswith(site + '.'):
             return db_session.query(models.DnsProvider).filter_by(search_regex='Self-hosted').one().id
+        providers = db_session.query(models.DnsProvider).filter_by(is_regex=True).all()
         for provider in providers:
             if provider.search_regex in ns_string:
                 print(provider.id)
@@ -99,11 +99,11 @@ def get_provider_from_ns_records(ans: list, site: str) -> int:
 
 def is_a_msft_dc(domain: str) -> bool:
     ans = safe_query('_msdcs.{}'.format(domain), 'soa')
-    rand_ans = safe_query('88DkwqpKw01OP7O.{}'.format(domain), 'soa')
-    result = ans and len(ans) > 0
-    rand_result = rand_ans and len(rand_ans) > 0
-    if result and not rand_result:
-        return result
+    if ans and len(ans) > 0:
+        rand_ans = safe_query('88DkwqpKw01OP7O.{}'.format(domain), 'soa')
+        rand_result = rand_ans and len(rand_ans) > 0
+        if not rand_result:
+            return True
     else:
         return False
 

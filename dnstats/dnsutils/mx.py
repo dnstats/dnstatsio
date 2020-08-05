@@ -6,9 +6,9 @@ from dnstats.dnsutils import safe_query
 def get_provider_from_mx_records(ans: list, site: str) -> int:
     if ans:
         mx_string = ''.join(ans).lower()
-        providers = db_session.query(models.EmailProvider).filter_by(is_regex=True).all()
         if mx_string.endswith(site + '.'):
             return db_session.query(models.EmailProvider).filter_by(search_regex='domain.').one().id
+        providers = db_session.query(models.EmailProvider).filter_by(is_regex=True).all()
         for provider in providers:
             if provider.search_regex in mx_string:
                 return provider.id
