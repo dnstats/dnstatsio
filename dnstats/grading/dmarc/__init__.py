@@ -10,17 +10,21 @@ class DmarcErrors(Enum):
     INVALID_FAILURE_REPORTING_VALUE = 3
     INVALID_POLICY = 4
     INVALID_SUBDOMAIN_POLICY = 5
+    MULTIPLE_DMARC_RECORDS = 6
 
-
-def grade(dmarc: str, domain: str) -> int:
+def grade(dmarcs: list, domain: str) -> int:
     current_grade = 0
-    has_policy = False
-    tag_count = dict()
     sp = 0
+    tag_count = dict()
     errors = list()
+    if len(dmarcs) > 1:
+        errors.append(DmarcErrors.MULTIPLE_DMARC_RECORDS)
+        return current_grade
+    dmarc = dmarcs[0]
     pct = False
     has_rua = False
     has_ruf = False
+    has_policy = False
     if dmarc and dmarc.startswith('v=DMARC1;'):
         parts = dmarc.split(';')
         for part in parts:
