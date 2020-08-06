@@ -35,7 +35,7 @@ if not os.environ.get('CELERY_BACKEND'):
     raise EnvironmentError("Celery CELERY_BACKEND connection is not setup.")
 
 
-app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('CELERY_BACKEND'))
+app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('CELERY_BACKEND'), broker_pool_limit=50)
 
 logger = get_task_logger('dnstats.scans')
 
@@ -90,7 +90,7 @@ def do_charts_latest():
     do_charts.s(run.id).apply_async()
 
 
-@app.task(time_limit=420, soft_time_limit=400)
+@app.task(time_limit=420, soft_time_limit=400, queue='gevent')
 def site_stat(site_id: int, run_id: int):
     result = dict()
     site = db_session.query(models.Site).filter(models.Site.id == site_id).scalar()
