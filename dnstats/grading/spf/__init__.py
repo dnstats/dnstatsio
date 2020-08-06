@@ -53,7 +53,7 @@ def grade(spfs: list, domain: str):
             current_grade = half_reduce(current_grade)
             errors.append(SpfError.TOO_MANY_DNS_LOOKUPS)
             break
-#START Mechanisms as defined in RFC 7208 Sec. 5
+    # START Mechanisms as defined in RFC 7208 Sec. 5
         if part.startswith('all'):
             return current_grade, errors
         if part.startswith('include'):
@@ -102,12 +102,12 @@ def grade(spfs: list, domain: str):
         if part.startswith('ptr'):
             # Count as one DNS query. No way to valid this without an email
             count += 1
-            #RFC 7208 states "ptr (do not use)"
+            # RFC 7208 states "ptr (do not use)"
         if part.startswith('exists'):
-            # We don't need to valid the name exists, as not exisitng is a valid part of the flow
+            # We don't need to valid the name exists, as not existing is a valid part of the flow
             count += 1
-#END Mechanisms as defined in RFC 7208 Sec. 5
-#START Modifiers as defined in RFC 7208 Sec. 6
+    # END Mechanisms as defined in RFC 7208 Sec. 5
+    # START Modifiers as defined in RFC 7208 Sec. 6
         if part.startswith('redirect'):
             sub_parts = part.split('=')
             # TODO: check if valid DNS Name
@@ -135,7 +135,7 @@ def grade(spfs: list, domain: str):
         else:
             errors.append(SpfError.INVALID_MECHANISM)
             break
-#END Modifiers as defined in RFC 7208 Sec. 6
+    # END Modifiers as defined in RFC 7208 Sec. 6
     if ptr:
         current_grade = half_reduce(current_grade)
         errors.append(SpfError.HAS_PTR)
