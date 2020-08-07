@@ -21,11 +21,13 @@ Install
 
 #. Ensure Postgres and RabbitMQ are running
 
-#. Create Database::
+#. Create Database
 In a ``psql` shell run
 
       create user dnstats with password 'changeme!';
       create database dnstats owner dnstats;
+
+See the Postgres doc for more details on how to configure Postgres.
 
 #. Clone the repo::
 
