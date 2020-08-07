@@ -114,7 +114,7 @@ def process_result(result: dict):
     processed = dict()
     site = db_session.query(models.Site).filter_by(id=result['site_id']).one()
     processed.update(dnutils.get_dmarc_stats(result['dmarc']))
-    dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=processed['dmarc_has_policy']).scalar()
+    dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=processed['dmarc_policy']).scalar()
     if dmarc_policy_db is None:
         dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string='invalid').scalar()
     sub_dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=processed['dmarc_sub_policy']).scalar()
@@ -128,10 +128,10 @@ def process_result(result: dict):
     processed.update(parse_ds(result['ds']))
     processed['dnssec_dnskey_algorithm'] = parse_dnskey(result['dnskey'])
     sr = models.SiteRun(site_id=result['site_id'], run_id=result['run_id'], run_rank=result['rank'], caa_record=result['caa'], has_caa=processed['caa_exists'],
-                        has_caa_reporting=processed['caa_has_reporting'], caa_issue_count=processed['caa_issue_count'], caa_wildcard_count=['caa_wildcard_count'],
-                        has_dmarc=processed['marc_exists'], dmarc_policy_id=dmarc_policy_db.id,
+                        has_caa_reporting=processed['caa_has_reporting'], caa_issue_count=processed['caa_issue_count'], caa_wildcard_count=processed['caa_wildcard_count'],
+                        has_dmarc=processed['dmarc_exists'], dmarc_policy_id=dmarc_policy_db.id,
                         dmarc_sub_policy_id=sub_dmarc_policy_db.id, has_dmarc_aggregate_reporting=processed['dmarc_has_aggregate'],
-                        has_dmarc_forensic_reporting=processed['dmarc_has_forensic'], dmarc_record=result['dmarc'], has_spf=processed['spf_record'],
+                        has_dmarc_forensic_reporting=processed['dmarc_has_forensic'], dmarc_record=result['dmarc'], has_spf=processed['spf_exists'],
                         spf_policy_id=spf_db.id, txt_records=result['txt'], ds_records=result['ds'], mx_records=result['mx'],
                         ns_records=result['ns'], email_provider_id=processed['email_provider_id'], dns_provider_id=processed['dns_provider_id'],
                         dnssec_ds_algorithm=processed['ds_algorithm'], dnssec_digest_type=processed['ds_digest_type'],
