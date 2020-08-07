@@ -55,6 +55,7 @@ def grade(spfs: list, domain: str):
             break
     # START Mechanisms as defined in RFC 7208 Sec. 5
         if part.startswith('all'):
+            # TODO: check for others and reduce grade if others mechanism are after (RFC 7209 5.1)
             return current_grade, errors
         if part.startswith('include'):
             count += 1
@@ -70,12 +71,14 @@ def grade(spfs: list, domain: str):
             if len(a_result) > 10:
                 errors.append(SpfError.TOO_MANY_A_RECORDS_RETURNED)
                 break
+            # TODO: Process if this mech has :
         if part.startswith('mx'):
             count += 1
             mx_result = safe_query(domain, 'a')
             if len(mx_result) > 10:
                 errors.append(SpfError.TOO_MANY_MX_RECORDS_RETURNED)
                 break
+            # TODO: Process if this mech has :
         if part.startswith('ip4'):
             ip = part.split(':', 1)
             ip_parts = ip.split('/', 1)
@@ -88,6 +91,8 @@ def grade(spfs: list, domain: str):
                     errors.append(SpfError.INVALID_IPV4_MECHANISM)
                     break
 
+            # TODO: validate cidr
+
         elif part.startswith('ip6'):
             ip = part.split(':', 1)
             ip_parts = ip.split('/', 1)
@@ -99,6 +104,7 @@ def grade(spfs: list, domain: str):
                 if not ipaddress.IPv6Address(ip[1]).is_global:
                     errors.append(SpfError.INVALID_IPV6_MECHANISM)
                     break
+            # TODO: validate cidr
         if part.startswith('ptr'):
             # Count as one DNS query. No way to valid this without an email
             count += 1
@@ -134,6 +140,7 @@ def grade(spfs: list, domain: str):
             pass
         else:
             errors.append(SpfError.INVALID_MECHANISM)
+            # TODO: account for new modifiers
             break
     # END Modifiers as defined in RFC 7208 Sec. 6
     if ptr:
