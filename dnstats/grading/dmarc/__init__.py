@@ -11,6 +11,9 @@ class DmarcErrors(Enum):
     INVALID_POLICY = 4
     INVALID_SUBDOMAIN_POLICY = 5
     MULTIPLE_DMARC_RECORDS = 6
+    INVALID_RF_VALUE = 7
+    INVALID_RI_VALUE = 8
+
 
 def grade(dmarcs: list, domain: str) -> int:
     current_grade = 0
@@ -78,24 +81,35 @@ def grade(dmarcs: list, domain: str) -> int:
                     pass
                 if pct_value == 0:
                     current_grade -= 2
-                elif 70 > pct_value <= 90:
+                elif 70 >= pct_value <= 90:
                     current_grade += 1
-                elif 90 >= pct_value >= 99:
+                elif 90 > pct_value <= 99:
                     current_grade += 3
                 elif pct_value == 100:
                     current_grade += 5
                 else:
                     current_grade -= 5
             elif tag == 'rf':
-                pass
+                values = value.split(';')
+                for rf in values:
+                    if rf != 'afrf':
+                        errors.append(DmarcErrors.INVALID_RF_VALUE)
             elif tag == 'ri':
-                pass
+                try:
+                    ri = int(value)
+                except ValueError:
+                    errors.append(DmarcErrors.INVALID_RI_VALUE)
+                    continue
+                if ri < 0 or ri > 4294967295:
+                    errors.append(DmarcErrors.INVALID_RI_VALUE)
+                # TODO: grading for RIs > one week?
+
             elif tag == 'rua':
                 if not has_rua:
                     current_grade += 5
                     has_rua = True
             elif tag == 'ruf':
-                if not  has_ruf:
+                if not has_ruf:
                     current_grade += 5
                     has_ruf = True
             elif tag == 'sp':
