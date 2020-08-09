@@ -117,30 +117,31 @@ def site_stat(site_id: int, run_id: int):
 @app.task(time_limit=60, soft_time_limit=54)
 def process_result(result: dict):
     logger.debug(result['site_id'])
+    processed = dict()
     site = db_session.query(models.Site).filter_by(id=result['site_id']).one()
-    has_dmarc_aggregate, has_dmarc_forensic, has_dmarc, dmarc_policy, dmarc_sub_policy = dnutils.get_dmarc_stats(result['dmarc'])
-    dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=dmarc_policy).scalar()
+    processed.update(dnutils.get_dmarc_stats(result['dmarc']))
+    dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=processed['dmarc_policy']).scalar()
     if dmarc_policy_db is None:
         dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string='invalid').scalar()
-    sub_dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=dmarc_sub_policy).scalar()
+    sub_dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=processed['dmarc_sub_policy']).scalar()
     if sub_dmarc_policy_db is None:
         sub_dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string='invalid').scalar()
-    issue_count, wildcard_count, has_reporting, allows_wildcard, has_caa = dnutils.caa_stats(result['caa'])
-    is_spf, spf_record, spf_policy = spfutils.get_spf_stats(result['txt'])
-    spf_db = db_session.query(models.SpfPolicy).filter_by(qualifier=spf_policy).scalar()
-    mx_db = mxutils.get_provider_from_mx_records(result['mx'], site.domain)
-    dns_db = dnutils.get_provider_from_ns_records(result['ns'], site.domain)
-    ds_algorithm, ds_digest_type = parse_ds(result['ds'])
-    dnssec_dnskey_algorithm = parse_dnskey(result['dnskey'])
-    sr = models.SiteRun(site_id=result['site_id'], run_id=result['run_id'], run_rank=result['rank'], caa_record=result['caa'], has_caa=has_caa,
-                        has_caa_reporting=has_reporting, caa_issue_count=issue_count, caa_wildcard_count=wildcard_count,
-                        has_dmarc=has_dmarc, dmarc_policy_id=dmarc_policy_db.id,
-                        dmarc_sub_policy_id=sub_dmarc_policy_db.id, has_dmarc_aggregate_reporting=has_dmarc_aggregate,
-                        has_dmarc_forensic_reporting=has_dmarc_forensic, dmarc_record=result['dmarc'], has_spf=is_spf,
+    processed.update(dnutils.caa_stats(result['caa']))
+    processed.update(spfutils.get_spf_stats(result['txt']))
+    spf_db = db_session.query(models.SpfPolicy).filter_by(qualifier=processed['spf_policy']).scalar()
+    processed['email_provider_id'] = mxutils.get_provider_from_mx_records(result['mx'], site.domain)
+    processed['dns_provider_id'] = dnutils.get_provider_from_ns_records(result['ns'], site.domain)
+    processed.update(parse_ds(result['ds']))
+    processed['dnssec_dnskey_algorithm'] = parse_dnskey(result['dnskey'])
+    sr = models.SiteRun(site_id=result['site_id'], run_id=result['run_id'], run_rank=result['rank'], caa_record=result['caa'], has_caa=processed['caa_exists'],
+                        has_caa_reporting=processed['caa_has_reporting'], caa_issue_count=processed['caa_issue_count'], caa_wildcard_count=processed['caa_wildcard_count'],
+                        has_dmarc=processed['dmarc_exists'], dmarc_policy_id=dmarc_policy_db.id,
+                        dmarc_sub_policy_id=sub_dmarc_policy_db.id, has_dmarc_aggregate_reporting=processed['dmarc_has_aggregate'],
+                        has_dmarc_forensic_reporting=processed['dmarc_has_forensic'], dmarc_record=result['dmarc'], has_spf=processed['spf_exists'],
                         spf_policy_id=spf_db.id, txt_records=result['txt'], ds_records=result['ds'], mx_records=result['mx'],
-                        ns_records=result['ns'], email_provider_id=mx_db, dns_provider_id=dns_db,
-                        dnssec_ds_algorithm=ds_algorithm, dnssec_digest_type=ds_digest_type,
-                        dnssec_dnskey_algorithm=dnssec_dnskey_algorithm, has_securitytxt=result['has_dnssec'], has_msdc=result['is_msdcs'])
+                        ns_records=result['ns'], email_provider_id=processed['email_provider_id'], dns_provider_id=processed['dns_provider_id'],
+                        dnssec_ds_algorithm=processed['ds_algorithm'], dnssec_digest_type=processed['ds_digest_type'],
+                        dnssec_dnskey_algorithm=processed['dnssec_dnskey_algorithm'], has_securitytxt=result['has_dnssec'], has_msdc=result['is_msdcs'])
     db_session.add(sr)
     db_session.commit()
     grade_spf.s(sr.id).apply_async()

@@ -11,7 +11,7 @@ class SPFErrors(Enum):
     TOO_MANY_MX_RECORDS_RETURNED = 2
 
 
-def get_spf_stats(ans: list):
+def get_spf_stats(ans: list) -> dict:
     """
 
     :param ans:
@@ -24,8 +24,8 @@ def get_spf_stats(ans: list):
                 r = _get_redirect_record(r)
 
             if r.startswith('v=spf'):
-                return True, r, spf_final_qualifier(r)
-    return False, None, 'no_policy'
+                return {'spf_exists': True, 'spf_record': r, 'spf_policy': spf_final_qualifier(r)}
+    return {'spf_exists': False, 'spf_record': None, 'spf_policy': 'no_policy'}
 
 
 def spf_final_qualifier(record: str) -> str:
