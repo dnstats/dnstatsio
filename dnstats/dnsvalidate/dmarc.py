@@ -16,7 +16,7 @@ class DmarcErrors(Enum):
     INVALID_PCT_VALUE = 9
 
 
-def grade(dmarc_result_set: list, domain: str) -> dict:
+def validate(dmarc_result_set: list, domain: str) -> dict:
     dmarc_record_values = dict()
     sp = 0
     tag_count = dict()
