@@ -18,7 +18,6 @@ class DmarcErrors(Enum):
 
 def validate(dmarc_result_set: list, domain: str) -> dict:
     dmarc_record_values = dict()
-    sp = 0
     tag_count = dict()
     errors = list()
     if len(dmarc_result_set) > 1:
@@ -26,10 +25,8 @@ def validate(dmarc_result_set: list, domain: str) -> dict:
         dmarc_record_values['errors'] = errors
         return dmarc_record_values
     dmarc_record = dmarc_result_set[0]
-    has_pct = False
     has_rua = False
     has_ruf = False
-    has_policy = False
     if dmarc_record and dmarc_record.startswith('v=DMARC1;'):
         parts = dmarc_record.split(';')
         for part in parts:
@@ -54,12 +51,10 @@ def validate(dmarc_result_set: list, domain: str) -> dict:
                     errors.append(DmarcErrors.INVALID_FAILURE_REPORTING_VALUE)
             elif tag == 'p':
                 dmarc_record_values['p'] = value
-                has_policy = True
                 if value not in ['none', 'quarantine', 'reject']:
                     errors.append(DmarcErrors.INVALID_POLICY)
             elif tag == 'pct':
                 pct_value = 100
-                has_pct = True
                 try:
                     pct_value = int(value)
                 except ValueError:
@@ -68,7 +63,7 @@ def validate(dmarc_result_set: list, domain: str) -> dict:
                     errors.append(DmarcErrors.INVALID_PCT_VALUE)
                 dmarc_record_values['pct'] = pct_value
             elif tag == 'rf':
-                dmarc['rf'] = value
+                dmarc_record_values['rf'] = value
                 values = value.split(';')
                 for rf in values:
                     if rf != 'afrf':
