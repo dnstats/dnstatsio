@@ -24,9 +24,8 @@ def get_spf_stats(ans: list):
                 r = _get_redirect_record(r)
 
             if r.startswith('v=spf'):
-                return {'spf_exists': True, 'spf_record': r, 'spf_policy': _spf_final_qualifier(r)}
+                return {'spf_exists': True, 'spf_record': r, 'spf_policy': spf_final_qualifier(r)}
     return {'spf_exists': False, 'spf_record': None, 'spf_policy': 'no_policy'}
-
 
 
 def spf_final_qualifier(record: str) -> str:
