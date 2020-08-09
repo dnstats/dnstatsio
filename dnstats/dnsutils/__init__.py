@@ -36,7 +36,8 @@ def caa_stats(ans):
             if ' issue ' in r:
                 has_caa = True
                 issue_count += 1
-    return issue_count, wildcard_count, has_reporting, allows_wildcard, has_caa
+    return {'caa_issue_count': issue_count, 'caa_wildcard_count': wildcard_count, 'caa_has_reporting': has_reporting,
+            'caa_allows_wildcard': allows_wildcard, 'caa_exists': has_caa}
 
 
 def get_dmarc_stats(ans):
@@ -68,7 +69,8 @@ def get_dmarc_stats(ans):
         policy = 'no_policy'
     if sub_policy is '':
         sub_policy = 'no_policy'
-    return aggregate, forensic, dmarc, policy, sub_policy
+    return {'dmarc_has_aggregate': aggregate, 'dmarc_has_forensic': forensic, 'dmarc_exists': dmarc,
+            'dmarc_policy': policy, 'dmarc_sub_policy': sub_policy}
 
 
 def _parse_dmarc(record) -> []:
