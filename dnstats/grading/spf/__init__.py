@@ -39,7 +39,7 @@ def grade(spfs: list, domain: str):
         return current_grade, errors
     parts = spf.split(' ')
     ptr = parts.__contains__('ptr')
-    final = spf_policy([spf])['spf_policy']
+    final = get_spf_stats([spf])['spf_policy']
     count = 1
     parts_to_consider = list()
     parts_to_consider.extend(parts)
