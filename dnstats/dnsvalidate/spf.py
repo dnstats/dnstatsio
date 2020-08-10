@@ -1,5 +1,5 @@
 import ipaddress
-from dnstats.dnsutils.spf import get_spf_stats
+from dnstats.dnsutils.spf import get_spf_stats, spf_final_qualifier
 from dnstats.dnsutils import safe_query
 from enum import Enum
 
@@ -26,28 +26,33 @@ class SpfError(Enum):
     MULTIPLE_SPF_RECORDS = 17
     NO_SPF_FOUND = 18
 
-class spf():
+
+class Spf:
+    def __init__(self, spf: str, domain: str):
+        self.spf_record = spf
+        self.domain = domain
 
     @property
     def is_valid(self):
-        if self.spf().errors == 0:
+        if _validate_spf(self.spf_record, self.domain)["errors"] == 0:
             return True
         else:
             return False
 
     @property
     def errors(self):
-        return self._validate_spf()['errors']
+        return _validate_spf(self.spf_record, self.domain)['errors']
 
     @property
     def final_qualifier(self):
-        return self.spf_final_qualifier()
+        return spf_final_qualifier(self.spf_record)
     
     @property
     def stats(self):
-        return self.spf_final_qualifier()
+        return get_spf_stats([self.spf_record])
 
-def extract_spf_from_txt(txt_records: list, domain: str):
+
+def extract_spf_from_txt(txt_records: str, domain: str):
     records = txt_records.replace('"', '').split(',')
     spfs = list()
     errors = list()
@@ -62,6 +67,7 @@ def extract_spf_from_txt(txt_records: list, domain: str):
     else:
         errors.append(SpfError.MULTIPLE_SPF_RECORDS)
         return False
+
 
 def _validate_spf(spf: str, domain: str):
     errors = list()
