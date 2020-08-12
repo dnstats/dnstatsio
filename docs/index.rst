@@ -12,8 +12,11 @@ Welcome to DNStats's documentation!
 
    info/install
    info/postgresql
+   grading/index
+   grading/spf
 
 .. automodule:: dnstats
+   :members:
 
 Indices and tables
 ==================
