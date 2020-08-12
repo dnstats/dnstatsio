@@ -112,22 +112,27 @@ def _validate_spf(spf: str, domain: str):
             # TODO: Process if this mech has :
         elif part.startswith('ip4'):
             ip = part.split(':', 1)
-            ip_parts = ip[1].split('/', 1)
-            if len(ip_parts) > 1:
-                if not ipaddress.IPv4Network(ip[0]).is_global:
+            try:
+                if len(ip) < 2:
                     errors.append(SpfError.INVALID_IPV4_MECHANISM)
                     break
-            else:
-                if not ipaddress.IPv4Address(ip[0]).is_global:
-                    errors.append(SpfError.INVALID_IPV4_MECHANISM)
-                    break
-
-            cidr = get_int_or_null(parts[1])
-            if not cidr or cidr < 0 or cidr > 32:
-                errors.append(SpfError.INVALID_IPV4_CIDR)
+                ip_parts = ip[1].split('/', 1)
+                if len(ip_parts) > 1:
+                    if not ipaddress.IPv4Network(ip[1]).is_global:
+                        errors.append(SpfError.INVALID_IPV4_MECHANISM)
+                        break
+                else:
+                    if not ipaddress.IPv4Address(ip[0]).is_global:
+                        errors.append(SpfError.INVALID_IPV4_MECHANISM)
+                        break
+            except ipaddress.NetmaskValueError:
+                    errors.append(SpfError.INVALID_IPV4_CIDR)
 
         elif part.startswith('ip6'):
             ip = part.split(':', 1)
+            if len(ip) < 2:
+                errors.append(SpfError.INVALID_IPV6_MECHANISM)
+                break
             ip_parts = ip[1].split('/', 1)
             if len(ip_parts) > 1:
                 if not ipaddress.IPv6Network(ip[1]).is_global:
@@ -151,6 +156,9 @@ def _validate_spf(spf: str, domain: str):
     # START Modifiers as defined in RFC 7208 Sec. 6
         elif part.startswith('redirect'):
             sub_parts = part.split('=')
+            if len(sub_parts) != 2:
+                errors.append(SpfError.INVALID_REDIRECT_MECHANISM)
+                break
             # TODO: check if valid DNS Name
             if len(sub_parts) == 2:
                 redirect_query = safe_query(sub_parts[1], 'txt')

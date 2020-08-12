@@ -13,4 +13,4 @@ def get_int_or_null(input: str):
         value = int(input)
     except ValueError:
         return None
-    return None
+    return value
