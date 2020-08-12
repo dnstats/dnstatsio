@@ -1,8 +1,8 @@
 import ipaddress
 from dnstats.dnsutils.spf import get_spf_stats, spf_final_qualifier
+from dnstats.utils import get_int_or_null
 from dnstats.dnsutils import safe_query
 from enum import Enum
-
 
 
 class SpfError(Enum):
@@ -25,6 +25,8 @@ class SpfError(Enum):
     INVALID_MECHANISM = 16
     MULTIPLE_SPF_RECORDS = 17
     NO_SPF_FOUND = 18
+    INVALID_IPV4_CIDR = 19
+    INVALID_IPV6_CIDR = 20
 
 
 class Spf:
@@ -34,7 +36,7 @@ class Spf:
 
     @property
     def is_valid(self):
-        if _validate_spf(self.spf_record, self.domain)["errors"] == 0:
+        if len(_validate_spf(self.spf_record, self.domain)["errors"]) == 0:
             return True
         else:
             return False
@@ -88,62 +90,66 @@ def _validate_spf(spf: str, domain: str):
         if part.startswith('all'):
             # TODO: check for others and reduce grade if others mechanism are after (RFC 7209 5.1)
             return errors
-        if part.startswith('include'):
+        elif part.startswith('include'):
             count += 1
             sub_parts = part.split(':')
             if len(sub_parts) != 2:
                 errors.append(SpfError.INVALID_INCLUDE_FORMAT)
                 break
-        if part.startswith('a'):
+        elif part.startswith('a'):
             count += 1
             a_result = safe_query(domain, 'a')
             if len(a_result) > 10:
                 errors.append(SpfError.TOO_MANY_A_RECORDS_RETURNED)
                 break
             # TODO: Process if this mech has :
-        if part.startswith('mx'):
+        elif part.startswith('mx'):
             count += 1
             mx_result = safe_query(domain, 'a')
             if len(mx_result) > 10:
                 errors.append(SpfError.TOO_MANY_MX_RECORDS_RETURNED)
                 break
             # TODO: Process if this mech has :
-        if part.startswith('ip4'):
+        elif part.startswith('ip4'):
             ip = part.split(':', 1)
-            ip_parts = ip.split('/', 1)
+            ip_parts = ip[1].split('/', 1)
             if len(ip_parts) > 1:
-                if not ipaddress.IPv4Network(ip[1]).is_global:
+                if not ipaddress.IPv4Network(ip[0]).is_global:
                     errors.append(SpfError.INVALID_IPV4_MECHANISM)
                     break
             else:
-                if not ipaddress.IPv4Address(ip[1]).is_global:
+                if not ipaddress.IPv4Address(ip[0]).is_global:
                     errors.append(SpfError.INVALID_IPV4_MECHANISM)
                     break
 
-            # TODO: validate cidr
+            cidr = get_int_or_null(parts[1])
+            if not cidr or cidr < 0 or cidr > 32:
+                errors.append(SpfError.INVALID_IPV4_CIDR)
 
         elif part.startswith('ip6'):
             ip = part.split(':', 1)
-            ip_parts = ip.split('/', 1)
+            ip_parts = ip[1].split('/', 1)
             if len(ip_parts) > 1:
                 if not ipaddress.IPv6Network(ip[1]).is_global:
                     errors.append(SpfError.INVALID_IPV6_MECHANISM)
                     break
             else:
-                if not ipaddress.IPv6Address(ip[1]).is_global:
+                if not ipaddress.IPv6Address(ip[0]).is_global:
                     errors.append(SpfError.INVALID_IPV6_MECHANISM)
                     break
-            # TODO: validate cidr
-        if part.startswith('ptr'):
+            cidr = get_int_or_null(ip_parts[1])
+            if not cidr or cidr < 0 or cidr > 128:
+                errors.append(SpfError.INVALID_IPV6_CIDR)
+        elif part.startswith('ptr'):
             # Count as one DNS query. No way to valid this without an email
             count += 1
             # RFC 7208 states "ptr (do not use)"
-        if part.startswith('exists'):
+        elif part.startswith('exists'):
             # We don't need to valid the name exists, as not existing is a valid part of the flow
             count += 1
     # END Mechanisms as defined in RFC 7208 Sec. 5
     # START Modifiers as defined in RFC 7208 Sec. 6
-        if part.startswith('redirect'):
+        elif part.startswith('redirect'):
             sub_parts = part.split('=')
             # TODO: check if valid DNS Name
             if len(sub_parts) == 2:
@@ -163,10 +169,17 @@ def _validate_spf(spf: str, domain: str):
             else:
                 errors.append(SpfError.INVALID_REDIRECT_MECHANISM)
             count += 1
-        if part.startswith('exp='):
+        elif part.startswith('exp='):
             pass
-        if part.startswith('unknown-modifier='):
+        elif part.startswith('unknown-modifier='):
             pass
+        elif part.endswith('all'):
+            pass
+        elif part.startswith('v'):
+            sub_parts = part.split('=')
+            if sub_parts[1] != 'spf1':
+                errors.append(SpfError.INVALID_RECORD_START)
+                break
         else:
             errors.append(SpfError.INVALID_MECHANISM)
             # TODO: account for new modifiers
