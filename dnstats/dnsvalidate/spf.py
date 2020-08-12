@@ -1,6 +1,5 @@
 import ipaddress
 from dnstats.dnsutils.spf import get_spf_stats, spf_final_qualifier
-from dnstats.utils import get_int_or_null
 from dnstats.dnsutils import safe_query
 from enum import Enum
 
@@ -43,6 +42,11 @@ class Spf:
 
     @property
     def errors(self):
+        """
+        This method checks the SPF returns any errors. See `dnstats.dnsvalidate.spf.SpfErrors` to translate the
+        errors into Englsh
+        :return: list of `SpfError`
+        """
         return _validate_spf(self.spf_record, self.domain)['errors']
 
     @property
@@ -82,6 +86,9 @@ def _validate_spf(spf: str, domain: str):
     parts_to_consider.extend(parts)
     inter = 0
     for part in parts_to_consider:
+        # Ignore whitespace
+        if not part:
+            break
         inter += 1
         if count >= 10:
             errors.append(SpfError.TOO_MANY_DNS_LOOKUPS)
@@ -134,16 +141,16 @@ def _validate_spf(spf: str, domain: str):
                 errors.append(SpfError.INVALID_IPV6_MECHANISM)
                 break
             ip_parts = ip[1].split('/', 1)
-            if len(ip_parts) > 1:
-                if not ipaddress.IPv6Network(ip[1]).is_global:
-                    errors.append(SpfError.INVALID_IPV6_MECHANISM)
-                    break
-            else:
-                if not ipaddress.IPv6Address(ip[0]).is_global:
-                    errors.append(SpfError.INVALID_IPV6_MECHANISM)
-                    break
-            cidr = get_int_or_null(ip_parts[1])
-            if not cidr or cidr < 0 or cidr > 128:
+            try:
+                if len(ip_parts) > 1:
+                    if not ipaddress.IPv6Network(ip[1]).is_global:
+                        errors.append(SpfError.INVALID_IPV6_MECHANISM)
+                        break
+                else:
+                    if not ipaddress.IPv6Address(ip[0]).is_global:
+                        errors.append(SpfError.INVALID_IPV6_MECHANISM)
+                        break
+            except ipaddress.NetmaskValueError:
                 errors.append(SpfError.INVALID_IPV6_CIDR)
         elif part.startswith('ptr'):
             # Count as one DNS query. No way to valid this without an email

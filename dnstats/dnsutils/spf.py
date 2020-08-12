@@ -31,7 +31,7 @@ def get_spf_stats(ans: list) -> dict:
 def spf_final_qualifier(record: str) -> str:
     m = re.search(r"[+?~-]all", record)
     if m:
-        return m[0]
+        return m[0].lower()
     else:
         return 'no_policy'
 
