@@ -14,9 +14,23 @@ class DmarcErrors(Enum):
     INVALID_RF_VALUE = 7
     INVALID_RI_VALUE = 8
     INVALID_PCT_VALUE = 9
+    INVALID_DMARC_RECORD_START = 10
 
 
-def validate(dmarc_result_set: list, domain: str) -> dict:
+class Dmarc:
+    def __init__(self, dmarc_result_set):
+        self.dmarc_result_set = dmarc_result_set
+
+    @property
+    def is_valid(self) -> bool:
+        return len(validate(self.dmarc_result_set)['errors']) == 0
+
+    @property
+    def errors(self) -> list:
+        return validate(self.dmarc_result_set)['errors']
+
+
+def validate(dmarc_result_set: list) -> dict:
     dmarc_record_values = dict()
     tag_count = dict()
     errors = list()
@@ -96,6 +110,7 @@ def validate(dmarc_result_set: list, domain: str) -> dict:
             else:
                 dmarc_record_values[tag] = value
     else:
+        errors.append(DmarcErrors.INVALID_DMARC_RECORD_START)
         dmarc_record_values['errors'] = errors
         return dmarc_record_values
 
