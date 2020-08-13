@@ -35,16 +35,13 @@ class Spf:
 
     @property
     def is_valid(self):
-        if len(_validate_spf(self.spf_record, self.domain)["errors"]) == 0:
-            return True
-        else:
-            return False
+        return len(_validate_spf(self.spf_record, self.domain)["errors"]) == 0
 
     @property
     def errors(self):
         """
         This method checks the SPF returns any errors. See `dnstats.dnsvalidate.spf.SpfErrors` to translate the
-        errors into Englsh
+        errors into English
         :return: list of `SpfError`
         """
         return _validate_spf(self.spf_record, self.domain)['errors']
