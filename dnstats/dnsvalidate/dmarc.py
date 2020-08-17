@@ -29,6 +29,10 @@ class Dmarc:
     def errors(self) -> list:
         return validate(self.dmarc_result_set)['errors']
 
+    @property
+    def adkim(self) -> str:
+        return validate(self.dmarc_result_set)['adkim']
+
 
 def validate(dmarc_result_set: list) -> dict:
     dmarc_record_values = dict()
