@@ -42,7 +42,7 @@ logger = get_task_logger('dnstats.scans')
 if os.environ.get('DNSTATS_ENV') != 'Development':
     import sentry_sdk
     from sentry_sdk.integrations.celery import CeleryIntegration
-    sentry_sdk.init(os.environ.get("SENTRY_URL"), integrations=[CeleryIntegration()])
+    sentry_sdk.init(os.environ.get("SENTRY"), integrations=[CeleryIntegration()])
 
 
 @app.on_after_configure.connect
