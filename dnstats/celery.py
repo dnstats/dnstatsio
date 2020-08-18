@@ -112,7 +112,7 @@ def site_stat(site_id: int, run_id: int):
 
 @app.task(time_limit=60, soft_time_limit=54)
 def process_result(result: dict):
-    logger.debug(result['site_id'])
+    logger.debug("Processing site: {}".format(result['site_id']))
     processed = dict()
     site = db_session.query(models.Site).filter_by(id=result['site_id']).one()
     processed.update(dnutils.get_dmarc_stats(result['dmarc']))
