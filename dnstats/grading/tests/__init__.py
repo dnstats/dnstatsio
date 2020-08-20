@@ -1,6 +1,6 @@
 import unittest
 
-from grading import percent_to_letter, half_reduce, full_reduce, Grade, full_raise, half_raise
+from dnstats.grading import percent_to_letter, half_reduce, full_reduce, Grade, full_raise, half_raise
 
 
 class Tests(unittest.TestCase):

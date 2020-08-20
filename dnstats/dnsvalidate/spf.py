@@ -77,10 +77,9 @@ def _validate_spf(spf: str, domain: str):
     if not spf.startswith('v=spf1 '):
         errors.append(SpfError.INVALID_RECORD_START)
     parts = spf.split(' ')
-    ptr = parts.__contains__('ptr')
-    count = 1
     parts_to_consider = list()
     parts_to_consider.extend(parts)
+    count = 1
     inter = 0
     for part in parts_to_consider:
         # Ignore whitespace
@@ -152,6 +151,7 @@ def _validate_spf(spf: str, domain: str):
         elif part.startswith('ptr'):
             # Count as one DNS query. No way to valid this without an email
             count += 1
+            errors.append(SpfError.HAS_PTR)
             # RFC 7208 states "ptr (do not use)"
         elif part.startswith('exists'):
             # We don't need to valid the name exists, as not existing is a valid part of the flow
@@ -197,7 +197,5 @@ def _validate_spf(spf: str, domain: str):
             # TODO: account for new modifiers
             break
     # END Modifiers as defined in RFC 7208 Sec. 6
-    if ptr:
-        errors.append(SpfError.HAS_PTR)
 
     return {'errors': errors}
