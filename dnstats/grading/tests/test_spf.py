@@ -11,7 +11,7 @@ class TestSpf(unittest.TestCase):
 
     def test_reject_all(self):
         grade = grade_spf(['v=spf1 -all',], 'example.com')
-        self.assertEqual(100, 100
+        self.assertEqual(100, 100)
 
     def test_pass_all(self):
         grade = grade_spf(['v=spf1 +all',], 'example.com')

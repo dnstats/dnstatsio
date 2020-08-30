@@ -1,6 +1,6 @@
 import unittest
 
-from dnsvalidate.dmarc import Dmarc, DmarcErrors
+from dnstats.dnsvalidate.dmarc import Dmarc, DmarcErrors
 
 
 class TestDmarc(unittest.TestCase):
