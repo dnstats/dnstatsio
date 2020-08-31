@@ -18,20 +18,63 @@ class DmarcErrors(Enum):
 
 
 class Dmarc:
+    """"
+    Validates and represents a DMARC record
+    """
     def __init__(self, dmarc_result_set):
         self.dmarc_result_set = dmarc_result_set
+        self.result = validate(self.dmarc_result_set)
 
     @property
     def is_valid(self) -> bool:
-        return len(validate(self.dmarc_result_set)['errors']) == 0
+        return self.result == 0
 
     @property
     def errors(self) -> list:
-        return validate(self.dmarc_result_set)['errors']
+        if self.result['errors']:
+            return self.result['errors']
+        else:
+            return list()
 
     @property
     def adkim(self) -> str:
-        return validate(self.dmarc_result_set)['adkim']
+        return self.result.get('adkim')
+
+    @property
+    def aspf(self) -> str:
+        return self.result.get('aspf')
+
+    @property
+    def fo(self) -> str:
+        return self.result.get('fo')
+
+    @property
+    def p(self) -> str:
+        """
+        Policy of the DMARC policy
+        :return:
+        """
+        return self.result.get('p')
+
+    @property
+    def pct(self) -> int:
+        value = self.result.get('pct')
+        if not value and value != 0:
+            return 100
+        else:
+            return value
+
+    @property
+    def rua(self) -> str:
+        return self.result.get('rua')
+
+    @property
+    def ruf(self) -> str:
+        return self.result.get('ruf')
+
+    @property
+    def sp(self) -> str:
+        return self.result.get('sp')
 
 
 def validate(dmarc_result_set: list) -> dict:
@@ -80,6 +123,7 @@ def validate(dmarc_result_set: list) -> dict:
                 if 0 < pct_value < 100:
                     errors.append(DmarcErrors.INVALID_PCT_VALUE)
                 dmarc_record_values['pct'] = pct_value
+                print(pct_value)
             elif tag == 'rf':
                 dmarc_record_values['rf'] = value
                 values = value.split(';')
