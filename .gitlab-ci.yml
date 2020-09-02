@@ -1,6 +1,9 @@
 default:
   image: python:3.7
 
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   POSTGRES_DB: dnstats
