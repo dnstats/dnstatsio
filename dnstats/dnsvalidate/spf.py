@@ -81,6 +81,7 @@ def _validate_spf(spf: str, domain: str):
     parts_to_consider.extend(parts)
     count = 1
     inter = 0
+    result = dict()
     for part in parts_to_consider:
         # Ignore whitespace
         if not part:
@@ -130,6 +131,8 @@ def _validate_spf(spf: str, domain: str):
                         break
             except ipaddress.NetmaskValueError:
                     errors.append(SpfError.INVALID_IPV4_CIDR)
+            except ipaddress.AddressValueError:
+                errors.append(SpfError.INVALID_IPV4_MECHANISMtests.test_spf.TestSpf.test_a_with_pass_all)
 
         elif part.startswith('ip6'):
             ip = part.split(':', 1)
@@ -198,4 +201,5 @@ def _validate_spf(spf: str, domain: str):
             break
     # END Modifiers as defined in RFC 7208 Sec. 6
 
-    return {'errors': errors}
+    result['errors'] = errors
+    return result
