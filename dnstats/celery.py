@@ -46,7 +46,7 @@ logger = get_task_logger('dnstats.scans')
 if os.environ.get('DNSTATS_ENV') != 'Development':
     import sentry_sdk
     from sentry_sdk.integrations.celery import CeleryIntegration
-    sentry_sdk.init(os.environ.get("SENTRY_URL"), integrations=[CeleryIntegration()])
+    sentry_sdk.init(os.environ.get("SENTRY"), integrations=[CeleryIntegration()])
 
 
 @app.on_after_configure.connect
@@ -96,27 +96,40 @@ def do_charts_latest():
 
 @app.task(time_limit=420, soft_time_limit=400, queue='gevent')
 def site_stat(site_id: int, run_id: int):
+    logger.debug('start site stat site {} run id {}'.format(site_id, run_id))
     result = dict()
     site = db_session.query(models.Site).filter(models.Site.id == site_id).scalar()
+    logger.debug('got site for {}'.format(site.domain))
     result['mx'] = dnutils.safe_query(site.domain, 'mx')
+    logger.debug('got mx for {}'.format(site.domain))
     result['txt'] = dnutils.safe_query(site.domain, 'txt')
+    logger.debug('got txtf or {}'.format(site.domain))
     result['caa'] = dnutils.safe_query(site.domain, 'caa')
+    logger.debug('got caa for {}'.format(site.domain))
     result['ds'] = dnutils.safe_query(site.domain, 'ds')
     result['dnskey'] = dnutils.safe_query(site.domain, 'dnskey')
+    logger.debug('got dnskey for {}'.format(site.domain))
     result['ns'] = dnutils.safe_query(site.domain, 'ns')
+    logger.debug('got ns')
     result['dmarc'] = dnutils.safe_query('_dmarc.' + site.domain, 'txt')
-    result['has_dnssec'] = has_security_txt(site.domain)
+    logger.debug('got dmarc for {}'.format(site.domain))
+    result['has_dnssec'] = has_security_txt(site.domain, logger)
+    logger.debug('got security.txt for {}'.format(site.domain))
     result['is_msdcs'] = dnstats.dnsutils.is_a_msft_dc(site.domain)
+    logger.debug('got has msdc for {}'.format(site.domain))
     result['site_id'] = site.id
+    logger.debug('set site id {}'.format(site.domain))
     result['rank'] = site.current_rank
+    logger.debug('set rank {}'.format(site.domain))
     result['run_id'] = run_id
+    logger.debug('set run id {} -- done'.format(site.domain))
 
     return result
 
 
 @app.task(time_limit=60, soft_time_limit=54)
 def process_result(result: dict):
-    logger.debug(result['site_id'])
+    logger.debug("Processing site: {}".format(result['site_id']))
     processed = dict()
     site = db_session.query(models.Site).filter_by(id=result['site_id']).one()
     processed.update(dnutils.get_dmarc_stats(result['dmarc']))
