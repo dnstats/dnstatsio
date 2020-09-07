@@ -1,4 +1,4 @@
-from dnstats.dnsvalidate.spf import Spf, SpfError
+from dnstats.dnsvalidate.spf import Spf, SpfError, extract_spf_from_txt
 
 SPF_POLICY_GRADE = {
     '-all': 100,
@@ -8,11 +8,12 @@ SPF_POLICY_GRADE = {
 }
 
 
-def grade(spfs: list, domain: str) -> int:
-    if len(spfs) != 1:
+def grade(spfs: str, domain: str) -> int:
+    spf_txt_record, errors = extract_spf_from_txt(spfs, domain)
+    if len(errors) != 0:
         return 0
-    spf_record = Spf(spfs[0], domain)
-    errors = spf_record.errors
+    spf_record = Spf(spf_txt_record, domain)
+    errors.extend(spf_record.errors)
     current_grade = SPF_POLICY_GRADE.get(spf_record.final_qualifier)
     if type(current_grade) != int:
         current_grade = 20
@@ -24,7 +25,6 @@ def grade(spfs: list, domain: str) -> int:
             return 0
     if errors:
         current_grade = current_grade - len(errors) * 2
-    print(errors)
     return max(current_grade, 0)
 
 

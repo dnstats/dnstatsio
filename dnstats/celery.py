@@ -14,7 +14,6 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
 
-
 import dnstats.dnsutils as dnutils
 import dnstats.dnsutils.spf as spfutils
 import dnstats.dnsutils.mx as mxutils
@@ -165,14 +164,8 @@ def process_result(result: dict):
 @app.task(time_limit=320, soft_time_limit=300)
 def grade_spf(site_run_id: int):
     site_run = db_session.query(models.SiteRun).filter_by(id == site_run_id).include('site')
-    records = site_run.txt_records.replace('"', '').split(',')
-    grade = Grade.F
-    spfs = list()
-    for record in records:
-        if record.startswith('v=spf1'):
-            spfs.append(record)
-    if spfs:
-        grade = grade_spf_record(spfs, site_run.site.domain)
+    records = site_run.txt_records
+    grade = grade_spf_record(records, site_run.site.domain)
     site_run.spf_grade = grade
     db_session.commit()
 

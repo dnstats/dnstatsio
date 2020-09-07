@@ -63,13 +63,13 @@ def extract_spf_from_txt(txt_records: str, domain: str):
         if record.startswith('v=spf1'):
             spfs.append(record)
     if len(spfs) == 1:
-        return spfs[0]
+        return spfs[0], list()
     elif len(spfs) < 1:
         errors.append(SpfError.NO_SPF_FOUND)
-        return False
+        return False, errors
     else:
         errors.append(SpfError.MULTIPLE_SPF_RECORDS)
-        return False
+        return False, errors
 
 
 def _validate_spf(spf: str, domain: str):
@@ -130,7 +130,7 @@ def _validate_spf(spf: str, domain: str):
                         errors.append(SpfError.INVALID_IPV4_MECHANISM)
                         break
             except ipaddress.NetmaskValueError:
-                    errors.append(SpfError.INVALID_IPV4_CIDR)
+                errors.append(SpfError.INVALID_IPV4_CIDR)
             except ipaddress.AddressValueError:
                 errors.append(SpfError.INVALID_IPV4_MECHANISMtests.test_spf.TestSpf.test_a_with_pass_all)
 
