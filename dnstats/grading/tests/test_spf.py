@@ -44,4 +44,3 @@ class TestSpf(unittest.TestCase):
     def test_many_spf_records(self):
         grade = grade_spf(['v=spf1 -all', 'v=spf1 -all'], 'example.com')
         self.assertEqual(0, grade)
-

@@ -12,7 +12,6 @@ SP = {'none': 0, 'quarantine': 10, 'reject': 15}
 def grade(dmarcs: list, domain: str) -> int:
     current_grade = 0
     dmarc = Dmarc(dmarcs)
-    print(dmarc.errors)
     if dmarc.errors.__contains__(DmarcErrors.INVALID_DMARC_RECORD_START):
         return 0
     if dmarc.adkim == 's':
@@ -29,7 +28,6 @@ def grade(dmarcs: list, domain: str) -> int:
         current_grade += get_grade(SP, dmarc.p, 0)
     else:
         current_grade += get_grade(SP, dmarc.sp, 0)
-    print(dmarc.pct)
     if dmarc.pct == 0:
         current_grade -= 2
     elif 70 >= dmarc.pct <= 90:
