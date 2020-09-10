@@ -75,3 +75,18 @@ def update_count_dict(d: dict, key: str):
         d[key] += 1
     else:
         d[key] = 1
+
+
+def get_grade(d: dict, k: str, default: int) -> int:
+    value = d.get(k)
+    if not value:
+        return default
+    else:
+        return value
+
+
+def not_in_penalty(d: dict, k: str, pen: int):
+    if d.__contains__(k):
+        return 0
+    else:
+        return pen
