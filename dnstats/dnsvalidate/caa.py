@@ -11,6 +11,7 @@ class CAAErrors(enum.Enum):
     VALUE_QUOTE_ERROR = 5
     VALUE_NOT_QUOTED = 6
     IODEF_NO_SCHEME = 7
+    IODEF_INVALID_EMAIL = 8
 
 
 def validate(caa_result_set: list, domain: str) -> dict:
@@ -75,6 +76,9 @@ def validate(caa_result_set: list, domain: str) -> dict:
             if not has_scheme:
                 errors.append(CAAErrors.IODEF_NO_SCHEME)
             # TODO: validate URI
-
-
-
+            if value.starts_with('mailto'):
+                # https://blog.mailtrap.io/python-validate-email/#Validating_emails_with_Python_libraries
+                email_regex = re.compile('^[a-z]([w-]*[a-z]|[w-.]*[a-z]{2,}|[a-z])*@[a-z]([w-]*[a-z]|[w-.]*[a-z]{2,}|[a-z]){4,}?.[a-z]{2,}$')
+                email = value.remove('mailto', '')
+                if len(email_regex.findall(email)) != 1:
+                    errors.append(CAAErrors.IODEF_INVALID_EMAIL)
