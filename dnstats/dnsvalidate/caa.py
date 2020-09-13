@@ -21,7 +21,7 @@ class CAAErrors(enum.Enum):
     TAG_TOO_LONG = 12
 
 
-class CAA:
+class Caa:
     """
     DNS validation for CAA
     """
@@ -95,19 +95,21 @@ def validate(caa_result_set: list, domain: str) -> dict:
         # Section 5.2
         if tag == 'issue':
             value = value.replace('"', '')
-            issue.append(value)
+
             if value == ';':
-                issuewild.append(value)
+                issue.append(value)
+                continue
             c_domain = value.split(';')
             if not validate_fqdn(c_domain[0]):
                 errors.append(CAAErrors.ISSUE_DOMAIN_INVALID)
                 continue
-            issuewild.append(value)
+            issue.append(value)
         # Section 5.3
         elif tag == 'issuewild':
             value = value.replace('"', '')
             if value == ';':
                 issuewild.append(value)
+                continue
             c_domain = value.split(';')
             if not validate_fqdn(c_domain[0]):
                 errors.append(CAAErrors.ISSUEWILD_DOMAIN_INVALID)
@@ -116,9 +118,6 @@ def validate(caa_result_set: list, domain: str) -> dict:
 
         elif tag == 'iodef':
             value = value.replace('"', '')
-            if value == ';':
-                iodef.append(';')
-                continue
             iodef_schemes = ['http', 'https', 'mailto']
             has_scheme = False
             for scheme in iodef_schemes:

@@ -25,6 +25,10 @@ class TestCaa(unittest.TestCase):
         output = validate_caa(['0 tacotacotacotaco taco'], 'example.com')
         self.assertEqual(output['errors'], [CAAErrors.TAG_TOO_LONG])
 
+    def test_bad_tag(self):
+        output = validate_caa(['0 t@aco taco'], 'example.com')
+        self.assertEqual(output['errors'], [CAAErrors.INVALID_TAG])
+
     def test_too_many_quotes(self):
         output = validate_caa(['0 issue ""taco"'], 'example.com')
         self.assertEqual(output['errors'], [CAAErrors.VALUE_QUOTE_ERROR])
@@ -36,10 +40,16 @@ class TestCaa(unittest.TestCase):
     def test_not_quoted(self):
         output = validate_caa(['0 issue taco taco'], 'example.com')
         self.assertEqual(output['errors'], [CAAErrors.VALUE_NOT_QUOTED])
+        self.assertEqual(0, len(output['iodef']))
+        self.assertEqual(0, len(output['issue']))
+        self.assertEqual(0, len(output['issuewild']))
 
     def test_issue(self):
         output = validate_caa(['0 issue dnstats.io'], 'example.com')
         self.assertEqual(output['errors'], [])
+        self.assertEqual(0, len(output['iodef']))
+        self.assertEqual(1, len(output['issue']))
+        self.assertEqual(0, len(output['issuewild']))
 
     def test_wildissue_quoted(self):
         output = validate_caa(['0 issuewild "dnstats.io"'], 'example.com')
@@ -48,6 +58,9 @@ class TestCaa(unittest.TestCase):
     def test_wildissue_quoted_semi(self):
         output = validate_caa(['0 issuewild "dnstats.io; value=taco"'], 'example.com')
         self.assertEqual(output['errors'], [])
+        self.assertEqual(0, len(output['iodef']))
+        self.assertEqual(0, len(output['issue']))
+        self.assertEqual(1, len(output['issuewild']))
 
     def test_issue_quoted_semi(self):
         output = validate_caa(['0 issue "dnstats.io; value=taco"'], 'example.com')
@@ -72,6 +85,9 @@ class TestCaa(unittest.TestCase):
     def test_iodef_web(self):
         output = validate_caa(['0 iodef https://dnstats.io/caa'], 'example.com')
         self.assertEqual(output['errors'], [])
+        self.assertEqual(1, len(output['iodef']))
+        self.assertEqual(0, len(output['issue']))
+        self.assertEqual(0, len(output['issuewild']))
 
     def test_iodef_mail_invalid(self):
         output = validate_caa(['0 iodef mailto:caa@dnstats,io'], 'example.com')
@@ -88,3 +104,24 @@ class TestCaa(unittest.TestCase):
     def test_iodef_bad_scheme(self):
         output = validate_caa(['0 iodef taco://dnstats.io/caa'], 'example.com')
         self.assertEqual(output['errors'], [CAAErrors.IODEF_NO_SCHEME])
+
+    def test_iodef_web_issue(self):
+        output = validate_caa(['0 iodef https://dnstats.io/caa', '0 issue dnstats.io'], 'example.com')
+        self.assertEqual(output['errors'], [])
+        self.assertEqual(1, len(output['iodef']))
+        self.assertEqual(1, len(output['issue']))
+        self.assertEqual(0, len(output['issuewild']))
+
+    def test_iodef_web_issue_issuewild(self):
+        output = validate_caa(['0 iodef https://dnstats.io/caa', '0 issue dnstats.io', '0 issuewild dnstats.io'], 'example.com')
+        self.assertEqual(output['errors'], [])
+        self.assertEqual(1, len(output['iodef']))
+        self.assertEqual(1, len(output['issue']))
+        self.assertEqual(1, len(output['issuewild']))
+
+    def test_iodef_web_block_all(self):
+        output = validate_caa(['0 iodef https://dnstats.io/caa', '0 issue ;', '0 issuewild ;'], 'example.com')
+        self.assertEqual(output['errors'], [])
+        self.assertEqual(1, len(output['iodef']))
+        self.assertEqual(1, len(output['issue']))
+        self.assertEqual(1, len(output['issuewild']))
