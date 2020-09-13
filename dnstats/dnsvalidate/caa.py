@@ -1,5 +1,8 @@
 import enum
 import re
+from validate_email import validate_email
+
+from dnstats.utils import validate_url, validate_fqdn
 
 
 class CAAErrors(enum.Enum):
@@ -12,6 +15,9 @@ class CAAErrors(enum.Enum):
     VALUE_NOT_QUOTED = 6
     IODEF_NO_SCHEME = 7
     IODEF_INVALID_EMAIL = 8
+    IODEF_INVALID_URL = 9
+    ISSUEWILD_DOMAIN_INVALID = 10
+    ISSUE_DOMAIN_INVALID = 11
 
 
 def validate(caa_result_set: list, domain: str) -> dict:
@@ -54,31 +60,46 @@ def validate(caa_result_set: list, domain: str) -> dict:
         if not value.starts_with('"') and value.__contains__(' '):
             errors.append(CAAErrors.VALUE_NOT_QUOTED)
 
-        # Section 4.2
+        # Section 5.2
         if tag == 'issue':
             value = value.replace('"', '')
             issue.append(value)
-            # TODO: check for ';' and a FQDN and add an error? Is something to think about
-        # Section 4.3
-        elif tag == 'issuewild':
-            # TODO: check for ';' and a FQDN and add an error? Is something to think about
-            value = value.replace('"', '')
+            if value == ';':
+                issuewild.append(value)
+            domain = value.split(';')
+            if not validate_fqdn(domain):
+                errors.append(CAAErrors.ISSUE_DOMAIN_INVALID)
+                break
             issuewild.append(value)
-        elif tag == 'iodef':
-            # TODO: check for bad charters
+        # Section 5.3
+        elif tag == 'issuewild':
             value = value.replace('"', '')
+            if value == ';':
+                issuewild.append(value)
+            domain = value.split(';')
+            if not validate_fqdn(domain):
+                errors.append(CAAErrors.ISSUEWILD_DOMAIN_INVALID)
+                break
+            issuewild.append(value)
+
+        elif tag == 'iodef':
+            value = value.replace('"', '')
+            if value == ';':
+                continue
             iodef_schemes = ['http', 'https', 'mailto']
             has_scheme = False
             for scheme in iodef_schemes:
                 if value.starts_with(scheme):
                     has_scheme = True
-                    break
             if not has_scheme:
                 errors.append(CAAErrors.IODEF_NO_SCHEME)
-            # TODO: validate URI
             if value.starts_with('mailto'):
-                # https://blog.mailtrap.io/python-validate-email/#Validating_emails_with_Python_libraries
-                email_regex = re.compile('^[a-z]([w-]*[a-z]|[w-.]*[a-z]{2,}|[a-z])*@[a-z]([w-]*[a-z]|[w-.]*[a-z]{2,}|[a-z]){4,}?.[a-z]{2,}$')
-                email = value.remove('mailto', '')
-                if len(email_regex.findall(email)) != 1:
+                email = value.remove('mailto:', '')
+                if not validate_email(email):
                     errors.append(CAAErrors.IODEF_INVALID_EMAIL)
+
+            elif value.starts_with('http') or value.starts_with('https'):
+                if not validate_url(value):
+                    errors.append(CAAErrors.IODEF_INVALID_URL)
+
+

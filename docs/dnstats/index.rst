@@ -1,5 +1,8 @@
+dnstats
+=======
+
 dnstats.charts
-==============
+--------------
 
 .. automodule:: dnstats.charts
    :members:
@@ -12,3 +15,9 @@ dnstats.charts
 .. automodule:: dnstats.charts.asset_utils
    :members:
    :undoc-members:
+
+dnstats.utils
+-------------
+
+.. automodule:: dnstats.utils
+   :members:
