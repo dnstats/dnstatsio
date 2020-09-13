@@ -39,7 +39,6 @@ class TestDmarc(unittest.TestCase):
     def test_reject_with_rua(self):
         grade = grade_dmarc(['v=DMARC1; p=reject; rua=mailto:postmaster@dnstats.io',], 'google.com')
         self.assertEqual(85, grade)
-        print(grade)
 
     def test_perfect_score(self):
         grade = grade_dmarc(['v=DMARC1; adkim=s; aspf=s; fo=1; p=reject; rua=mailto:postmaster@dnstats.io; ruf=mailto:postmaster@dnstats.io',], 'google.com')
