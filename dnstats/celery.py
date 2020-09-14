@@ -170,7 +170,7 @@ def process_result(result: dict):
                         has_spf=processed['spf_exists'],
                         spf_policy_id=spf_db.id, txt_records=result['txt'], ds_records=result['ds'],
                         dnskey_records=result['dnskey'], mx_records=result['mx'],
-                        ns_records=result['ns'], email_provider_id=processed['email_provider_id'],ns_rrds=result[''],
+                        ns_records=result['ns'], email_provider_id=processed['email_provider_id'],ns_rrds=result['rrsig'],
                         dns_provider_id=processed['dns_provider_id'],
                         dnssec_ds_algorithm=processed['ds_algorithm'], dnssec_digest_type=processed['ds_digest_type'],
                         dnssec_dnskey_algorithm=processed['dnssec_dnskey_algorithm'],
