@@ -50,6 +50,7 @@ class SiteRun(Base):
     spf_policy_id = Column(BigInteger, ForeignKey('spf_policies.id'), nullable=False)
     txt_records = Column(Text)
     ds_records = Column(Text)
+    dnskey_records = Column(Text)
     mx_records = Column(Text)
     ns_records = Column(Text)
     email_provider_id = Column(BigInteger, ForeignKey('email_providers.id'))
