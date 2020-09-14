@@ -53,6 +53,7 @@ class SiteRun(Base):
     dnskey_records = Column(Text)
     mx_records = Column(Text)
     ns_records = Column(Text)
+    ns_rrsig = Column(Text)
     email_provider_id = Column(BigInteger, ForeignKey('email_providers.id'))
     dns_provider_id = Column(BigInteger, ForeignKey('dns_providers.id'))
     dnssec_ds_algorithm = Column(SmallInteger)

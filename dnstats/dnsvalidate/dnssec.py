@@ -1,5 +1,4 @@
 import enum
-import dns.dnssec
 
 from dnstats.db import db_session
 import dnstats.db.models as models

@@ -3,6 +3,11 @@ import io
 import os
 import zipfile
 
+import dns.message
+import dns.rdataclass
+import dns.rdatatype
+import dns.query
+import dns.name
 from celery import Celery, Task
 from celery.canvas import chain, group
 from celery.schedules import crontab
@@ -122,7 +127,16 @@ def site_stat(site_id: int, run_id: int):
     logger.debug('set rank {}'.format(site.domain))
     result['run_id'] = run_id
     logger.debug('set run id {} -- done'.format(site.domain))
+    qname = dns.name.from_text(site.domain)
+    logger.debug('start getting ns rrsig')
+    ns_query = dns.message.make_query(qname, dns.rdatatype.NS, want_dnssec=True)
+    ns_response = dns.query.udp(ns_query, os.environ.get('DNS_SERVER'))
+    rrsig = None
+    for answer in ns_response.answer:
+        if 'rrsig' in answer:
+            rrsig = answer
 
+    result['rrsig'] = rrsig
     return result
 
 
@@ -156,7 +170,7 @@ def process_result(result: dict):
                         has_spf=processed['spf_exists'],
                         spf_policy_id=spf_db.id, txt_records=result['txt'], ds_records=result['ds'],
                         dnskey_records=result['dnskey'], mx_records=result['mx'],
-                        ns_records=result['ns'], email_provider_id=processed['email_provider_id'],
+                        ns_records=result['ns'], email_provider_id=processed['email_provider_id'],ns_rrds=result[''],
                         dns_provider_id=processed['dns_provider_id'],
                         dnssec_ds_algorithm=processed['ds_algorithm'], dnssec_digest_type=processed['ds_digest_type'],
                         dnssec_dnskey_algorithm=processed['dnssec_dnskey_algorithm'],
