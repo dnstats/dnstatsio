@@ -1,5 +1,5 @@
 publicsuffix2
-dnspython3
+dnspython==2.0.0
 celery
 flower
 amqp
