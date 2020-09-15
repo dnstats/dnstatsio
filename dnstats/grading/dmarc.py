@@ -1,6 +1,4 @@
-from enum import Enum
-
-from dnstats.grading import Grade, half_reduce, update_count_dict, half_raise, get_grade, not_in_penalty
+from dnstats.grading import get_grade
 from dnstats.dnsvalidate.dmarc import Dmarc, DmarcErrors
 
 FO = {'1': 4, 'd': 2, 's': 2}
