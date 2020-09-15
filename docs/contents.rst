@@ -14,8 +14,7 @@ Welcome to DNStats's documentation!
    info/postgresql
    grading/index
    grading/spf
-   dnstats/charts
-
+   dnstats/index
 
 Indices and tables
 ==================

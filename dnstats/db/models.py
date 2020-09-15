@@ -61,6 +61,7 @@ class SiteRun(Base):
     has_msdc = Column(Boolean)
     spf_grade = Column(SmallInteger)
     dmarc_grade = Column(SmallInteger)
+    caa_grade = Column(SmallInteger)
 
     UniqueConstraint('site_id', 'run_id')
 

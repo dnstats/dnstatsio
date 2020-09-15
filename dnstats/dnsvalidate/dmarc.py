@@ -123,7 +123,6 @@ def validate(dmarc_result_set: list) -> dict:
                 if 0 < pct_value < 100:
                     errors.append(DmarcErrors.INVALID_PCT_VALUE)
                 dmarc_record_values['pct'] = pct_value
-                print(pct_value)
             elif tag == 'rf':
                 dmarc_record_values['rf'] = value
                 values = value.split(';')

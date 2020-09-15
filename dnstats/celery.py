@@ -25,6 +25,7 @@ from dnstats.utils import chunks
 from dnstats.httputils import has_security_txt
 from dnstats.grading.spf import grade as grade_spf_record
 from dnstats.grading.dmarc import grade as grade_dmarc_record
+from dnstats.grading.caa import grade as grade_caa_records
 from dnstats.grading import Grade
 
 
@@ -158,6 +159,7 @@ def process_result(result: dict):
     db_session.commit()
     grade_spf.s(sr.id).apply_async()
     grade_dmarc.s(sr.id).apply_async()
+    grade_caa(sr.id).apply_async()
     return
 
 
@@ -182,6 +184,14 @@ def grade_dmarc(site_run_id: int):
     if dmarcs:
         grade = grade_dmarc_record(dmarcs, site_run.site.domain)
     site_run.dmarc_grade = grade
+    db_session.commit()
+
+
+@app.task(time_limit=80, soft_time_limit=75)
+def grade_caa(site_run_id: int):
+    site_run = db_session.query(models.SiteRun).filter_by(id == site_run_id).include('site')
+    records = site_run.caa_record.split(',')
+    site_run.caa_grade = grade_caa_records(records, site_run.site.domain)
     db_session.commit()
 
 

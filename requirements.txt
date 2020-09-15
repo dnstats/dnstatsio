@@ -16,3 +16,4 @@ alembic
 requests
 gevent
 coverage
+validate_email

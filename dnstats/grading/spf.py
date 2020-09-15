@@ -17,7 +17,6 @@ def grade(spfs: str, domain: str) -> int:
     current_grade = SPF_POLICY_GRADE.get(spf_record.final_qualifier)
     if type(current_grade) != int:
         current_grade = 20
-    print('spf: {}, {}'.format(spf_record.final_qualifier, current_grade))
 
     for error in errors:
         if error == SpfError.NO_SPF_FOUND or error == SpfError.INVALID_RECORD_START or \
