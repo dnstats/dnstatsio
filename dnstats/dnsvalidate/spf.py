@@ -55,11 +55,10 @@ class Spf:
         return get_spf_stats([self.spf_record])
 
 
-def extract_spf_from_txt(txt_records: str, domain: str):
-    records = txt_records.replace('"', '').split(',')
+def extract_spf_from_txt(txt_records: list, domain: str):
     spfs = list()
     errors = list()
-    for record in records:
+    for record in txt_records:
         if record.startswith('v=spf1'):
             spfs.append(record)
     if len(spfs) == 1:

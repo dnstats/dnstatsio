@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Boolean, String, DateTime, ForeignKey, BigInteger, Text, UniqueConstraint, SmallInteger
+from sqlalchemy import Column, Boolean, String, DateTime, ForeignKey, BigInteger, Text, UniqueConstraint, SmallInteger, JSON
 
 Base = declarative_base()
 
@@ -59,9 +59,12 @@ class SiteRun(Base):
     dnssec_dnskey_algorithm = Column(SmallInteger)
     has_securitytxt = Column(Boolean)
     has_msdc = Column(Boolean)
-    spf_grade = Column(SmallInteger)
-    dmarc_grade = Column(SmallInteger)
-    caa_grade = Column(SmallInteger)
+    spf_grade = Column(BigInteger)
+    dmarc_grade = Column(BigInteger)
+    caa_grade = Column(BigInteger)
+    j_caa_records = Column(JSON)
+    j_txt_records = Column(JSON)
+    j_dmarc_record = Column(JSON)
 
     UniqueConstraint('site_id', 'run_id')
 

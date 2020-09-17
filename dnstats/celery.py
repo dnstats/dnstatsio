@@ -154,35 +154,41 @@ def process_result(result: dict):
                         spf_policy_id=spf_db.id, txt_records=result['txt'], ds_records=result['ds'], mx_records=result['mx'],
                         ns_records=result['ns'], email_provider_id=processed['email_provider_id'], dns_provider_id=processed['dns_provider_id'],
                         dnssec_ds_algorithm=processed['ds_algorithm'], dnssec_digest_type=processed['ds_digest_type'],
-                        dnssec_dnskey_algorithm=processed['dnssec_dnskey_algorithm'], has_securitytxt=result['has_dnssec'], has_msdc=result['is_msdcs'])
+                        dnssec_dnskey_algorithm=processed['dnssec_dnskey_algorithm'], has_securitytxt=result['has_dnssec'], has_msdc=result['is_msdcs'],
+                        j_caa_records=result['caa'], j_dmarc_record=result['dmarc'], j_txt_records=result['txt'])
     db_session.add(sr)
     db_session.commit()
     grade_spf.s(sr.id).apply_async()
     grade_dmarc.s(sr.id).apply_async()
-    grade_caa(sr.id).apply_async()
+    grade_caa.s(sr.id).apply_async()
     return
 
 
 @app.task(time_limit=320, soft_time_limit=300)
 def grade_spf(site_run_id: int):
-    site_run = db_session.query(models.SiteRun).filter_by(id == site_run_id).include('site')
-    records = site_run.txt_records
-    grade = grade_spf_record(records, site_run.site.domain)
+    site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
+    site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
+    records = site_run.j_txt_records
+    grade = grade_spf_record(records, site.domain)
     site_run.spf_grade = grade
     db_session.commit()
 
 
 @app.task(time_limit=80, soft_time_limit=75)
 def grade_dmarc(site_run_id: int):
-    site_run = db_session.query(models.SiteRun).filter_by(id == site_run_id).include('site')
-    records = site_run.txt_records.replace('"', '').split(',')
-    grade = Grade.F
+    site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
+    site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
+    records = site_run.j_txt_records
+    grade = 0
     dmarcs = list()
+    if not records:
+        return grade
     for record in records:
+        logger.warning('DMARC - {} - {}'.format(site_run_id, record))
         if record.startswith('v=DMARC1'):
             dmarcs.append(record)
     if dmarcs:
-        grade = grade_dmarc_record(dmarcs, site_run.site.domain)
+        grade = grade_dmarc_record(dmarcs, site.domain)
     site_run.dmarc_grade = grade
     db_session.commit()
 
@@ -191,27 +197,15 @@ def grade_dmarc(site_run_id: int):
 def grade_caa(site_run_id: int):
     site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
     site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
-    records = site_run.caa_record
+    records = site_run.j_caa_records
     if not records:
         site_run.caa_grade = 0
     else:
-        records = site_run.caa_record
-        records = _clean_up_records(records)
+        records = site_run.j_caa_records
         grade = grade_caa_records(records, site.domain)
         site_run.caa_grade = grade
         logger.warning("CAA Grade: {} - {} - {}".format(site.domain, site_run.caa_grade, grade))
     db_session.commit()
-
-
-def _clean_up_records(records):
-    records = re.sub('^"', '', records)
-    records = re.sub('"$', '', records)
-    records = records.replace('{', '').replace('}', '').replace('\'"', '').replace('"\'', '').replace('\\', '').split(
-        ',')
-    for i in range(len(records)):
-        records[i] = re.sub('^"', '', records[i])
-        records[i] = re.sub('"$', '', records[i])
-    return records
 
 
 @app.task()
