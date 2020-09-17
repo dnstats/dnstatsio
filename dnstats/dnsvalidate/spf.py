@@ -126,11 +126,11 @@ def _validate_spf(spf: str, domain: str):
                     break
                 ip_parts = ip[1].split('/', 1)
                 if len(ip_parts) > 1:
-                    if not ipaddress.IPv4Address(ip[1]).is_global:
+                    if not ipaddress.IPv4Network(ip[1]).is_global:
                         errors.append(SpfError.INVALID_IPV4_MECHANISM)
                         break
                 else:
-                    if not ipaddress.IPv4Address(ip[0]).is_global:
+                    if not ipaddress.IPv4Network(ip[1], strict=False).is_global:
                         errors.append(SpfError.INVALID_IPV4_MECHANISM)
                         break
             except ipaddress.NetmaskValueError:

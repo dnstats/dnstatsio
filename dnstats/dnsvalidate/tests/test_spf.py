@@ -33,7 +33,7 @@ class TestSpf(unittest.TestCase):
         self.assertEqual(False, results)
 
     def test_invalid_cidr_ipv4(self):
-        spf_record = Spf("v=spf1 ip4:192.168.0.1/35 -all", 'example.com')
+        spf_record = Spf("v=spf1 ip4:1.0.0.1/35 -all", 'example.com')
         results = spf_record.is_valid
         errors = spf_record.errors
         errors.__contains__(SpfError.INVALID_IPV4_CIDR)
