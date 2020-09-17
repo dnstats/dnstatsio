@@ -125,3 +125,12 @@ class TestCaa(unittest.TestCase):
         self.assertEqual(1, len(output['iodef']))
         self.assertEqual(1, len(output['issue']))
         self.assertEqual(1, len(output['issuewild']))
+
+    def test_netfilx(self):
+        caa = ['0 issue "digicert.com"', '0 issue "letsencrypt.org"', '0 issuewild "digicert.com"',
+               '0 issuewild "letsencrypt.org"', '0 iodef "mailto:security@netflix.com"']
+        output = validate_caa(caa, 'example.com')
+        self.assertEqual(output['errors'], [])
+        self.assertEqual(1, len(output['iodef']))
+        self.assertEqual(2, len(output['issue']))
+        self.assertEqual(2, len(output['issuewild']))
