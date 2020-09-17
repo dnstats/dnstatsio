@@ -178,16 +178,18 @@ def grade_spf(site_run_id: int):
 def grade_dmarc(site_run_id: int):
     site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
     site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
-    records = site_run.j_txt_records
+    records = site_run.j_dmarc_record
     grade = 0
     dmarcs = list()
     if not records:
         return grade
     for record in records:
-        logger.warning('DMARC - {} - {}'.format(site_run_id, record))
-        if record.startswith('v=DMARC1'):
+        record = record.replace('"', '')
+        if record.startswith('v=DMARC1;'):
+            logger.warning('DMARC - {} - {}'.format(site_run_id, record))
             dmarcs.append(record)
     if dmarcs:
+        logger.warning('DMARC Count - {} - {}'.format(site_run_id, len(dmarcs)))
         grade = grade_dmarc_record(dmarcs, site.domain)
     site_run.dmarc_grade = grade
     db_session.commit()
