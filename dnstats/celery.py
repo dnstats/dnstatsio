@@ -189,10 +189,29 @@ def grade_dmarc(site_run_id: int):
 
 @app.task(time_limit=80, soft_time_limit=75)
 def grade_caa(site_run_id: int):
-    site_run = db_session.query(models.SiteRun).filter_by(id == site_run_id).include('site')
-    records = site_run.caa_record.split(',')
-    site_run.caa_grade = grade_caa_records(records, site_run.site.domain)
+    site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
+    site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
+    records = site_run.caa_record
+    if not records:
+        site_run.caa_grade = 0
+    else:
+        records = site_run.caa_record
+        records = _clean_up_records(records)
+        grade = grade_caa_records(records, site.domain)
+        site_run.caa_grade = grade
+        logger.warning("CAA Grade: {} - {} - {}".format(site.domain, site_run.caa_grade, grade))
     db_session.commit()
+
+
+def _clean_up_records(records):
+    records = re.sub('^"', '', records)
+    records = re.sub('"$', '', records)
+    records = records.replace('{', '').replace('}', '').replace('\'"', '').replace('"\'', '').replace('\\', '').split(
+        ',')
+    for i in range(len(records)):
+        records[i] = re.sub('^"', '', records[i])
+        records[i] = re.sub('"$', '', records[i])
+    return records
 
 
 @app.task()
