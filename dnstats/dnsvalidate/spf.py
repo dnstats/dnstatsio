@@ -58,7 +58,12 @@ class Spf:
 def extract_spf_from_txt(txt_records: list, domain: str):
     spfs = list()
     errors = list()
+    if not txt_records:
+        errors.append(SpfError.NO_SPF_FOUND)
+        return False, errors
+
     for record in txt_records:
+        record = record.replace('"', '')
         if record.startswith('v=spf1'):
             spfs.append(record)
     if len(spfs) == 1:
@@ -121,7 +126,7 @@ def _validate_spf(spf: str, domain: str):
                     break
                 ip_parts = ip[1].split('/', 1)
                 if len(ip_parts) > 1:
-                    if not ipaddress.IPv4Network(ip[1]).is_global:
+                    if not ipaddress.IPv4Address(ip[1]).is_global:
                         errors.append(SpfError.INVALID_IPV4_MECHANISM)
                         break
                 else:
@@ -131,7 +136,7 @@ def _validate_spf(spf: str, domain: str):
             except ipaddress.NetmaskValueError:
                 errors.append(SpfError.INVALID_IPV4_CIDR)
             except ipaddress.AddressValueError:
-                errors.append(SpfError.INVALID_IPV4_MECHANISMtests.test_spf.TestSpf.test_a_with_pass_all)
+                errors.append(SpfError.INVALID_IPV4_MECHANISM)
 
         elif part.startswith('ip6'):
             ip = part.split(':', 1)
