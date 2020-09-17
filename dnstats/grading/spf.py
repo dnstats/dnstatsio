@@ -8,7 +8,7 @@ SPF_POLICY_GRADE = {
 }
 
 
-def grade(spfs: str, domain: str) -> int:
+def grade(spfs: list, domain: str) -> int:
     spf_txt_record, errors = extract_spf_from_txt(spfs, domain)
     if len(errors) != 0:
         return 0
