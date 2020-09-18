@@ -1,0 +1,33 @@
+default:
+  image: python:3.7
+
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  POSTGRES_DB: dnstats
+  POSTGRES_USER: dnstats
+  POSTGRES_PASSWORD: ""
+  POSTGRES_HOST_AUTH_METHOD: trust
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+services:
+  - postgres:12
+
+before_script:
+  - python -V  # Print out python version for debugging
+  - pip install virtualenv
+  - virtualenv venv
+  - source venv/bin/activate
+  - pip install -r requirements.txt
+  - export DB=postgres://$POSTGRES_USER@postgres/$POSTGRES_DB
+  - alembic upgrade head
+  - pip install -e dnstats
+  - python -m dnstats.db.seed
+
+test:
+  script:
+    - python -m unittest

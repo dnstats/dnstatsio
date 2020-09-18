@@ -3,12 +3,43 @@ import csv
 import dnstats.db.models as models
 from dnstats.db import db_session
 
-
-def seed_db() -> None:
+def seed_db()  -> None:
     _seed_dmarc_policy()
     _seed_spf()
     _seed_email_providers()
     _seed_ns_providers()
+    _seed_remark_types()
+
+"""
+Remark Levels
+0 - Fatal
+1 - Error, assuming default
+2 - Warning, value should be used
+3 - Depercation Warning - Value was once valid, no longer
+4 - Info - No action need. Just addional data
+"""
+def _seed_remarks():
+    dmarc = [
+        (1, 'Invalid ADKIM Value'),
+        (1, 'Invalid ASPF Value'),
+        (1, 'Invalid Failure Reporting Value'),
+        (1, 'Invalid Policy'),
+        (1, 'Invalid Subdomain policy')
+    ]
+    remark_type_db = models.Remark(name='dmarc')
+    for remark in dmarc:
+        remark_db = db_session.query(models.Remark).filter_by(remark_type_db=1, remark_level=remark[0], name=remark[1])
+        db_session.add(remark_db)
+        db_session.commit()
+
+
+def _seed_remark_types():
+    remark_types = ['spf', 'dmarc']
+
+    for remark_type in remark_types:
+        remark_type_db = models.RemarkTypes(name=remark_type)
+        db_session.add(remark_type_db)
+        db_session.commit()
 
 
 def _seed_spf():
@@ -186,3 +217,7 @@ def _seed_ns_providers():
             nsp = models.DnsProvider(display_name=ns_provider[0], search_regex=ns_provider[1], is_regex=ns_provider[2])
             db_session.add(nsp)
             db_session.commit()
+
+
+if __name__ == '__main__':
+    seed_db()

@@ -23,7 +23,6 @@ copyright = '2020, Matthew Burket'
 author = 'Matthew Burket'
 
 
-
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be

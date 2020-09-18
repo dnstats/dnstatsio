@@ -15,3 +15,5 @@ sphinx_rtd_theme
 alembic
 requests
 gevent
+coverage
+validate_email
