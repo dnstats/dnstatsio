@@ -186,10 +186,10 @@ def grade_dmarc(site_run_id: int):
     for record in records:
         record = record.replace('"', '')
         if record.startswith('v=DMARC1;'):
-            logger.warning('DMARC - {} - {}'.format(site_run_id, record))
+            logger.debug('DMARC - {} - {}'.format(site_run_id, record))
             dmarcs.append(record)
     if dmarcs:
-        logger.warning('DMARC Count - {} - {}'.format(site_run_id, len(dmarcs)))
+        logger.debug('DMARC Count - {} - {}'.format(site_run_id, len(dmarcs)))
         grade = grade_dmarc_record(dmarcs, site.domain)
     site_run.dmarc_grade = grade
     db_session.commit()
@@ -202,11 +202,12 @@ def grade_caa(site_run_id: int):
     records = site_run.j_caa_records
     if not records:
         site_run.caa_grade = 0
+        logger.debug("CAA Grade: {} - {} - {} - NO CAA".format(site.domain, site_run.caa_grade, 0))
     else:
         records = site_run.j_caa_records
         grade = grade_caa_records(records, site.domain)
         site_run.caa_grade = grade
-        logger.warning("CAA Grade: {} - {} - {}".format(site.domain, site_run.caa_grade, grade))
+        logger.debug("CAA Grade: {} - {} - {}".format(site.domain, site_run.caa_grade, grade))
     db_session.commit()
 
 
@@ -227,7 +228,7 @@ def launch_run(run_id):
 def do_run():
     date = datetime.datetime.now()
     if os.environ.get('DNSTATS_ENV') == 'Development':
-        run = models.Run(start_time=date, start_rank=1, end_rank=150)
+        run = models.Run(start_time=date, start_rank=1, end_rank=500)
         logger.warning("[DO RUN]: Running a Debug top 50 sites runs")
     else:
         run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
