@@ -38,8 +38,16 @@ class TestSpf(unittest.TestCase):
         self.assertEqual(0, grade)
 
     def test_fastmail(self):
-        grade = grade_spf(['v=spf1 nclude:spf.messagingengine.com -all'], 'dnstats.io')
+        grade = grade_spf(['v=spf1 include:spf.messagingengine.com -all'], 'dnstats.io')
         self.assertEqual(100, grade)
+
+    def test_tacos_all(self):
+        grade = grade_spf(['v=spf1 include:tacos.all -all'], 'dnstats.io')
+        self.assertEqual(100, grade)
+
+    def test_tacos_all_default(self):
+        grade = grade_spf(['v=spf1 include:tacos.all'], 'dnstats.io')
+        self.assertEqual(20, grade)
 
     def test_many_spf_records(self):
         grade = grade_spf(['"v=spf1 -all"', '"v=spf1 -all"'], 'example.com')
