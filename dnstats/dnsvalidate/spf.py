@@ -28,7 +28,7 @@ class SpfError(Enum):
     INVALID_IPV6_CIDR = 20
     TOO_MANY_ENDINGS = 21
     TOO_MANY_STARTS = 22
-
+    NO_MX_RECORDS = 23
 
 
 class Spf:
@@ -119,6 +119,9 @@ def _validate_spf(spf: str, domain: str):
         elif part.startswith('mx'):
             count += 1
             mx_result = safe_query(domain, 'a')
+            if not mx_result:
+                errors.append(SpfError.NO_MX_RECORDS)
+                continue
             if len(mx_result) > 10:
                 errors.append(SpfError.TOO_MANY_MX_RECORDS_RETURNED)
                 break
@@ -160,6 +163,8 @@ def _validate_spf(spf: str, domain: str):
                         break
             except ipaddress.NetmaskValueError:
                 errors.append(SpfError.INVALID_IPV6_CIDR)
+            except ipaddress.AddressValueError:
+                errors.append(SpfError.INVALID_IPV6_MECHANISM)
         elif part.startswith('ptr'):
             # Count as one DNS query. No way to valid this without an email
             count += 1
