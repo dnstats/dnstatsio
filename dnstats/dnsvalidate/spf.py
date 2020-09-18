@@ -26,6 +26,9 @@ class SpfError(Enum):
     NO_SPF_FOUND = 18
     INVALID_IPV4_CIDR = 19
     INVALID_IPV6_CIDR = 20
+    TOO_MANY_ENDINGS = 21
+    TOO_MANY_STARTS = 22
+
 
 
 class Spf:
@@ -86,6 +89,8 @@ def _validate_spf(spf: str, domain: str):
     count = 1
     inter = 0
     result = dict()
+    end_again = False
+    start_again = False
     for part in parts_to_consider:
         # Ignore whitespace
         if not part:
@@ -193,12 +198,18 @@ def _validate_spf(spf: str, domain: str):
         elif part.startswith('unknown-modifier='):
             pass
         elif part.endswith('all'):
+            if end_again:
+                errors.append(SpfError.TOO_MANY_ENDINGS)
+            end_again = True
             pass
-        elif part.startswith('v'):
+        elif part.startswith('v='):
+            if start_again:
+                errors.append(SpfError.TOO_MANY_STARTS)
             sub_parts = part.split('=')
             if sub_parts[1] != 'spf1':
                 errors.append(SpfError.INVALID_RECORD_START)
                 break
+            start_again = True
         else:
             errors.append(SpfError.INVALID_MECHANISM)
             # TODO: account for new modifiers
