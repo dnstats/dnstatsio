@@ -2,7 +2,6 @@ default:
   image: python:3.7
 
 stages:
-  - lint
   - test
   - pages
 
@@ -31,12 +30,6 @@ before_script:
   - alembic upgrade head
   - pip install -e dnstats
   - python -m dnstats.db.seed
-
-lint:
-  stage: lint
-  script:
-    - pylint --ignored-classes=_socketobject dnstats
-  allow_failure: true
 
 test:
   stage: test
