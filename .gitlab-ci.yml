@@ -1,6 +1,10 @@
 default:
   image: python:3.7
 
+stages:
+  - lint
+  - test
+  - pages
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
@@ -28,6 +32,26 @@ before_script:
   - pip install -e dnstats
   - python -m dnstats.db.seed
 
-test:
+lint:
+  stage: lint
   script:
-    - python -m unittest
+    - pylint --ignored-classes=_socketobject *.py
+  allow_failure: true
+
+test:
+  stage: test
+  script:
+    - coverage run -m unittest discover
+
+pages:
+  stage: pages
+  script:
+    - cd doc 
+    - make html
+    - mv _build/html/ ../public/
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
+  allow_failure: true
