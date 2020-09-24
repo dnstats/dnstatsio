@@ -35,18 +35,19 @@ before_script:
 lint:
   stage: lint
   script:
-    - pylint --ignored-classes=_socketobject *.py
+    - pylint --ignored-classes=_socketobject dnstats
   allow_failure: true
 
 test:
   stage: test
   script:
     - coverage run -m unittest discover
+    - coverage report -m
 
 pages:
   stage: pages
   script:
-    - cd doc 
+    - cd docs
     - make html
     - mv _build/html/ ../public/
   artifacts:
