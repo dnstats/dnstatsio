@@ -48,3 +48,9 @@ let options =  {
     let {{ category[2] }}_chart = new d3pie({{ category[2] }}_id, {{ category[2] }}_chartOpts);
     // End {{ category[1] }}_
 {% endfor %}
+
+
+{% for histogram in histograms %}
+    let {{histogram[2]}}_id = document.getElementById('{{ category[2] }}');
+    let  {{histogram[2]}}_svg = 
+{% endfor }
