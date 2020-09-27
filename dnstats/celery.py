@@ -53,7 +53,7 @@ if os.environ.get('DNSTATS_ENV') != 'Development':
 def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(crontab(hour=0, minute=58), import_list.s())
     sender.add_periodic_task(crontab(hour=8, minute=0), do_run.s())
-    sender.add_periodic_task(crontab(hour=13, minute=0), do_charts_latest.s())
+    sender.add_periodic_task(crontab(hour=18, minute=0), do_charts_latest.s())
 
 
 class SqlAlchemyTask(Task):
