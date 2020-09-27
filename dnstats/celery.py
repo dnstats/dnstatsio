@@ -69,7 +69,7 @@ class SqlAlchemyTask(Task):
         super(SqlAlchemyTask, self).after_return(status, retval, task_id, args, kwargs, einfo)
 
 
-@app.task()
+@app.task(queue='deployment')
 def do_charts(run_id: int):
     run = db_session.query(models.Run).filter_by(id=run_id).scalar()
     folder_name = run.start_time.strftime("%Y-%m-%d")
@@ -87,7 +87,7 @@ def do_charts(run_id: int):
     _send_published_email(run_id)
 
 
-@app.task()
+@app.task(queue='deployment')
 def do_charts_latest():
     the_time = db_session.query(func.Max(models.Run.start_time)).scalar()
     run = db_session.query(models.Run).filter_by(start_time=the_time).scalar()
