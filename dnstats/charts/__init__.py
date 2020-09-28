@@ -108,10 +108,10 @@ def create_reports(run_id: int):
                       "order by count asc;".format(run_id)
 
     dns_providers = "select count(*), display_name from site_runs sr " \
-                      "join dns_providers dp on sr.dns_provider_id=dp.id " \
-                      "where run_id={} " \
-                      "group by display_name " \
-                      "order by count asc;".format(run_id)
+                    "join dns_providers dp on sr.dns_provider_id=dp.id " \
+                    "where run_id={} " \
+                    "group by display_name " \
+                    "order by count asc;".format(run_id)
 
     caa_issue_count = """
                     select count(*), sr.range
@@ -140,15 +140,18 @@ def create_reports(run_id: int):
 
                 """.format(run_id)
 
-     caa_grade_distribution = "select caa_grade, count(*) from site_runs where run_id={} group by caa_grade".format(run_id)
-     dmarc_grade_distribution = "select dmarc_grade, count(*) from site_runs where run_id={} group by dmarc_grade".format(run_id)
-     spf_distribution = "select spf_grade, count(*) from site_runs where run_id={} group by spf_grade".format(run_id)
-     overall_grade_distribution = """select COALESCE(dmarc_grade, 0) + COALESCE(caa_grade, 0) +
+    caa_grade_distribution = "select caa_grade, count(*) from site_runs where run_id={} group by caa_grade".format(
+        run_id)
+    dmarc_grade_distribution = "select dmarc_grade, count(*) from site_runs where run_id={} group by dmarc_grade".format(
+        run_id)
+    spf_grade_distribution = "select spf_grade, count(*) from site_runs where run_id={} group by spf_grade".format(
+        run_id)
+    overall_grade_distribution = """select COALESCE(dmarc_grade, 0) + COALESCE(caa_grade, 0) +
                                           COALESCE(spf_grade, 0) as grade, count(*)
                                        from site_runs
                                        where run_id=224
                                        group by grade;
-     """"
+     """
 
     category_data = [_run_report(spf_adoption_query, 'SPF Adoption', True, run_id),
                      _run_report(spf_reports_query, 'SPF Policy', False, run_id),
@@ -166,11 +169,11 @@ def create_reports(run_id: int):
                      _run_report(caa_wildcard_issue_count, 'CAA Wildcard Issue Count', False, run_id, True)
                      ]
     histograms_data = [
-                        _run_histogram(caa_grade_distribution, 'CAA Grade Distribution', run_id),
-                        _run_histogram(dmarc_grade_distribution, 'DMARC Grade Distribution', run_id),
-                        _run_histogram(spf_grade_distribution, 'SPF Grade Distribution', run_id),
-                        _run_histogram(overall_grade_distribution, 'Overall Grade Distribution', run_id)
-                      ]
+        _run_histogram(caa_grade_distribution, 'CAA Grade Distribution', run_id),
+        _run_histogram(dmarc_grade_distribution, 'DMARC Grade Distribution', run_id),
+        _run_histogram(spf_grade_distribution, 'SPF Grade Distribution', run_id),
+        _run_histogram(overall_grade_distribution, 'Overall Grade Distribution', run_id)
+    ]
     js_filename = _create_time_date_filename('charts')
     _render_piejs(category_data, histograms_data, js_filename)
     html_filename = _create_html(category_data, run_id, js_filename)
@@ -178,22 +181,23 @@ def create_reports(run_id: int):
 
 
 def _run_histogram(query: str, report: str, run_id: int) -> [{}]:
-       with engine.connect() as connection:
+    with engine.connect() as connection:
         result_set = connection.execute(query)
 
         result = []
 
         for row in result_set:
-          result.append({'grade': row[0], 'count': row[1]})
+            result.append({'grade': row[0], 'count': row[1]})
 
     filename = _create_time_date_filename(report)
     return filename, report, slugify(report), result
+
 
 def _create_html(category_data: [()], run_id: int, js_filename: str):
     for filename in category_data:
         print(filename[1], filename[2])
     hostname = socket.gethostname()
-    file_loader =  q(os.path.join(os.path.dirname(__file__), 'templates'))
+    file_loader = q(os.path.join(os.path.dirname(__file__), 'templates'))
     env = Environment(loader=file_loader)
     template = env.get_template('index.html')
     run = db_session.query(models.Run).filter_by(id=run_id).one()
