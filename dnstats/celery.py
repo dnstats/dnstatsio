@@ -411,7 +411,7 @@ def _send_eoq(run_id):
 
 
 def _send_published_email(run_id: int):
-    subject = '[DNStats] - Scan id {} Has Been Published'.format(run_id)
+    subject = '[DNStats] Scan id {} Has Been Published'.format(run_id)
     body = '''
     The stats are now published at https://dnstats.io.
     
@@ -429,7 +429,7 @@ def _send_published_email(run_id: int):
 
 
 def _send_sites_updated_started():
-    subject = '[DNStats] - Site List Update Started'
+    subject = '[DNStats] Site List Update Started'
     body ="""
         Started site list upgrade at: {}
         
@@ -447,7 +447,7 @@ def _send_sites_updated_started():
 
 
 def _send_sites_updated_done():
-    subject = '[DNStats] - Site List Update Is Done'
+    subject = '[DNStats] Site List Update Is Done'
     body ="""
         Ended site list upgrade at: {}
         
@@ -468,7 +468,7 @@ def _send_sites_updated_done():
 
 def _send_botched_deploy(date, run_id: int, count: int, target_count: int):
     delta = target_count - count
-    subject = '[DNStats] - CRITICAL - Botched Website Deploy'
+    subject = '[DNStats] CRITICAL Botched Website Deploy'
     body = '''
     Run id: {run_id}
     Target: {target_count}
