@@ -2,31 +2,29 @@ import datetime
 import io
 import os
 import zipfile
+import requests
 
 from celery import Celery, Task
 from celery.canvas import chain, group
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
-import requests
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import func
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
-
+import dnstats.charts
 import dnstats.dnsutils as dnutils
 import dnstats.dnsutils.spf as spfutils
 import dnstats.dnsutils.mx as mxutils
-from dnstats.dnsutils.dnssec import parse_ds, parse_dnskey
 import dnstats.db.models as models
-import dnstats.charts
+from dnstats.dnsutils.dnssec import parse_ds, parse_dnskey
 from dnstats.db import db_session, engine
 from dnstats.utils import chunks
 from dnstats.httputils import has_security_txt
 from dnstats.grading.spf import grade as grade_spf_record
 from dnstats.grading.dmarc import grade as grade_dmarc_record
 from dnstats.grading.caa import grade as grade_caa_records
-from dnstats.grading import Grade
 
 
 if not os.environ.get('DB'):
