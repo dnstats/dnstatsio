@@ -70,6 +70,12 @@ class SqlAlchemyTask(Task):
 @app.task(queue='deployment')
 def do_charts(run_id: int):
     run = db_session.query(models.Run).filter_by(id=run_id).scalar()
+    if not os.environ.get('DNSTATS_ENV') == 'Development':
+        target = 950000
+        site_run_count = db_session.query(models.SiteRun).filter_by(run_id=run_id)
+        if site_run_count < target:
+            _send_botched_deploy(run.start_time, site_run_count, target)
+            return
     folder_name = run.start_time.strftime("%Y-%m-%d")
     js_filename, html_filename = dnstats.charts.create_reports(run_id)
     print(js_filename)
@@ -342,7 +348,7 @@ def _send_message(email):
 
 
 def _send_start_email(date, run_id):
-    subject = 'DNStats Scan Starting'
+    subject = '[DNStats] Scan Starting'
     body = '''
     Starting time: {starting_time}
     Run id: {run_id}
@@ -361,7 +367,7 @@ def _send_start_email(date, run_id):
 
 @app.task
 def _send_eos(results, run_time):
-    subject = 'DNStats Scan Ending'
+    subject = '[DNStats] Scan Ending'
     print("taco")
     print(run_time)
     result_count = db_session.query(models.SiteRun).filter_by(run_id=run_time).count()
@@ -386,7 +392,7 @@ def _send_eos(results, run_time):
 
 def _send_eoq(run_id):
     run = db_session.query(models.Run).filter_by(id=run_id).first()
-    subject = 'DNStats All Scans In Queue'
+    subject = '[DNStats] All Scans In Queue'
     body = '''
     Run start time: {starting_time}
     Run id: {run_id}
@@ -405,7 +411,7 @@ def _send_eoq(run_id):
 
 
 def _send_published_email(run_id: int):
-    subject = 'DNStats scan id {} has been published'.format(run_id)
+    subject = '[DNStats] Scan id {} Has Been Published'.format(run_id)
     body = '''
     The stats are now published at https://dnstats.io.
     
@@ -423,7 +429,7 @@ def _send_published_email(run_id: int):
 
 
 def _send_sites_updated_started():
-    subject = 'DNStats Site List Update Started'
+    subject = '[DNStats] Site List Update Started'
     body ="""
         Started site list upgrade at: {}
         
@@ -441,7 +447,7 @@ def _send_sites_updated_started():
 
 
 def _send_sites_updated_done():
-    subject = 'DNStats Site List Update Is Done'
+    subject = '[DNStats] Site List Update Is Done'
     body ="""
         Ended site list upgrade at: {}
         
@@ -455,6 +461,23 @@ def _send_sites_updated_done():
         
         
     """.format(datetime.datetime.now().strftime('%c'))
+    message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
+                   plain_text_content=body)
+    _send_message(message)
+
+
+def _send_botched_deploy(date, run_id: int, count: int, target_count: int):
+    delta = target_count - count
+    subject = '[DNStats] CRITICAL Botched Website Deploy'
+    body = '''
+    Run id: {run_id}
+    Target: {target_count}
+    Actual = {count}
+    Delta = {delta}
+    Run start Time = {starting_time}
+    Cowardly refusing to deploy run {run_id}, it appears the scan failed or is not finished. Investigate and publish 
+    results.
+    '''.format(starting_time=date.strftime('%c'), run_id=run_id, target_count=target_count, count=count, delta=delta)
     message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
                    plain_text_content=body)
     _send_message(message)
