@@ -1,6 +1,9 @@
 default:
   image: python:3.7
 
+stages:
+  - test
+  - pages
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
@@ -29,5 +32,20 @@ before_script:
   - python -m dnstats.db.seed
 
 test:
+  stage: test
   script:
-    - python -m unittest
+    - coverage run -m unittest discover
+    - coverage report -m
+
+pages:
+  stage: pages
+  script:
+    - cd docs
+    - make html
+    - mv _build/html/ ../public/
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
+  allow_failure: true
