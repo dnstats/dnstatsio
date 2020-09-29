@@ -13,6 +13,11 @@ body a:hover {
     text-decoration: none;
 }
 
+.histogram {
+	width: 450px;
+	height: 450px;
+}
+
 /* http://www.responsivegridsystem.com/calculator/
   SECTIONS  */
 .section {

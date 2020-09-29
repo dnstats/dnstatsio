@@ -1,3 +1,4 @@
+import json
 import os
 import socket
 import datetime
@@ -176,7 +177,7 @@ def create_reports(run_id: int):
     ]
     js_filename = _create_time_date_filename('charts')
     _render_piejs(category_data, histograms_data, js_filename)
-    html_filename = _create_html(category_data, run_id, js_filename)
+    html_filename = _create_html(category_data, histograms_data, run_id, js_filename)
     return js_filename, html_filename
 
 
@@ -190,14 +191,14 @@ def _run_histogram(query: str, report: str, run_id: int) -> [{}]:
             result.append({'grade': row[0], 'count': row[1]})
 
     filename = _create_time_date_filename(report)
-    return filename, report, slugify(report), result
+    return filename, report, slugify(report),  json.dumps(result)
 
 
-def _create_html(category_data: [()], run_id: int, js_filename: str):
+def _create_html(category_data: [()], histograms: [()], run_id: int, js_filename: str):
     for filename in category_data:
         print(filename[1], filename[2])
     hostname = socket.gethostname()
-    file_loader = q(os.path.join(os.path.dirname(__file__), 'templates'))
+    file_loader = FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates'))
     env = Environment(loader=file_loader)
     template = env.get_template('index.html')
     run = db_session.query(models.Run).filter_by(id=run_id).one()
@@ -205,7 +206,7 @@ def _create_html(category_data: [()], run_id: int, js_filename: str):
     js_sha = calculate_sri_hash(js_filename + '.js')
     end_rank = '{:,}'.format(run.end_rank)
     result = template.render(charts=category_data, report_date=report_date, end_rank=end_rank,
-                             js_filename=js_filename,
+                             js_filename=js_filename, histrograms=histograms,
                              js_sha=js_sha, hostname=hostname)
     filename = _create_time_date_filename('index') + '.html'
     with open(filename, 'w') as file:
