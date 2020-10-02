@@ -121,24 +121,24 @@
             <div class="col span_1_of_2">
                 <h3>Combined Grade</h3>
                 <hr />
-                <div class="histogram" id="combined_grade_distribution"></div>
+                <svg class="histogram" id="combined_grade_distribution"></svg>
             </div>
             <div class="col span_1_of_2">
                 <h3>CAA Grade</h3>
                 <hr />
-                <div class="histogram" id="caa_grade_distribution"></div>
+                <svg class="histogram" id="caa_grade_distribution"></svg>
             </div>
         </div>
         <div class="section group">
             <div class="col span_1_of_2">
                 <h3>DMARC Grade</h3>
                 <hr />
-                <div class="histogram" id="dmarc_grade_distribution"></div>
+                <svg class="histogram" id="dmarc_grade_distribution"></svg>
             </div>
             <div class="col span_1_of_2">
                 <h3>SPF Grade</h3>
                 <hr />
-                <div class="histogram" id="spf_grade_distribution"></div>
+                <svg class="histogram" id="spf_grade_distribution"></svg>
             </div>
         </div>
         <hr />
@@ -147,7 +147,7 @@
         Creative Commons Attribution 4.0 International License</a>.</p>
         <p>Created by <a href="https://matthewburket.com" target="_blank">Matthew Burket</a>.</p>
     </body>
-    <script integrity="sha384-A753X7DKbqixyg9PJac76aNkFtPsX0ycrZTWbtFasXq1cWjTruFWwrvspVjmKQIZ" crossorigin="anonymous"  src="/d3.js"></script>
-    <script integrity="sha384-hChw8ZV0Iwp7ETExPFldu4PYtFKfWwWBZRiYW/ZvQqWDSsZ33fUS9reU6+gnTvB0" crossorigin="anonymous" src="/d3pie.min.js"></script>
+    <script crossorigin="anonymous"  src="/d3.js"></script>
+    <script crossorigin="anonymous" src="/d3pie.js"></script>
     <script integrity="sha384-{{ js_sha }}" src="{{ js_filename }}.js" crossorigin="anonymous"></script>
 </html>

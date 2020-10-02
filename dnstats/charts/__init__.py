@@ -141,17 +141,18 @@ def create_reports(run_id: int):
 
                 """.format(run_id)
 
-    caa_grade_distribution = "select caa_grade, count(*) from site_runs where run_id={} group by caa_grade".format(
+    caa_grade_distribution = "select caa_grade, count(*) from site_runs where run_id={} group by caa_grade order by caa_grade".format(
         run_id)
-    dmarc_grade_distribution = "select dmarc_grade, count(*) from site_runs where run_id={} group by dmarc_grade".format(
+    dmarc_grade_distribution = "select dmarc_grade, count(*) from site_runs where run_id={} group by dmarc_grade order by dmarc_grade".format(
         run_id)
-    spf_grade_distribution = "select spf_grade, count(*) from site_runs where run_id={} group by spf_grade".format(
+    spf_grade_distribution = "select spf_grade, count(*) from site_runs where run_id={} group by spf_grade order by spf_grade".format(
         run_id)
     overall_grade_distribution = """select COALESCE(dmarc_grade, 0) + COALESCE(caa_grade, 0) +
                                           COALESCE(spf_grade, 0) as grade, count(*)
                                        from site_runs
                                        where run_id=224
-                                       group by grade;
+                                       group by grade
+                                       order by grade;
      """
 
     category_data = [_run_report(spf_adoption_query, 'SPF Adoption', True, run_id),
