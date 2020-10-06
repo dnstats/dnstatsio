@@ -223,8 +223,11 @@ def launch_run(run_id):
                                                       models.Site.current_rank <= run.end_rank))
 
     sites_all_chunked = list(chunks(sites.all(), 10000))
+    c = 0
     for sites in sites_all_chunked:
-        group(chain(site_stat.s(site.id, run.id), process_result.s()) for site in sites).apply_async()
+        g = group(chain(site_stat.s(site.id, run.id), process_result.s()) for site in sites).apply_async()
+        print(c)
+        c += 1
     _send_eoq(run_id)
 
 
