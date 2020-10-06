@@ -185,16 +185,15 @@ def grade_dmarc(site_run_id: int):
     records = site_run.j_dmarc_record
     grade = 0
     dmarcs = list()
-    if not records:
-        return grade
-    for record in records:
-        record = record.replace('"', '')
-        if record.startswith('v=DMARC1;'):
-            logger.debug('DMARC - {} - {}'.format(site_run_id, record))
-            dmarcs.append(record)
-    if dmarcs:
-        logger.debug('DMARC Count - {} - {}'.format(site_run_id, len(dmarcs)))
-        grade = grade_dmarc_record(dmarcs, site.domain)
+    if records:
+        for record in records:
+            record = record.replace('"', '')
+            if record.startswith('v=DMARC1;'):
+                logger.debug('DMARC - {} - {}'.format(site_run_id, record))
+                dmarcs.append(record)
+        if dmarcs:
+            logger.debug('DMARC Count - {} - {}'.format(site_run_id, len(dmarcs)))
+            grade = grade_dmarc_record(dmarcs, site.domain)
     site_run.dmarc_grade = grade
     db_session.commit()
 
@@ -204,14 +203,14 @@ def grade_caa(site_run_id: int):
     site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
     site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
     records = site_run.j_caa_records
+    grade = 0
     if not records:
-        site_run.caa_grade = 0
         logger.debug("CAA Grade: {} - {} - {} - NO CAA".format(site.domain, site_run.caa_grade, 0))
+        grade = 0
     else:
-        records = site_run.j_caa_records
-        grade = grade_caa_records(records, site.domain)
-        site_run.caa_grade = grade
         logger.debug("CAA Grade: {} - {} - {}".format(site.domain, site_run.caa_grade, grade))
+        grade = grade_caa_records(records, site.domain)
+    site_run.dmarc_grade = grade
     db_session.commit()
 
 
