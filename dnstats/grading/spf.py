@@ -20,9 +20,9 @@ def grade(spfs: list, domain: str, has_mx: True) -> int:
     # Return a grade 5 if there is no SPF
     # Since NO SPF is better than pass all
     if has_mx:
-        no_spf_grade = 10
+        no_spf_grade = 0
     else:
-        no_spf_grade = 6
+        no_spf_grade = 3
 
     if len(errors) != 0:
         return no_spf_grade
