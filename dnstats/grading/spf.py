@@ -2,8 +2,8 @@ from dnstats.dnsvalidate.spf import Spf, SpfError, extract_spf_from_txt
 
 SPF_POLICY_GRADE = {
     '-all': 100,
-    '~all': 60,
-    '?all': 35,
+    '~all': 75,
+    '?all': 50,
     '+all': 0
 }
 
@@ -19,10 +19,14 @@ def grade(spfs: list, domain: str, has_mx: True) -> int:
     spf_txt_record, errors = extract_spf_from_txt(spfs, domain)
     # Return a grade 5 if there is no SPF
     # Since NO SPF is better than pass all
+    # Reasoning: If you have an MX record it is assume you are using this domain to send mail. If you sending email
+    # and do not have an SPF record you WILL run into mail delivery issue. The is evidence of big email providers
+    # such as Microsoft filtering messages from domains without SPF. The results are not consistent. This matters to
+    # security due to the violation of availability in the CIA model.
     if has_mx:
         no_spf_grade = 0
     else:
-        no_spf_grade = 3
+        no_spf_grade = 20
 
     if len(errors) != 0:
         return no_spf_grade
