@@ -71,6 +71,9 @@ class SiteRun(Base):
     def has_dmarc_reporting(self):
         return self.has_dmarc_aggregate_reporting or self.has_dmarc_forensic_reporting
 
+    def has_mx(self) -> bool:
+        return self.mx_records is not None
+
 
 class SpfPolicy(Base):
     __tablename__ = 'spf_policies'

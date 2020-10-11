@@ -173,7 +173,7 @@ def grade_spf(site_run_id: int):
     site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
     site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
     records = site_run.j_txt_records
-    grade = grade_spf_record(records, site.domain)
+    grade = grade_spf_record(records, site.domain, site_run.has_mx)
     site_run.spf_grade = grade
     db_session.commit()
 
