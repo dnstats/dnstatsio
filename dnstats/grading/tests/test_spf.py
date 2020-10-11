@@ -7,7 +7,7 @@ from dnstats.grading.spf import grade as grade_spf
 class TestSpf(unittest.TestCase):
     def test_invalid(self):
         grade = grade_spf(['not spf'], 'example.com', False)
-        self.assertEqual(3, grade)
+        self.assertEqual(20, grade)
 
     def test_invalid_with_mx(self):
         grade = grade_spf(['not spf'], 'example.com', True)
@@ -15,7 +15,7 @@ class TestSpf(unittest.TestCase):
 
     def test_no_spf_no_mx(self):
         grade = grade_spf([], 'example.com', False)
-        self.assertEqual(3, grade)
+        self.assertEqual(20, grade)
 
     def test_no_spf_with_mx(self):
         grade = grade_spf([], 'example.com', True)
@@ -57,10 +57,14 @@ class TestSpf(unittest.TestCase):
         grade = grade_spf(['v=spf1 include:tacos.all -all'], 'dnstats.io', False)
         self.assertEqual(100, grade)
 
+    def test_tacos_sub_all(self):
+        grade = grade_spf(['v=spf1 include:tacos.all ~all'], 'dnstats.io', False)
+        self.assertEqual(75, grade)
+
     def test_tacos_all_default(self):
         grade = grade_spf(['v=spf1 include:tacos.all'], 'dnstats.io', False)
         self.assertEqual(20, grade)
 
     def test_many_spf_records(self):
         grade = grade_spf(['"v=spf1 -all"', '"v=spf1 -all"'], 'example.com', False)
-        self.assertEqual(3, grade)
+        self.assertEqual(20, grade)
