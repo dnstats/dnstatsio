@@ -147,12 +147,12 @@ def create_reports(run_id: int):
         run_id)
     spf_grade_distribution = "select spf_grade from site_runs where run_id={} order by spf_grade".format(
         run_id)
-    overall_grade_distribution = """select COALESCE(dmarc_grade, 0) + COALESCE(caa_grade, 0) +
-                                          COALESCE(spf_grade, 0) as grade
+    overall_grade_distribution = """select (ceil(((COALESCE(dmarc_grade, 0) + COALESCE(caa_grade, 0) +
+                                          COALESCE(spf_grade, 0))/300.0)*100)::integer) as grade
                                        from site_runs
-                                       where run_id=224
+                                       where run_id={}
                                        order by grade;
-     """
+     """.format(run_id)
 
     category_data = [_run_report(spf_adoption_query, 'SPF Adoption', True, run_id),
                      _run_report(spf_reports_query, 'SPF Policy', False, run_id),

@@ -54,7 +54,6 @@ const width = 550 - 2 * margin;
 const height = 550 - 2 * margin;
 
 {% for histogram in histograms %}
-
     const {{histogram[2]}}_svg = d3.select('#{{ histogram[2] }}')
     const {{histogram[2]}}_data = {{histogram[3]}};
 
@@ -66,8 +65,7 @@ const height = 550 - 2 * margin;
     .range([0, width])
     .domain([0, d3.max({{histogram[2]}}_data.map((s) =>  { return s; }))]);
 
-    const {{histogram[2]}}_histogram = d3.histogram().value((s) => { return s }).domain({{histogram[2]}}_xScale.domain())
-            .thresholds({{histogram[2]}}_xScale.ticks(5));
+    const {{histogram[2]}}_histogram = d3.histogram().value((s) => { return s; }).domain({{histogram[2]}}_xScale.domain());
 
     const {{histogram[2]}}_bins = {{histogram[2]}}_histogram({{histogram[2]}}_data)
 
@@ -83,7 +81,7 @@ const height = 550 - 2 * margin;
     .call(d3.axisLeft({{histogram[2]}}_yScale));
 
 
-    {{histogram[2]}}_chart.append("g")
+    {{histogram[2]}}_chart.selectAll("rect")
     .data({{histogram[2]}}_bins)
     .enter()
     .append('rect')
@@ -92,6 +90,4 @@ const height = 550 - 2 * margin;
         .attr('width', (d) => { return {{histogram[2]}}_xScale(d.x1) - {{histogram[2]}}_xScale(d.x0)  - 1; })
         .attr("height", (d) => { return height - {{histogram[2]}}_yScale(d.length); })
         .style("fill", "#69b3a2");
-
-
 {% endfor %}
