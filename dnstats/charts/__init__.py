@@ -141,16 +141,17 @@ def create_reports(run_id: int):
 
                 """.format(run_id)
 
-    caa_grade_distribution = "select caa_grade from site_runs where run_id={} order by caa_grade".format(
+    caa_grade_distribution = "select caa_grade, count(*) from site_runs where run_id={} group by caa_grade order by caa_grade".format(
         run_id)
-    dmarc_grade_distribution = "select dmarc_grade from site_runs where run_id={} order by dmarc_grade".format(
+    dmarc_grade_distribution = "select dmarc_grade, count(*) from site_runs where run_id={}  group by dmarc_grade order by dmarc_grade".format(
         run_id)
-    spf_grade_distribution = "select spf_grade from site_runs where run_id={} order by spf_grade".format(
+    spf_grade_distribution = "select spf_grade, count(*) from site_runs where run_id={} group by spf_grade order by spf_grade".format(
         run_id)
     overall_grade_distribution = """select (ceil(((COALESCE(dmarc_grade, 0) + COALESCE(caa_grade, 0) +
-                                          COALESCE(spf_grade, 0))/300.0)*100)::integer) as grade
+                                          COALESCE(spf_grade, 0))/300.0)*100)::integer) as grade, count(*)
                                        from site_runs
                                        where run_id={}
+                                       group by grade
                                        order by grade;
      """.format(run_id)
 
@@ -185,14 +186,29 @@ def _run_histogram(query: str, report: str, run_id: int) -> [{}]:
     with engine.connect() as connection:
         result_set = connection.execute(query)
 
-        result = []
+        results = []
+        for i in range(0, 10):
+            results.append(0)
 
         for row in result_set:
-            result.append(row[0])
+            results[_get_percentage_bin(row[0])] += row[1]
+
+        json_result = []
+        # Grade is min of the bin
+        for i in range(0, 10):
+            json_result.append({'grade': i * 10, 'count': results[i]})
 
     filename = _create_time_date_filename(report)
-    return filename, report, slugify(report),  json.dumps(result)
+    return filename, report, slugify(report),  json.dumps(json_result)
 
+
+def _get_percentage_bin(num: int) -> int:
+   if not num or num < 10:
+      return 0
+   if num == 100:
+       return 0
+   else:
+      return int(str(num)[0:1])
 
 def _create_html(category_data: [()], histograms: [()], run_id: int, js_filename: str):
     for filename in category_data:

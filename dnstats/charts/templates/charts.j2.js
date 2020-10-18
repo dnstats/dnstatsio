@@ -63,11 +63,8 @@ const height = 550 - 2 * margin;
 
     const {{histogram[2]}}_xScale = d3.scaleLinear()
     .range([0, width])
-    .domain([0, d3.max({{histogram[2]}}_data.map((s) =>  { return s; }))]);
+    .domain([0, 100]);
 
-    const {{histogram[2]}}_histogram = d3.histogram().value((s) => { return s; }).domain({{histogram[2]}}_xScale.domain());
-
-    const {{histogram[2]}}_bins = {{histogram[2]}}_histogram({{histogram[2]}}_data)
 
 {{histogram[2]}}_chart.append('g')
     .attr('transform', `translate(0, ${height})`)
@@ -75,19 +72,21 @@ const height = 550 - 2 * margin;
 
     const {{histogram[2]}}_yScale = d3.scaleLinear()
     .range([height, 0])
-    .domain([0, d3.max({{histogram[2]}}_bins, (s) => { return s.length })]);
+    .domain([0, d3.max({{histogram[2]}}_data, (s) => { return s.count })]);
 
     {{histogram[2]}}_chart.append('g')
     .call(d3.axisLeft({{histogram[2]}}_yScale));
 
 
     {{histogram[2]}}_chart.selectAll("rect")
-    .data({{histogram[2]}}_bins)
+    .data({{histogram[2]}}_data)
     .enter()
     .append('rect')
-        .attr('x', 1)
-        .attr("transform", (d) => { return "translate(" + {{histogram[2]}}_xScale(d.x0) + "," + {{histogram[2]}}_yScale(d.length) + ")"; })
-        .attr('width', (d) => { return {{histogram[2]}}_xScale(d.x1) - {{histogram[2]}}_xScale(d.x0)  - 1; })
-        .attr("height", (d) => { return height - {{histogram[2]}}_yScale(d.length); })
-        .style("fill", "#69b3a2");
+        .attr('x', (s) => { return {{histogram[2]}}_xScale(s.grade)})
+        .attr('y', (s) => { return {{histogram[2]}}_yScale(s.count)})
+        .attr('height', (s) => { return height - {{histogram[2]}}_yScale(s.count); })
+        .attr('width', width/10)
+        .attr('class', 'bar')
+        .style('fill', '#69b3a2');
+
 {% endfor %}
