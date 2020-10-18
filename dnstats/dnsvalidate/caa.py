@@ -66,7 +66,7 @@ def validate(caa_result_set: list, domain: str) -> dict:
         if len(parts) != 3:
             errors.append(CAAErrors.INVALID_PROPERTY_STRUCTURE)
             continue
-        # Validate to section 5.1.1
+        # Validate to section 4.1.1
         flag = parts[0]
         tag = parts[1]
         value = parts[2]
@@ -92,7 +92,7 @@ def validate(caa_result_set: list, domain: str) -> dict:
         if not value.startswith('"') and value.__contains__(' '):
             errors.append(CAAErrors.VALUE_NOT_QUOTED)
             continue
-        # Section 5.2
+        # Section 4.2
         if tag == 'issue':
             value = value.replace('"', '')
 
@@ -104,7 +104,7 @@ def validate(caa_result_set: list, domain: str) -> dict:
                 errors.append(CAAErrors.ISSUE_DOMAIN_INVALID)
                 continue
             issue.append(value)
-        # Section 5.3
+        # Section 4.3
         elif tag == 'issuewild':
             value = value.replace('"', '')
             if value == ';':
@@ -115,7 +115,7 @@ def validate(caa_result_set: list, domain: str) -> dict:
                 errors.append(CAAErrors.ISSUEWILD_DOMAIN_INVALID)
                 continue
             issuewild.append(value)
-
+        # Section 4.4
         elif tag == 'iodef':
             value = value.replace('"', '')
             iodef_schemes = ['http', 'https', 'mailto']
@@ -144,5 +144,4 @@ def validate(caa_result_set: list, domain: str) -> dict:
     result['issuewild'] = issuewild
     result['iodef'] = iodef
     return result
-
 
