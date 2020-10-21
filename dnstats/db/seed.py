@@ -3,7 +3,8 @@ import csv
 import dnstats.db.models as models
 from dnstats.db import db_session
 
-def seed_db()  -> None:
+
+def seed_db() -> None:
     _seed_dmarc_policy()
     _seed_spf()
     _seed_email_providers()
