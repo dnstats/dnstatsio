@@ -102,7 +102,7 @@ class DnsProvider(Base):
     UniqueConstraint('search_regex')
 
 
-class RemarkTypes(Base):
+class RemarkType(Base):
     __tablename__ = 'remark_types'
     id = Column(SmallInteger, primary_key=True)
     name = Column(String, nullable=False)

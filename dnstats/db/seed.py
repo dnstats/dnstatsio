@@ -37,7 +37,7 @@ def _seed_remark_types():
     remark_types = ['spf', 'dmarc']
 
     for remark_type in remark_types:
-        remark_type_db = models.RemarkTypes(name=remark_type)
+        remark_type_db = models.RemarkType(name=remark_type)
         db_session.add(remark_type_db)
         db_session.commit()
 
