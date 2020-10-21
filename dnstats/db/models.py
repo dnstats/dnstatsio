@@ -115,10 +115,16 @@ class Remark(Base):
     name = Column(String, nullable=False)
     remark_type_id = Column(SmallInteger, ForeignKey('remark_types.id'))
     remark_level = Column(SmallInteger)
+    enum_value = Column(BigInteger)
+
+    UniqueConstraint(remark_type_id, enum_value)
+    UniqueConstraint('name', 'remark_type_id')
 
 
-class SiteRunRemark(Base):
+class SiterunRemark(Base):
     __tablename__ = 'siterun_remarks'
     id = Column(BigInteger, primary_key=True)
     site_run_id = Column(BigInteger, ForeignKey('site_runs.id'))
     remark_id = Column(SmallInteger, ForeignKey('remarks.id'))
+
+    UniqueConstraint('remark_id', 'site_run_id')
