@@ -88,9 +88,12 @@ def _seed_remark_types():
     remark_types = ['spf', 'dmarc', 'caa']
 
     for remark_type in remark_types:
-        remark_type_db = models.RemarkType(name=remark_type)
-        db_session.add(remark_type_db)
-        db_session.commit()
+        remark_type_s = db_session.query(models.RemarkType).filter_by(name=remark_type).scalar()
+
+        if not remark_type_s:
+            remark_type_db = models.RemarkType(name=remark_type)
+            db_session.add(remark_type_db)
+            db_session.commit()
 
 
 def _seed_spf():
