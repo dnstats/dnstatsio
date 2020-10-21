@@ -71,7 +71,7 @@ def _seed_remarks():
 
 def _seed_remark_arrays(remark_type_db_spf: models.RemarkType, spf: list) -> None:
     for remark in spf:
-        remark_db = db_session.query(models.Remark).filter_by(remark_type_db_id=remark_type_db_spf.id,
+        remark_db = db_session.query(models.Remark).filter_by(remark_type_id=remark_type_db_spf.id,
                                                               enum_value=remark[2])
 
         if not remark_db:
