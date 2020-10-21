@@ -37,7 +37,7 @@ def _seed_remarks():
     ]
 
     spf = [
-        [(0, 'None', 0),
+         (0, 'None', 0),
          (0, 'Invalid Record Start', 1),
          (3, 'Has Ptr', 2),
          (2, 'Too Many DNS Lookups', 3),
@@ -61,7 +61,6 @@ def _seed_remarks():
          (1, 'Too Many Endings', 21),
          (0, 'Too Many Starts', 22),
          (4, 'No MX Records', 23)]
-    ]
     remark_type_db_dmarc = models.RemarkType(name='dmarc')
     _seed_remark_arrays(remark_type_db_dmarc, dmarc)
 
