@@ -10,27 +10,78 @@ def seed_db() -> None:
     _seed_email_providers()
     _seed_ns_providers()
     _seed_remark_types()
+    _seed_remarks()
 
-"""
-Remark Levels
-0 - Fatal
-1 - Error, assuming default
-2 - Warning, value should be used
-3 - Depercation Warning - Value was once valid, no longer
-4 - Info - No action need. Just addional data
-"""
+
 def _seed_remarks():
+    """
+    Remark Levels:
+    0 - Fatal
+    1 - Error, assuming default
+    2 - Warning, value should be used
+    3 - Deprecation Warning - Value was once valid, no longer
+    4 - Info - No action need. Just additional data
+    """
     dmarc = [
-        (1, 'Invalid ADKIM Value'),
-        (1, 'Invalid ASPF Value'),
-        (1, 'Invalid Failure Reporting Value'),
-        (1, 'Invalid Policy'),
-        (1, 'Invalid Subdomain policy')
+        (0, 'Invalid DMARC Record', 0),
+        (1, 'Invalid DKIM alignment mode (adkim) value', 1),
+        (1, 'Invalid SPF alignment mode ASPF, value', 2),
+        (1, 'Invalid Failure Reporting Value', 3),
+        (0, 'Invalid Policy', 4),
+        (1, 'Invalid Subdomain Policy', 5),
+        (0, 'Multiple Dmarc Records', 6),
+        (1, 'Invalid Failure reporting (rf) Value', 7),
+        (1, 'Invalid Aggregate Reporting interval (ri) Value', 8),
+        (1, 'Invalid Percent Value', 9),
+        (0, 'Invalid DMARC Record Start', 10)
     ]
-    remark_type_db = models.Remark(name='dmarc')
-    for remark in dmarc:
-        remark_db = db_session.query(models.Remark).filter_by(remark_type_db=1, remark_level=remark[0], name=remark[1])
-        db_session.add(remark_db)
+
+    spf = [
+        [(0, 'None', 0),
+         (0, 'Invalid Record Start', 1),
+         (3, 'Has Ptr', 2),
+         (2, 'Too Many DNS Lookups', 3),
+         (1, 'Default All Qualifier', 4),
+         (1, 'Invalid Include Format', 5),
+         (0, 'Include Returned Many Spf', 6),
+         (2, 'Too Many A Records Returned', 7),
+         (1, 'Invalid A Mechanism', 8),
+         (1, 'Invalid MX Mechanism', 9),
+         (2, 'Too Many MX Records Returned', 10),
+         (1, 'Invalid Redirect Mechanism', 11),
+         (0, 'No Record At Redirect', 12),
+         (0, 'Redirect Returned Many Spf', 13),
+         (1, 'Invalid IPv4 Mechanism', 14),
+         (1, 'Invalid IPv6 Mechanism', 15),
+         (1, 'Invalid Mechanism', 16),
+         (0, 'Multiple Spf Records', 17),
+         (0, 'No Spf Found', 18),
+         (1, 'Invalid IPv4 Cidr', 19),
+         (1, 'Invalid IPv6 Cidr', 20),
+         (1, 'Too Many Endings', 21),
+         (0, 'Too Many Starts', 22),
+         (4, 'No MX Records', 23)]
+    ]
+    remark_type_db_dmarc = models.RemarkType(name='dmarc')
+    _seed_remark_arrays(remark_type_db_dmarc, dmarc)
+
+    remark_type_db_spf = models.RemarkType(name='spf')
+    _seed_remark_arrays(remark_type_db_spf, spf)
+
+
+def _seed_remark_arrays(remark_type_db_spf: models.RemarkType, spf: list) -> None:
+    for remark in spf:
+        remark_db = db_session.query(models.Remark).filter_by(remark_type_db_id=remark_type_db_spf.id,
+                                                              enum_value=remark[2])
+
+        if not remark_db:
+            remark_db.remark_level = remark[0]
+            remark_db.name = remark[1]
+            remark.enum_value = remark[2]
+        else:
+            remark_db = models.Remark(remark_type_id=remark_type_db_spf.id, name=remark[1], remark_level=remark[0],
+                                      enum_value=remark[2])
+            db_session.add(remark_db)
         db_session.commit()
 
 
