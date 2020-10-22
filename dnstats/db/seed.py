@@ -90,7 +90,7 @@ def _seed_remark_arrays(remark_type_db_spf: models.RemarkType, spf: list) -> Non
         remark_db = db_session.query(models.Remark).filter_by(remark_type_id=remark_type_db_spf.id,
                                                               enum_value=remark[2]).scalar()
 
-        if remark_db.id:
+        if remark_db:
             remark_db.remark_level = remark[0]
             remark_db.name = remark[1]
             remark_db.enum_value = remark[2]
