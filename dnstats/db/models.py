@@ -65,6 +65,9 @@ class SiteRun(Base):
     j_caa_records = Column(JSON)
     j_txt_records = Column(JSON)
     j_dmarc_record = Column(JSON)
+    j_ns_records = Column(JSON)
+    j_mx_records = Column(JSON)
+    j_ds_recoreds = Column(JSON)
 
     UniqueConstraint('site_id', 'run_id')
 

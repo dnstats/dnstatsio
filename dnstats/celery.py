@@ -159,7 +159,8 @@ def process_result(result: dict):
                         ns_records=result['ns'], email_provider_id=processed['email_provider_id'], dns_provider_id=processed['dns_provider_id'],
                         dnssec_ds_algorithm=processed['ds_algorithm'], dnssec_digest_type=processed['ds_digest_type'],
                         dnssec_dnskey_algorithm=processed['dnssec_dnskey_algorithm'], has_securitytxt=result['has_dnssec'], has_msdc=result['is_msdcs'],
-                        j_caa_records=result['caa'], j_dmarc_record=result['dmarc'], j_txt_records=result['txt'])
+                        j_caa_records=result['caa'], j_dmarc_record=result['dmarc'], j_txt_records=result['txt'],
+                        j_ns_records=result['ns'], j_mx_records=result['mx'], j_ds_recoreds=result['ds'])
     db_session.add(sr)
     db_session.commit()
     grade_spf.s(sr.id).apply_async()
