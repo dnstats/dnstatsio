@@ -61,11 +61,28 @@ def _seed_remarks():
          (1, 'Too Many Endings', 21),
          (0, 'Too Many Starts', 22),
          (4, 'No MX Records', 23)]
+
+    caa = [(0, 'Invalid Property Structure', 0),
+     (0, 'No Caa Records', 1),
+     (1, 'Invalid Flag', 2),
+     (1, 'Invalid Tag', 3),
+     (1, 'Invalid Value', 4),
+     (0, 'Value Quote Error', 5),
+     (0, 'Value Not Quoted', 6),
+     (1, 'Iodef No Scheme', 7),
+     (1, 'Iodef Invalid Email', 8),
+     (1, 'Iodef Invalid Url', 9),
+     (1, 'Issuewild Domain Invalid', 10),
+     (1, 'Issue Domain Invalid', 11),
+     (1, 'Tag Too Long', 12)]
     remark_type_db_dmarc = models.RemarkType(name='dmarc')
     _seed_remark_arrays(remark_type_db_dmarc, dmarc)
 
     remark_type_db_spf = models.RemarkType(name='spf')
     _seed_remark_arrays(remark_type_db_spf, spf)
+
+    remark_type_db_caa = db_session.query(models.RemarkType).filter_by(name='spf').one()
+    _seed_remark_arrays(remark_type_db_caa, caa)
 
 
 def _seed_remark_arrays(remark_type_db_spf: models.RemarkType, spf: list) -> None:
