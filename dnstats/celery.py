@@ -173,9 +173,10 @@ def grade_spf(site_run_id: int):
     site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
     site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
     records = site_run.j_txt_records
-    grade = grade_spf_record(records, site.domain, site_run.has_mx)
+    grade, errors = grade_spf_record(records, site.domain, site_run.has_mx)
     site_run.spf_grade = grade
     db_session.commit()
+    _grade_errors(errors, 'spf', site_run_id)
 
 
 @app.task(time_limit=80, soft_time_limit=75)
@@ -193,7 +194,8 @@ def grade_dmarc(site_run_id: int):
                 dmarcs.append(record)
         if dmarcs:
             logger.debug('DMARC Count - {} - {}'.format(site_run_id, len(dmarcs)))
-            grade = grade_dmarc_record(dmarcs, site.domain)
+            grade, errors = grade_dmarc_record(dmarcs, site.domain)
+            _grade_errors(errors, 'dmarc', site_run_id)
     site_run.dmarc_grade = grade
     db_session.commit()
 
@@ -209,9 +211,18 @@ def grade_caa(site_run_id: int):
         grade = 0
     else:
         logger.debug("CAA Grade: {} - {} - {}".format(site.domain, site_run.caa_grade, grade))
-        grade = grade_caa_records(records, site.domain)
-    site_run.dmarc_grade = grade
+        grade, errors = grade_caa_records(records, site.domain)
+    site_run.caa_grade = grade
     db_session.commit()
+
+
+def _grade_errors(errors: list, grade_type: str, site_run_id: int):
+    remark_type = db_session.query(models.RemarkType).filter_by(name=grade_type).one()
+    for error in errors:
+        remark = db_session.query(models.Remark).filter_by(remark_type_id=remark_type.id, enum_value=error.value).one()
+        remark_siterun = models.SiterunRemark(site_run_id=site_run_id, remark_id=remark.id)
+        db_session.add(remark_siterun)
+        db_session.commit()
 
 
 @app.task()

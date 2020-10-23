@@ -1,5 +1,7 @@
 from dnstats.dnsvalidate.spf import Spf, SpfError, extract_spf_from_txt
 
+from dnstats.db import db_session, models
+
 SPF_POLICY_GRADE = {
     '-all': 100,
     '~all': 75,
@@ -8,7 +10,7 @@ SPF_POLICY_GRADE = {
 }
 
 
-def grade(spfs: list, domain: str, has_mx: True) -> int:
+def grade(spfs: list, domain: str, has_mx: True) -> [int, list]:
     """
     Grade a given SPF for a given domain.
     :param spfs: a list of txt records for the apex
@@ -29,9 +31,9 @@ def grade(spfs: list, domain: str, has_mx: True) -> int:
         no_spf_grade = 20
 
     if len(errors) != 0:
-        return no_spf_grade
+        return no_spf_grade, errors
     if len(spfs) != 1:
-        return no_spf_grade
+        return no_spf_grade, errors
     spf_record = Spf(spf_txt_record, domain)
     errors.extend(spf_record.errors)
     current_grade = SPF_POLICY_GRADE.get(spf_record.final_qualifier)
@@ -41,8 +43,8 @@ def grade(spfs: list, domain: str, has_mx: True) -> int:
     for error in errors:
         if error == SpfError.NO_SPF_FOUND or error == SpfError.INVALID_RECORD_START or \
                 error == SpfError.REDIRECT_RETURNED_MANY_SPF or error == SpfError.INVALID_REDIRECT_MECHANISM:
-            return no_spf_grade
+            return no_spf_grade, errors
     if errors:
         current_grade = current_grade - len(errors) * 2
 
-    return max(current_grade, 0)
+    return max(current_grade, 0), errors
