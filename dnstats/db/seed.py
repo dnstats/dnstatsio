@@ -62,7 +62,9 @@ def _seed_remarks():
          (0, 'Too Many Starts', 22),
          (4, 'No MX Records', 23),
          (2, 'No A Records Returned In Mechanism', 24),
-         (2, 'No MX Records Returned In Mechanism', 25)]
+         (2, 'No MX Records Returned In Mechanism', 25),
+         (1, 'Invalid IPv4 Value', 26),
+         (1, 'Invalid IPv6 Value', 27)]
 
     caa = [(0, 'Invalid Property Structure', 0),
      (0, 'No Caa Records', 1),
