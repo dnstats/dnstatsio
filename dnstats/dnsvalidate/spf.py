@@ -118,7 +118,7 @@ def _validate_spf(spf: str, domain: str):
             a_result = safe_query(domain, 'a')
             if not a_result:
                 errors.append(SpfError.NO_A_RECORDS_IN_MECHANISM)
-
+                break
             if len(a_result) > 10:
                 errors.append(SpfError.TOO_MANY_A_RECORDS_RETURNED)
                 break
