@@ -29,6 +29,8 @@ class SpfError(Enum):
     TOO_MANY_ENDINGS = 21
     TOO_MANY_STARTS = 22
     NO_MX_RECORDS = 23
+    INVALID_IPV4_VALUE = 26
+    INVALID_IPV6_VALUE = 27
 
 
 class Spf:
@@ -144,7 +146,9 @@ def _validate_spf(spf: str, domain: str):
             except ipaddress.NetmaskValueError:
                 errors.append(SpfError.INVALID_IPV4_CIDR)
             except ipaddress.AddressValueError:
-                errors.append(SpfError.INVALID_IPV4_MECHANISM)
+                errors.append(SpfError.INVALID_IPV4_VALUE)
+            except:
+                errors.append(SpfError.INVALID_IPV6_MECHANISM)
 
         elif part.startswith('ip6'):
             ip = part.split(':', 1)
@@ -159,11 +163,13 @@ def _validate_spf(spf: str, domain: str):
                         break
                 else:
                     if not ipaddress.IPv6Address(ip[0]).is_global:
-                        errors.append(SpfError.INVALID_IPV6_MECHANISM)
+                        errors.append(SpfError.INVALID_IPV6_VALUE)
                         break
             except ipaddress.NetmaskValueError:
                 errors.append(SpfError.INVALID_IPV6_CIDR)
             except ipaddress.AddressValueError:
+                errors.append(SpfError.INVALID_IPV6_VALUE)
+            except:
                 errors.append(SpfError.INVALID_IPV6_MECHANISM)
         elif part.startswith('ptr'):
             # Count as one DNS query. No way to valid this without an email

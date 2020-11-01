@@ -60,7 +60,9 @@ def _seed_remarks():
          (1, 'Invalid IPv6 Cidr', 20),
          (1, 'Too Many Endings', 21),
          (0, 'Too Many Starts', 22),
-         (4, 'No MX Records', 23)]
+         (4, 'No MX Records', 23),
+         (1, 'Invalid IPv4 Value', 26),
+         (1, 'Invalid IPv6 Value', 27)]
 
     caa = [(0, 'Invalid Property Structure', 0),
      (0, 'No Caa Records', 1),
