@@ -29,6 +29,8 @@ class SpfError(Enum):
     TOO_MANY_ENDINGS = 21
     TOO_MANY_STARTS = 22
     NO_MX_RECORDS = 23
+    NO_A_RECORDS_IN_MECHANISM = 24
+    NO_MX_RECORDS_IN_MECHANISM = 25
 
 
 class Spf:
@@ -112,16 +114,22 @@ def _validate_spf(spf: str, domain: str):
         elif part.startswith('a'):
             count += 1
             a_result = safe_query(domain, 'a')
+            if not a_result:
+                errors.append(SpfError.NO_A_RECORDS_IN_MECHANISM)
+
             if len(a_result) > 10:
                 errors.append(SpfError.TOO_MANY_A_RECORDS_RETURNED)
                 break
             # TODO: Process if this mech has :
         elif part.startswith('mx'):
             count += 1
-            mx_result = safe_query(domain, 'a')
+            mx_result = safe_query(domain, 'mx')
             if not mx_result:
                 errors.append(SpfError.NO_MX_RECORDS)
                 continue
+            if not mx_result:
+                errors.append(SpfError.NO_MX_RECORDS_IN_MECHANISM)
+                break
             if len(mx_result) > 10:
                 errors.append(SpfError.TOO_MANY_MX_RECORDS_RETURNED)
                 break
