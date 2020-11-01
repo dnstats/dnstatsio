@@ -94,7 +94,6 @@ def get_provider_from_ns_records(ans: list, site: str) -> int:
         providers = db_session.query(models.DnsProvider).filter_by(is_regex=True).all()
         for provider in providers:
             if provider.search_regex in ns_string:
-                print(provider.id)
                 return provider.id
         return db_session.query(models.DnsProvider).filter_by(search_regex='Unknown.').one().id
 

@@ -7,11 +7,11 @@ RUA_RUF = {'none': 10, 'quarantine': 15, 'reject': 15}
 SP = {'none': 0, 'quarantine': 10, 'reject': 15}
 
 
-def grade(dmarcs: list, domain: str) -> int:
+def grade(dmarcs: list, domain: str) -> [int, ()]:
     current_grade = 0
     dmarc = Dmarc(dmarcs)
     if dmarc.errors.__contains__(DmarcErrors.INVALID_DMARC_RECORD_START):
-        return 0
+        return 0, dmarc.errors
     if dmarc.adkim == 's':
         current_grade += 5
     if dmarc.aspf == 's':
@@ -19,7 +19,7 @@ def grade(dmarcs: list, domain: str) -> int:
     current_grade += get_grade(FO, dmarc.fo, 0)
     current_grade += get_grade(P, dmarc.p, 0)
     if dmarc.p not in P:
-        return 0
+        return 0, dmarc.errors
     current_grade += get_grade(RUA_RUF, dmarc.rua, 0)
     current_grade += get_grade(RUA_RUF, dmarc.ruf, 0)
     if not dmarc.sp:
@@ -41,4 +41,4 @@ def grade(dmarcs: list, domain: str) -> int:
     if dmarc.ruf is not None:
         current_grade += 5
 
-    return current_grade
+    return current_grade, dmarc.errors
