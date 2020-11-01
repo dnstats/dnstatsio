@@ -83,7 +83,7 @@ def extract_spf_from_txt(txt_records: list, domain: str):
         return False, errors
 
 
-def _validate_spf(spf: str, domain: str):
+def _validate_spf(spf: str, domain: str) -> {}:
     errors = list()
     if not spf.startswith('v=spf1 '):
         errors.append(SpfError.INVALID_RECORD_START)
@@ -106,7 +106,8 @@ def _validate_spf(spf: str, domain: str):
     # START Mechanisms as defined in RFC 7208 Sec. 5
         if part.startswith('all'):
             # TODO: check for others and reduce grade if others mechanism are after (RFC 7209 5.1)
-            return errors
+            result['errors'] = errors
+            return result
         elif part.startswith('include'):
             count += 1
             sub_parts = part.split(':')
