@@ -131,7 +131,7 @@ def query_name_server(dns_server_ips: list, domain: str, request_type: str) -> [
     resolver.nameservers = dns_server_ips
     r = None
     try:
-        r = resolver.resolve(domain, request_type)
+        r = dns.resolver.resolve(domain, request_type)
     except:
         pass
     if r:

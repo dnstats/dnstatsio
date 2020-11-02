@@ -2,8 +2,6 @@ from enum import Enum
 
 import ipaddress
 
-from dnstats.dnsutils import safe_query
-
 
 class NsErrors(Enum):
     NO_NS_RECORDS = 0
@@ -18,7 +16,7 @@ class Ns:
     """
     Validate NS records for a given domain.
     """
-    def __int__(self, ns_records: list, domain: str):
+    def __int__(self, ns_records: list, ns_ip_addresses: dict, ns_server_ns_results: dict,  domain: str) -> {}:
         """
         Setup an name server check
 
@@ -27,7 +25,9 @@ class Ns:
         """
         self.domain = domain
         self.ns_records = ns_records
-        self._result = self.validate()
+        self.ns_ip_addresses = ns_ip_addresses
+        self.ns_server_ns_results = ns_server_ns_results
+        self._result = self._validate()
         self.errors = self._result['errors']
         self.validated_nameservers = self._result['validated_nameservers']
 
@@ -43,26 +43,19 @@ class Ns:
             errors.append(NsErrors.ONLY_ONE_NS_RECORD)
 
         validated_records = []
-        for ns_record in self.ns_records:
-            if not ns_record:
+        for record in list(self.ns_ip_addresses.keys()):
+            if not self.ns_ip_addresses[record]:
                 errors.append(NsErrors.NULL_NS_RECORD)
-                break
-            ns_lookup_results = safe_query(ns_record, 'a')
-            ns_lookup_results += safe_query(ns_record, 'aaaa')
-            if not ns_lookup_results:
-                errors.append(NsErrors.NAMESERVER_HAS_NO_A)
-
-            for ns_lookup_result in ns_lookup_results:
+            for ip in self.ns_ip_addresses[record]:
                 try:
-                    r = ipaddress.ip_address(ns_lookup_result)
+                    r = ipaddress.ip_address(ip)
                     if not r.is_global:
                         errors.append(NsErrors.NAMESERVER_IS_NOT_PUBLIC)
                         break
                 except:
                     errors.append(NsErrors.NAMESERVER_HAS_INVALID_RESPONSE)
                     break
-
-                validated_records.append(ns_record)
+            validated_records.append(record)
 
         result['errors'] = errors
         result['validated_nameservers'] = validated_records
