@@ -14,7 +14,7 @@ def safe_query(site: str, type: str):
     """
     r = None
     try:
-        r = dns.resolver.query(site, type)
+        r = dns.resolver.resolve(site, type)
     except:
         pass
 
@@ -115,21 +115,29 @@ def is_a_msft_dc(domain: str) -> bool:
     else:
         return False
 
-def query_name_server(dns_server: str, domain: str, request_type: str) -> []:
+
+def query_name_server(dns_server_ips: list, domain: str, request_type: str) -> []:
     """
     Do a query with a given name server, domain, and request type
-    :param dns_server: DNS Name of the name server to use
+    :param dns_server_ips: IP addresses of the name servers to use
     :param domain: domain to query
     :param request_type: type of record to query
     :return: list of records from the requested query
     """
-    if not dns_server or not domain or not request_type:
+    if not dns_server_ips or not domain or not request_type:
         return ValueError('All arguments must not be Falsey')
 
-    nameserver_ipaddress = safe_query(dns_server)
-    if not nameserver_ipaddress:
-        raise ValueError('Given name servers do not have IPs')
-
     resolver = dns.resolver.Resolver(configure=False)
-    resolver.nameservers = nameserver_ipaddress
-    return resolver.query(domain, request_type)
+    resolver.nameservers = dns_server_ips
+    r = None
+    try:
+        r = resolver.resolve(domain, request_type)
+    except:
+        pass
+    if r:
+        results = list()
+        for ans in r:
+            results.append(ans.to_text())
+        return results
+    else:
+        return None

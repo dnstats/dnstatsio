@@ -130,7 +130,7 @@ def site_stat(site_id: int, run_id: int):
     logger.debug('set run id {} -- done'.format(site.domain))
     result['name_server_ips'] = get_name_server_ips(result['ns'])
     logger.debug('got the IP addresses for all the name servers')
-    result['ns_server_ns_results'] = get_name_server_results(result['ns'], site.domain)
+    result['ns_server_ns_results'] = get_name_server_results(result['name_server_ips'], site.domain)
     logger.debug('got name server results from each name server')
 
     return result
