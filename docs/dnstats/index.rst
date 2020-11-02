@@ -55,3 +55,10 @@ dnstats.dnsvalidate.spf
 .. automodule:: dnstats.dnsvalidate.spf
    :members:
    :undoc-members:
+
+dnstats.dnsvalidate.ns
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: dnstats.dnsvalidate.ns
+   :members:
+   :undoc-members:
