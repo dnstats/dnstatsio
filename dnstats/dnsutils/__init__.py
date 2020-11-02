@@ -1,10 +1,17 @@
 import dns.resolver
 
+
 from dnstats.db import models
 from dnstats.db import db_session
 
 
 def safe_query(site: str, type: str):
+   """
+   Perform the given query. If any errors return None.
+
+   :param site: the domain to query
+   :param type: type of query to perform
+   """
     r = None
     try:
         r = dns.resolver.query(site, type)
@@ -108,3 +115,21 @@ def is_a_msft_dc(domain: str) -> bool:
     else:
         return False
 
+def query_name_server(dns_server: str, domain: str, request_type: str) -> []:
+    """
+    Do a query with a given name server, domain, and request type
+    :param dns_server: DNS Name of the name server to use
+    :param domain: domain to query
+    :param request_type: type of record to query
+    :return: list of records from the requested query
+    """
+    if not dns_server or not domain or not request_type:
+        return ValueError('All arguments must not be Falsey')
+
+    nameserver_ipaddress = safe_query(dns_server)
+    if not nameserver_ipaddress:
+        raise ValueError('Given name servers do not have IPs')
+
+    resolver = dns.resolver.Resolver(configure=False)
+    resolver.nameservers = nameserver_ipaddress
+    return resolver.query(domain, request_type)

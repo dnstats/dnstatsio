@@ -19,6 +19,7 @@ import dnstats.dnsutils.spf as spfutils
 import dnstats.dnsutils.mx as mxutils
 import dnstats.db.models as models
 from dnstats.dnsutils.dnssec import parse_ds, parse_dnskey
+from dnstats.dnsutils.ns import get_name_server_ips, get_name_server_results
 from dnstats.db import db_session, engine
 from dnstats.utils import chunks
 from dnstats.httputils import has_security_txt
@@ -98,7 +99,7 @@ def do_charts_latest():
     do_charts.s(run.id).apply_async()
 
 
-@app.task(time_limit=420, soft_time_limit=400, queue='gevent')
+@app.task(time_limit=450, soft_time_limit=500, queue='gevent')
 def site_stat(site_id: int, run_id: int):
     logger.debug('start site stat site {} run id {}'.format(site_id, run_id))
     result = dict()
@@ -127,6 +128,10 @@ def site_stat(site_id: int, run_id: int):
     logger.debug('set rank {}'.format(site.domain))
     result['run_id'] = run_id
     logger.debug('set run id {} -- done'.format(site.domain))
+    result['name_server_ips'] = get_name_server_ips(result['ns'])
+    logger.debug('got the IP addresses for all the name servers')
+    result['ns_server_ns_results'] = get_name_server_results(result['ns'], site.domain)
+    logger.debug('got name server results from each name server')
 
     return result
 
@@ -160,7 +165,8 @@ def process_result(result: dict):
                         dnssec_ds_algorithm=processed['ds_algorithm'], dnssec_digest_type=processed['ds_digest_type'],
                         dnssec_dnskey_algorithm=processed['dnssec_dnskey_algorithm'], has_securitytxt=result['has_dnssec'], has_msdc=result['is_msdcs'],
                         j_caa_records=result['caa'], j_dmarc_record=result['dmarc'], j_txt_records=result['txt'],
-                        j_ns_records=result['ns'], j_mx_records=result['mx'], j_ds_recoreds=result['ds'])
+                        j_ns_records=result['ns'], j_mx_records=result['mx'], j_ds_recoreds=result['ds'],
+                        ns_ip_addresses=result['name_server_ips'], ns_server_ns_results=result['ns_server_ns_results'])
     db_session.add(sr)
     db_session.commit()
     grade_spf.s(sr.id).apply_async()
