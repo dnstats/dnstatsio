@@ -119,8 +119,9 @@ def is_a_msft_dc(domain: str) -> bool:
 def query_name_server(dns_server_ips: list, domain: str, request_type: str) -> []:
     """
     Do a query with a given name server, domain, and request type
+
     :param dns_server_ips: IP addresses of the name servers to use
-    :param domain: domain to query
+    :param domain: domain: to query
     :param request_type: type of record to query
     :return: list of records from the requested query
     """

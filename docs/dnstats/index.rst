@@ -28,6 +28,20 @@ dnstats.utils
 .. automodule:: dnstats.utils
    :members:
 
+dnstats.dnsutils
+-----------------
+
+.. automodule:: dnstats.dnsutils
+   :members:
+
+
+dnstats.dnsutils.ns
+~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: dnstats.dnsutils.ns
+   :members:
+   :undoc-members:
+
 dnstats.dnsvaildate
 -------------------
 
