@@ -14,7 +14,7 @@ def safe_query(site: str, type: str):
     """
     r = None
     try:
-        r = dns.resolver.resolve(site, type)
+        r = dns.resolver.query(site, type)
     except:
         pass
 
