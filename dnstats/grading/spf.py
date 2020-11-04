@@ -32,8 +32,7 @@ def grade(spfs: list, domain: str, has_mx: True) -> [int, list]:
 
     if len(errors) != 0:
         return no_spf_grade, errors
-    if len(spfs) != 1:
-        return no_spf_grade, errors
+
     spf_record = Spf(spf_txt_record, domain)
     errors.extend(spf_record.errors)
     current_grade = SPF_POLICY_GRADE.get(spf_record.final_qualifier)

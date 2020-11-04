@@ -25,6 +25,10 @@ class TestSpf(unittest.TestCase):
         grade = grade_spf(['v=spf1 -all'], 'example.com', False)[0]
         self.assertEqual(100, grade)
 
+    def test_reject_all_with_others(self):
+        grade = grade_spf(['v=spf1 -all', 'googletag=tacotacotacotaco'], 'example.com', False)[0]
+        self.assertEqual(100, grade)
+
     def test_pass_all(self):
         grade = grade_spf(['v=spf1 +all'], 'example.com', False)[0]
         self.assertEqual(0, grade)
