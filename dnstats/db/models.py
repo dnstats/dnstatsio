@@ -70,6 +70,7 @@ class SiteRun(Base):
     j_ds_recoreds = Column(JSON)
     ns_ip_addresses = Column(JSON)
     ns_server_ns_results = Column(JSON)
+    ns_grade = Column(BigInteger)
 
     UniqueConstraint('site_id', 'run_id')
 
