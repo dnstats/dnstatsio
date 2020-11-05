@@ -26,6 +26,7 @@ from dnstats.httputils import has_security_txt
 from dnstats.grading.spf import grade as grade_spf_record
 from dnstats.grading.dmarc import grade as grade_dmarc_record
 from dnstats.grading.caa import grade as grade_caa_records
+from dnstats.grading.ns import grade as grade_ns_records
 
 
 if not os.environ.get('DB'):
@@ -172,6 +173,7 @@ def process_result(result: dict):
     grade_spf.s(sr.id).apply_async()
     grade_dmarc.s(sr.id).apply_async()
     grade_caa.s(sr.id).apply_async()
+    grade_ns.s(sr.id).apply_async()
     return
 
 
@@ -219,7 +221,29 @@ def grade_caa(site_run_id: int):
     else:
         logger.debug("CAA Grade: {} - {} - {}".format(site.domain, site_run.caa_grade, grade))
         grade, errors = grade_caa_records(records, site.domain)
+        _grade_errors(errors, 'caa', site_run_id)
+
     site_run.caa_grade = grade
+    db_session.commit()
+
+
+@app.task(time_limit=80, soft_time_limit=75)
+def grade_ns(site_run_id: int) -> None:
+    site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
+    site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
+    records = site_run.j_ns_records
+    ip_addresses = site_run.ns_ip_addresses
+    record_results = site_run.ns_server_ns_results
+    grade = 0
+
+    if not records:
+        logger.debug("NS Grade: {} - {} - {} - NO CAA".format(site.domain, site_run.ns_grade, 0))
+        grade = 0
+    else:
+        logger.debug("NS Grade: {} - {} - {}".format(site.domain, site_run.ns_grade, grade))
+        grade, errors = grade_ns_records(records, ip_addresses, record_results, site.domain)
+        _grade_errors(errors, 'ns', site_run_id)
+    site_run.ns_grade = grade
     db_session.commit()
 
 
@@ -252,7 +276,7 @@ def launch_run(run_id):
 def do_run():
     date = datetime.datetime.now()
     if os.environ.get('DNSTATS_ENV') == 'Development':
-        run = models.Run(start_time=date, start_rank=1, end_rank=500)
+        run = models.Run(start_time=date, start_rank=1, end_rank=150)
         logger.warning("[DO RUN]: Running a Debug top 50 sites runs")
     else:
         run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
