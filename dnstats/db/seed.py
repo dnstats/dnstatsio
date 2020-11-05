@@ -79,6 +79,15 @@ def _seed_remarks():
      (1, 'Issuewild Domain Invalid', 10),
      (1, 'Issue Domain Invalid', 11),
      (1, 'Tag Too Long', 12)]
+
+    ns = [(0, 'No NS Records', 0),
+          (2, 'Only One Name Server', 1),
+          (0, 'Null NS Record', 2),
+          (1, 'Name Server Has no A Record', 3),
+          (0, 'Name Server Has Invalid Response', 4),
+          (2, 'Name Server Is Not Public', 5),
+          (0, 'No Name Servers Returned', 6),
+          (2, 'Name Server Mismatch', 7), ]
     remark_type_db_dmarc = db_session.query(models.RemarkType).filter_by(name='dmarc').one()
     _seed_remark_arrays(remark_type_db_dmarc, dmarc)
 
@@ -87,6 +96,9 @@ def _seed_remarks():
 
     remark_type_db_caa = db_session.query(models.RemarkType).filter_by(name='spf').one()
     _seed_remark_arrays(remark_type_db_caa, caa)
+
+    remark_type_db_ns = db_session.query(models.RemarkType).filter_by(name='ns').one()
+    _seed_remark_arrays(remark_type_db_ns, ns)
 
 
 def _seed_remark_arrays(remark_type_db_spf: models.RemarkType, spf: list) -> None:
@@ -106,7 +118,7 @@ def _seed_remark_arrays(remark_type_db_spf: models.RemarkType, spf: list) -> Non
 
 
 def _seed_remark_types():
-    remark_types = ['spf', 'dmarc', 'caa']
+    remark_types = ['spf', 'dmarc', 'caa', 'ns']
 
     for remark_type in remark_types:
         remark_type_s = db_session.query(models.RemarkType).filter_by(name=remark_type).scalar()
