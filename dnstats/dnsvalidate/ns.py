@@ -62,15 +62,20 @@ class Ns:
                     break
             validated_records.append(record)
 
-        sets = set()
+        sets = list()
         for ns_server in list(self.ns_server_ns_results.keys()):
-            sets.add(self.ns_server_ns_results[ns_server])
+            the_set = set()
+            for ns_result in self.ns_server_ns_results[ns_server]:
+                the_set.add(ns_result)
+            sets.append(the_set)
+
+        for outer_set in sets:
+            for inner_set in sets:
+                if outer_set != inner_set:
+                    errors.append(NsErrors.NAME_SERVER_MISMATCH)
 
         if len(sets) == 0:
             errors.append(NsErrors.NO_NAME_SERVERS_RETURNED)
-
-        if len(sets) != 0 or len(sets) == 1:
-            errors.append(NsErrors.NAME_SERVER_MISMATCH)
 
         result['errors'] = errors
         result['validated_nameservers'] = validated_records
