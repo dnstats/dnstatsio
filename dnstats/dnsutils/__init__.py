@@ -144,9 +144,18 @@ def query_name_server(dns_server_ips: list, domain: str, request_type: str) -> [
         return None
 
 
-def validate_label(label: str):
+def validate_label(label: str) -> bool:
     if len(label) == 1:
         pattern = re.compile('[a-zA-Z]')
     else:
         pattern = re.compile('[a-zA-Z][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]')
     return False if pattern.match(label) is None else True
+
+def validate_domain(label: str) -> bool:
+    if not str:
+        return False
+    parts = label.split('.')
+    for part in parts:
+        if not validate_label(part):
+            return False
+    return True
