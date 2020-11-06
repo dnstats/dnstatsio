@@ -63,6 +63,20 @@ dnstats.dnsvalidate.dmarc
    :members:
    :undoc-members:
 
+dnstats.dnsvalidate.ns
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: dnstats.dnsvalidate.ns
+   :members:
+   :undoc-members:
+
+dnstats.dnsvalidate.soa
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: dnstats.dnsvalidate.soa
+   :members:
+   :undoc-members:
+
 dnstats.dnsvalidate.spf
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -70,9 +84,3 @@ dnstats.dnsvalidate.spf
    :members:
    :undoc-members:
 
-dnstats.dnsvalidate.ns
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. automodule:: dnstats.dnsvalidate.ns
-   :members:
-   :undoc-members:
