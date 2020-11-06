@@ -148,12 +148,14 @@ def validate_label(label: str) -> bool:
     if len(label) == 1:
         pattern = re.compile('[a-zA-Z]')
     else:
-        pattern = re.compile('[a-zA-Z][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]')
+        pattern = re.compile('[a-zA-Z][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]{1}')
     return False if pattern.match(label) is None else True
 
 def validate_domain(label: str) -> bool:
     if not str:
         return False
+    if label.endswith('.'):
+        label = label[:-1]
     parts = label.split('.')
     for part in parts:
         if not validate_label(part):
