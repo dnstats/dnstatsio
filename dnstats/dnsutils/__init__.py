@@ -1,5 +1,5 @@
 import dns.resolver
-
+import re
 
 from dnstats.db import models
 from dnstats.db import db_session
@@ -142,3 +142,11 @@ def query_name_server(dns_server_ips: list, domain: str, request_type: str) -> [
         return results
     else:
         return None
+
+
+def validate_label(label: str):
+    if len(label) == 1:
+        pattern = re.compile('[a-zA-Z]')
+    else:
+        pattern = re.compile('[a-zA-Z][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]')
+    return False if pattern.match(label) is None else True
