@@ -30,4 +30,6 @@ class TestDnsUtils(unittest.TestCase):
         self.assertFalse(validate_domain('4taco.com'))
         self.assertFalse(validate_domain('4-taco.com'))
         self.assertFalse(validate_domain('taco.com-'))
-       
+        self.assertFalse(validate_domain('taco-.com'))
+        self.assertFalse(validate_domain('taco-.com-.'))
+
