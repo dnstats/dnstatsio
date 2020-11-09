@@ -1,5 +1,6 @@
 import enum
 
+
 from dnstats.dnsutils import validate_domain
 
 
@@ -13,8 +14,13 @@ class SoaErrors(enum.Enum):
     INVALID_REFRESH = 6
     INVALID_RETRY = 7
     INVALID_EXPIRE = 8
-    INVALID_TTL = 9
+    INVALID_MINIMUM = 9
     SERIAL_NOT_IN_RANGE = 10
+    REFRESH_NOT_IN_RANGE = 11
+    RETRY_NOT_IN_RANGE = 12
+    MINIMUM_NOT_IN_RANGE = 13
+    EXPIRE_NOT_IN_RANGE = 14
+
 
 
 class Soa:
@@ -27,8 +33,9 @@ class Soa:
     def __init__(self, soas: list, domain: str):
         self.soas = soas
         self.domain = domain
-        self.errors = self.validate['errors']
-
+        result = self.validate()
+        self.errors = result['errors']
+        self.serial = result['serial']
 
     def validate(self) -> {}:
         result = {}
@@ -58,11 +65,34 @@ class Soa:
         if not validate_domain(rname):
             errors.append(SoaErrors.INVALID_RNAME)
 
+        result['serial'], serial_errors = validate_numbers(serial, SoaErrors.INVALID_SERIAL, SoaErrors.SERIAL_NOT_IN_RANGE)
+        errors.extend(serial_errors)
 
+        result['refresh'], refresh_errors = validate_numbers(refresh, SoaErrors.INVALID_REFRESH, SoaErrors.REFRESH_NOT_IN_RANGE)
+        errors.extend(refresh_errors)
 
-        if serial > 4294967295 or serial < 0:
-            errors.append(SoaErrors.SERIAL_NOT_IN_RANGE)
+        result['retry'], retry_errors = validate_numbers(retry, SoaErrors.INVALID_RETRY, SoaErrors.RETRY_NOT_IN_RANGE)
+        errors.extend(retry_errors)
+
+        result['expire'], expire_errors = validate_numbers(expire, SoaErrors.INVALID_EXPIRE, SoaErrors.EXPIRE_NOT_IN_RANGE)
+        errors.extend(expire_errors)
+
+        result['minimum'], minimum_errors = validate_numbers(minimum, SoaErrors.INVALID_MINIMUM, SoaErrors.MINIMUM_NOT_IN_RANGE)
+        errors.extend(minimum_errors)
 
 
         result['errors'] = errors
         return result
+
+
+def validate_numbers(value: str, invalid_error: SoaErrors, out_of_range_error: SoaErrors) -> (int, list):
+    errors = list()
+    try:
+        value_int = int(value)
+    except ValueError:
+        errors.append(invalid_error)
+        return -1, errors
+
+    if value_int > 4294967295 or value_int < 0:
+        errors.append(out_of_range_error)
+    return value_int, errors
