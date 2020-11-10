@@ -22,7 +22,6 @@ class SoaErrors(enum.Enum):
     EXPIRE_NOT_IN_RANGE = 14
 
 
-
 class Soa:
     """
     Start of Authority record (SOA record) checker.
@@ -34,8 +33,14 @@ class Soa:
         self.soas = soas
         self.domain = domain
         result = self.validate()
-        self.errors = result['errors']
-        self.serial = result['serial']
+        self.errors = result.get('errors')
+        self.mname = result.get('mname')
+        self.rname = result.get('rname')
+        self.refresh = result.get('refresh')
+        self.retry = result.get('retry')
+        self.expire = result.get('expire')
+        self.minimum = result.get('minimum')
+        self.serial = result.get('serial')
 
     def validate(self) -> {}:
         result = {}
