@@ -51,11 +51,15 @@ class Soa:
 
         if len(self.soas) != 1:
             errors.append(SoaErrors.TOO_MANY_SOA)
+            errors.append(errors)
+            return result
 
         soa = self.soas[0]
         soa_parts = soa.split(' ')
         if len(soa_parts) != 7:
             errors.append(SoaErrors.SOA_INVALID)
+            result['errors'] = errors
+            return result
 
         mname = soa_parts[0]
         rname = soa_parts[1]
@@ -66,9 +70,11 @@ class Soa:
         minimum = soa_parts[6]
         if not validate_domain(mname):
             errors.append(SoaErrors.INVALID_MNAME)
+        result['mname'] = mname
 
         if not validate_domain(rname):
             errors.append(SoaErrors.INVALID_RNAME)
+        result['rname'] = rname
 
         result['serial'], serial_errors = validate_numbers(serial, SoaErrors.INVALID_SERIAL, SoaErrors.SERIAL_NOT_IN_RANGE)
         errors.extend(serial_errors)
@@ -84,7 +90,6 @@ class Soa:
 
         result['minimum'], minimum_errors = validate_numbers(minimum, SoaErrors.INVALID_MINIMUM, SoaErrors.MINIMUM_NOT_IN_RANGE)
         errors.extend(minimum_errors)
-
 
         result['errors'] = errors
         return result
