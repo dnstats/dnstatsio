@@ -30,6 +30,11 @@ class Soa:
     - RFC 1035 (https://tools.ietf.org/html/rfc1035)
     """
     def __init__(self, soas: list, domain: str):
+        """
+        Create an Soa object to check an domain SOA record
+        :param soas: the results of from query on soa
+        :param domain:
+        """
         self.soas = soas
         self.domain = domain
         result = self.validate()
@@ -47,11 +52,13 @@ class Soa:
         errors = []
         if len(self.soas) == 0:
             errors.append(SoaErrors.NO_SOA)
+            result['errors'] = errors
             return result
 
         if len(self.soas) != 1:
             errors.append(SoaErrors.TOO_MANY_SOA)
             errors.append(errors)
+            result['errors'] = errors
             return result
 
         soa = self.soas[0]
