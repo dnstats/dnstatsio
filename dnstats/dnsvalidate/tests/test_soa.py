@@ -34,3 +34,7 @@ class TestNs(unittest.TestCase):
     def test_taco(self):
         result = Soa(['taco'], 'dnstats.io')
         self.assertNotEqual(0, len(result.errors))
+
+    def test_taco_in_all_the_places(self):
+        result = Soa(['8taco. 7taco taco taco taco taco taco'], 'dnstats.io')
+        self.assertEqual(7, len(result.errors))
