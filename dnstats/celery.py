@@ -170,7 +170,8 @@ def process_result(result: dict):
                         dnssec_dnskey_algorithm=processed['dnssec_dnskey_algorithm'], has_securitytxt=result['has_dnssec'], has_msdc=result['is_msdcs'],
                         j_caa_records=result['caa'], j_dmarc_record=result['dmarc'], j_txt_records=result['txt'],
                         j_ns_records=result['ns'], j_mx_records=result['mx'], j_ds_recoreds=result['ds'],
-                        ns_ip_addresses=result['name_server_ips'], ns_server_ns_results=result['ns_server_ns_results'])
+                        ns_ip_addresses=result['name_server_ips'], ns_server_ns_results=result['ns_server_ns_results'],
+                        j_soa_records=result['soa'])
     db_session.add(sr)
     db_session.commit()
     grade_spf.s(sr.id).apply_async()
@@ -250,6 +251,7 @@ def grade_ns(site_run_id: int) -> None:
     site_run.ns_grade = grade
     db_session.commit()
 
+
 @app.task(time_limit=80, soft_time_limt=75)
 def grade_soa(site_run_id: int) -> None:
     site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
@@ -263,8 +265,9 @@ def grade_soa(site_run_id: int) -> None:
         logger.debug("SOA Grade: {} - {} - {}".format(site.domain, site_run.ns_grade, grade))
         grade, errors = grade_soa_records(records, site.domain)
         _grade_errors(errors, 'soa', site_run_id)
-    site_run.ns_grade = grade
+    site_run.soa_grade = grade
     db_session.commit()
+
 
 def _grade_errors(errors: list, grade_type: str, site_run_id: int):
     remark_type = db_session.query(models.RemarkType).filter_by(name=grade_type).one()
