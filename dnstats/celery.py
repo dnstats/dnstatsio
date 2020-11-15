@@ -27,6 +27,7 @@ from dnstats.grading.spf import grade as grade_spf_record
 from dnstats.grading.dmarc import grade as grade_dmarc_record
 from dnstats.grading.caa import grade as grade_caa_records
 from dnstats.grading.ns import grade as grade_ns_records
+from dnstats.grading.soa import grade as grade_soa_records
 
 
 if not os.environ.get('DB'):
@@ -174,6 +175,7 @@ def process_result(result: dict):
     grade_dmarc.s(sr.id).apply_async()
     grade_caa.s(sr.id).apply_async()
     grade_ns.s(sr.id).apply_async()
+    grade_soa.s(sr.id).apply_async()
     return
 
 
@@ -246,6 +248,21 @@ def grade_ns(site_run_id: int) -> None:
     site_run.ns_grade = grade
     db_session.commit()
 
+@app.task(time_limit=80, soft_time_limt=75)
+def grade_soa(site_run_id: int) -> None:
+    site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
+    site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
+    records = site_run.j_soa_records
+    grade = 0
+    if not records:
+        logger.debug("SOA Grade: {} - {} - {} - NO CAA".format(site.domain, site_run.ns_grade, 0))
+        grade = 0
+    else:
+        logger.debug("SOA Grade: {} - {} - {}".format(site.domain, site_run.ns_grade, grade))
+        grade, errors = grade_soa_records(records, site.domain)
+        _grade_errors(errors, 'soa', site_run_id)
+    site_run.ns_grade = grade
+    db_session.commit()
 
 def _grade_errors(errors: list, grade_type: str, site_run_id: int):
     remark_type = db_session.query(models.RemarkType).filter_by(name=grade_type).one()
