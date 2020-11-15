@@ -134,6 +134,8 @@ def site_stat(site_id: int, run_id: int):
     logger.debug('got the IP addresses for all the name servers')
     result['ns_server_ns_results'] = get_name_server_results(result['name_server_ips'], site.domain)
     logger.debug('got name server results from each name server')
+    result['soa'] = dnutils.safe_query(site.domain, 'soa')
+    logger.debug('got soa for {}'.format(site.domain))
 
     return result
 
