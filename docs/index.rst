@@ -10,11 +10,14 @@ Welcome to DNStats's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+
    info/install
    info/postgresql
    grading/index
    grading/spf
    dnstats/index
+   arch/index
+   arch/scanning
 
 Indices and tables
 ==================
