@@ -28,6 +28,20 @@ dnstats.utils
 .. automodule:: dnstats.utils
    :members:
 
+dnstats.dnsutils
+-----------------
+
+.. automodule:: dnstats.dnsutils
+   :members:
+
+
+dnstats.dnsutils.ns
+~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: dnstats.dnsutils.ns
+   :members:
+   :undoc-members:
+
 dnstats.dnsvaildate
 -------------------
 
@@ -49,9 +63,24 @@ dnstats.dnsvalidate.dmarc
    :members:
    :undoc-members:
 
+dnstats.dnsvalidate.ns
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: dnstats.dnsvalidate.ns
+   :members:
+   :undoc-members:
+
+dnstats.dnsvalidate.soa
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: dnstats.dnsvalidate.soa
+   :members:
+   :undoc-members:
+
 dnstats.dnsvalidate.spf
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: dnstats.dnsvalidate.spf
    :members:
    :undoc-members:
+

@@ -19,12 +19,15 @@ import dnstats.dnsutils.spf as spfutils
 import dnstats.dnsutils.mx as mxutils
 import dnstats.db.models as models
 from dnstats.dnsutils.dnssec import parse_ds, parse_dnskey
+from dnstats.dnsutils.ns import get_name_server_ips, get_name_server_results
 from dnstats.db import db_session, engine
 from dnstats.utils import chunks
 from dnstats.httputils import has_security_txt
 from dnstats.grading.spf import grade as grade_spf_record
 from dnstats.grading.dmarc import grade as grade_dmarc_record
 from dnstats.grading.caa import grade as grade_caa_records
+from dnstats.grading.ns import grade as grade_ns_records
+from dnstats.grading.soa import grade as grade_soa_records
 
 
 if not os.environ.get('DB'):
@@ -98,7 +101,7 @@ def do_charts_latest():
     do_charts.s(run.id).apply_async()
 
 
-@app.task(time_limit=420, soft_time_limit=400, queue='gevent')
+@app.task(time_limit=450, soft_time_limit=500, queue='gevent')
 def site_stat(site_id: int, run_id: int):
     logger.debug('start site stat site {} run id {}'.format(site_id, run_id))
     result = dict()
@@ -127,6 +130,12 @@ def site_stat(site_id: int, run_id: int):
     logger.debug('set rank {}'.format(site.domain))
     result['run_id'] = run_id
     logger.debug('set run id {} -- done'.format(site.domain))
+    result['name_server_ips'] = get_name_server_ips(result['ns'])
+    logger.debug('got the IP addresses for all the name servers')
+    result['ns_server_ns_results'] = get_name_server_results(result['name_server_ips'], site.domain)
+    logger.debug('got name server results from each name server')
+    result['soa'] = dnutils.safe_query(site.domain, 'soa')
+    logger.debug('got soa for {}'.format(site.domain))
 
     return result
 
@@ -159,12 +168,17 @@ def process_result(result: dict):
                         ns_records=result['ns'], email_provider_id=processed['email_provider_id'], dns_provider_id=processed['dns_provider_id'],
                         dnssec_ds_algorithm=processed['ds_algorithm'], dnssec_digest_type=processed['ds_digest_type'],
                         dnssec_dnskey_algorithm=processed['dnssec_dnskey_algorithm'], has_securitytxt=result['has_dnssec'], has_msdc=result['is_msdcs'],
-                        j_caa_records=result['caa'], j_dmarc_record=result['dmarc'], j_txt_records=result['txt'])
+                        j_caa_records=result['caa'], j_dmarc_record=result['dmarc'], j_txt_records=result['txt'],
+                        j_ns_records=result['ns'], j_mx_records=result['mx'], j_ds_recoreds=result['ds'],
+                        ns_ip_addresses=result['name_server_ips'], ns_server_ns_results=result['ns_server_ns_results'],
+                        j_soa_records=result['soa'])
     db_session.add(sr)
     db_session.commit()
     grade_spf.s(sr.id).apply_async()
     grade_dmarc.s(sr.id).apply_async()
     grade_caa.s(sr.id).apply_async()
+    grade_ns.s(sr.id).apply_async()
+    grade_soa.s(sr.id).apply_async()
     return
 
 
@@ -212,7 +226,46 @@ def grade_caa(site_run_id: int):
     else:
         logger.debug("CAA Grade: {} - {} - {}".format(site.domain, site_run.caa_grade, grade))
         grade, errors = grade_caa_records(records, site.domain)
+        _grade_errors(errors, 'caa', site_run_id)
+
     site_run.caa_grade = grade
+    db_session.commit()
+
+
+@app.task(time_limit=80, soft_time_limit=75)
+def grade_ns(site_run_id: int) -> None:
+    site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
+    site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
+    records = site_run.j_ns_records
+    ip_addresses = site_run.ns_ip_addresses
+    record_results = site_run.ns_server_ns_results
+    grade = 0
+
+    if not records:
+        logger.debug("NS Grade: {} - {} - {} - NO CAA".format(site.domain, site_run.ns_grade, 0))
+        grade = 0
+    else:
+        logger.debug("NS Grade: {} - {} - {}".format(site.domain, site_run.ns_grade, grade))
+        grade, errors = grade_ns_records(records, ip_addresses, record_results, site.domain)
+        _grade_errors(errors, 'ns', site_run_id)
+    site_run.ns_grade = grade
+    db_session.commit()
+
+
+@app.task(time_limit=80, soft_time_limt=75)
+def grade_soa(site_run_id: int) -> None:
+    site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
+    site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
+    records = site_run.j_soa_records
+    grade = 0
+    if not records:
+        logger.debug("SOA Grade: {} - {} - {} - NO CAA".format(site.domain, site_run.ns_grade, 0))
+        grade = 0
+    else:
+        logger.debug("SOA Grade: {} - {} - {}".format(site.domain, site_run.ns_grade, grade))
+        grade, errors = grade_soa_records(records, site.domain)
+        _grade_errors(errors, 'soa', site_run_id)
+    site_run.soa_grade = grade
     db_session.commit()
 
 
@@ -245,7 +298,7 @@ def launch_run(run_id):
 def do_run():
     date = datetime.datetime.now()
     if os.environ.get('DNSTATS_ENV') == 'Development':
-        run = models.Run(start_time=date, start_rank=1, end_rank=500)
+        run = models.Run(start_time=date, start_rank=1, end_rank=150)
         logger.warning("[DO RUN]: Running a Debug top 50 sites runs")
     else:
         run = models.Run(start_time=date, start_rank=1, end_rank=1000000)

@@ -5,6 +5,13 @@ from dnstats.db import db_session
 
 
 def seed_db() -> None:
+    """
+    This method seeds the database with the needed look up tables.
+
+    .. warning::
+        This method will have had results if ran one than once.
+    :return: None
+    """
     _seed_dmarc_policy()
     _seed_spf()
     _seed_email_providers()
@@ -15,6 +22,8 @@ def seed_db() -> None:
 
 def _seed_remarks():
     """
+    This method seed the remarks
+
     Remark Levels:
     0 - Fatal
     1 - Error, assuming default
@@ -79,6 +88,32 @@ def _seed_remarks():
      (1, 'Issuewild Domain Invalid', 10),
      (1, 'Issue Domain Invalid', 11),
      (1, 'Tag Too Long', 12)]
+
+    ns = [(0, 'No NS Records', 0),
+          (2, 'Only One Name Server', 1),
+          (0, 'Null NS Record', 2),
+          (1, 'Name Server Has no A Record', 3),
+          (0, 'Name Server Has Invalid Response', 4),
+          (2, 'Name Server Is Not Public', 5),
+          (0, 'No Name Servers Returned', 6),
+          (2, 'Name Server Mismatch', 7), ]
+
+    soa = [(0, 'No SOA', 0),
+           (0, 'Too Many SOA', 1),
+           (0, 'SOA Invalid', 2),
+           (1, 'Invalid MNAME', 3),
+           (1, 'Invalid RNAME', 4),
+           (1, 'Invalid Serial', 5),
+           (1, 'Invalid Refresh', 6),
+           (1, 'Invalid Retry', 7),
+           (1, 'Invalid Expire', 8),
+           (1, 'Invalid Minimum', 9),
+           (1, 'Serial Not In Range', 10),
+           (1, 'Refresh Not in Range', 11),
+           (1, 'Retry Not In Range', 12),
+           (1, 'Minimum Not In Range', 13),
+           (1, 'Expire Not In Range', 14), ]
+
     remark_type_db_dmarc = db_session.query(models.RemarkType).filter_by(name='dmarc').one()
     _seed_remark_arrays(remark_type_db_dmarc, dmarc)
 
@@ -87,6 +122,12 @@ def _seed_remarks():
 
     remark_type_db_caa = db_session.query(models.RemarkType).filter_by(name='spf').one()
     _seed_remark_arrays(remark_type_db_caa, caa)
+
+    remark_type_db_ns = db_session.query(models.RemarkType).filter_by(name='ns').one()
+    _seed_remark_arrays(remark_type_db_ns, ns)
+
+    remark_type_db_soa = db_session.query(models.RemarkType).filter_by(name='soa').one()
+    _seed_remark_arrays(remark_type_db_soa, soa)
 
 
 def _seed_remark_arrays(remark_type_db_spf: models.RemarkType, spf: list) -> None:
@@ -106,7 +147,7 @@ def _seed_remark_arrays(remark_type_db_spf: models.RemarkType, spf: list) -> Non
 
 
 def _seed_remark_types():
-    remark_types = ['spf', 'dmarc', 'caa']
+    remark_types = ['spf', 'dmarc', 'caa', 'ns', 'soa']
 
     for remark_type in remark_types:
         remark_type_s = db_session.query(models.RemarkType).filter_by(name=remark_type).scalar()

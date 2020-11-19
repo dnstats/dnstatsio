@@ -59,3 +59,11 @@ def validate_fqdn(fqdn: str) -> bool:
                        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
     # No match returns None, seems hacky
     return True if regex.search(fqdn) else False
+
+
+def count_value(value: object, the_list: list):
+    count = 0
+    for item in the_list:
+        if item == value:
+            count += 1
+    return count

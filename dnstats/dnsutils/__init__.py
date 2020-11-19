@@ -1,10 +1,17 @@
 import dns.resolver
+import re
 
 from dnstats.db import models
 from dnstats.db import db_session
 
 
 def safe_query(site: str, type: str):
+    """
+    Perform the given query. If any errors return None.
+
+    :param site: the domain to query
+    :param type: type of query to perform
+    """
     r = None
     try:
         r = dns.resolver.query(site, type)
@@ -108,3 +115,50 @@ def is_a_msft_dc(domain: str) -> bool:
     else:
         return False
 
+
+def query_name_server(dns_server_ips: list, domain: str, request_type: str) -> []:
+    """
+    Do a query with a given name server, domain, and request type
+
+    :param dns_server_ips: IP addresses of the name servers to use
+    :param domain: domain: to query
+    :param request_type: type of record to query
+    :return: list of records from the requested query
+    """
+    if not dns_server_ips or not domain or not request_type:
+        return ValueError('All arguments must not be Falsey')
+
+    resolver = dns.resolver.Resolver(configure=False)
+    resolver.nameservers = dns_server_ips
+    r = None
+    try:
+        r = dns.resolver.query(domain, request_type)
+    except:
+        pass
+    if r:
+        results = list()
+        for ans in r:
+            results.append(ans.to_text())
+        return results
+    else:
+        return None
+
+
+def validate_label(label: str) -> bool:
+    if len(label) == 1:
+        pattern = re.compile('[a-zA-Z]')
+    else:
+        pattern = re.compile('^[a-zA-Z][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]$')
+    return False if pattern.match(label) is None else True
+
+
+def validate_domain(label: str) -> bool:
+    if not str:
+        return False
+    if label.endswith('.'):
+        label = label[:-1]
+    parts = label.split('.')
+    for part in parts:
+        if not validate_label(part):
+            return False
+    return True
