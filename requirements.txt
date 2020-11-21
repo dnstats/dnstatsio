@@ -1,6 +1,6 @@
 publicsuffix2
 dnspython3
-celery
+celery<5.0.0
 flower
 amqp
 sqlalchemy
@@ -14,3 +14,7 @@ sphinx
 sphinx_rtd_theme
 alembic
 requests
+gevent
+coverage
+validate_email
+pylint

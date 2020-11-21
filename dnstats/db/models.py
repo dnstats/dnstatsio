@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Boolean, String, DateTime, ForeignKey, BigInteger, Text, UniqueConstraint, SmallInteger
+from sqlalchemy import Column, Boolean, String, DateTime, ForeignKey, BigInteger, Text, UniqueConstraint, SmallInteger, JSON
 
 Base = declarative_base()
 
@@ -58,12 +58,29 @@ class SiteRun(Base):
     dnssec_digest_type = Column(SmallInteger)
     dnssec_dnskey_algorithm = Column(SmallInteger)
     has_securitytxt = Column(Boolean)
-
+    has_msdc = Column(Boolean)
+    spf_grade = Column(BigInteger)
+    dmarc_grade = Column(BigInteger)
+    caa_grade = Column(BigInteger)
+    j_caa_records = Column(JSON)
+    j_txt_records = Column(JSON)
+    j_dmarc_record = Column(JSON)
+    j_ns_records = Column(JSON)
+    j_mx_records = Column(JSON)
+    j_ds_recoreds = Column(JSON)
+    ns_ip_addresses = Column(JSON)
+    ns_server_ns_results = Column(JSON)
+    ns_grade = Column(BigInteger)
+    j_soa_records = Column(JSON)
+    soa_grade = Column(BigInteger)
 
     UniqueConstraint('site_id', 'run_id')
 
     def has_dmarc_reporting(self):
         return self.has_dmarc_aggregate_reporting or self.has_dmarc_forensic_reporting
+
+    def has_mx(self) -> bool:
+        return self.mx_records is not None
 
 
 class SpfPolicy(Base):
@@ -91,3 +108,31 @@ class DnsProvider(Base):
     search_regex = Column(String, nullable=False)
     is_regex = Column(Boolean, nullable=False, default=True)
     UniqueConstraint('search_regex')
+
+
+class RemarkType(Base):
+    __tablename__ = 'remark_types'
+    id = Column(SmallInteger, primary_key=True)
+    name = Column(String, nullable=False)
+    UniqueConstraint('name')
+
+
+class Remark(Base):
+    __tablename__ = 'remarks'
+    id = Column(SmallInteger, primary_key=True)
+    name = Column(String, nullable=False)
+    remark_type_id = Column(SmallInteger, ForeignKey('remark_types.id'))
+    remark_level = Column(SmallInteger)
+    enum_value = Column(BigInteger)
+
+    UniqueConstraint(remark_type_id, enum_value)
+    UniqueConstraint('name', 'remark_type_id')
+
+
+class SiterunRemark(Base):
+    __tablename__ = 'siterun_remarks'
+    id = Column(BigInteger, primary_key=True)
+    site_run_id = Column(BigInteger, ForeignKey('site_runs.id'))
+    remark_id = Column(SmallInteger, ForeignKey('remarks.id'))
+
+    UniqueConstraint('remark_id', 'site_run_id')
