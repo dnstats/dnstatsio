@@ -18,6 +18,8 @@ Welcome to DNStats's documentation!
    dnstats/index
    arch/index
    arch/scanning
+   about/index
+
 
 Indices and tables
 ==================
