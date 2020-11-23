@@ -4,7 +4,7 @@
         <meta charset="utf-8" />
         <meta name="author" content="Matthew Burket" />
         <meta name="generator" content="DNStats - {{ hostname }}" />
-        <meta name="keywords" content="dns,dnstats,stats,statistics,statistic,daily,scan,million,top,websites,sites,dmarc,spf,caa,email" />
+        <meta name="keywords" content="dns,dnstats,stats,statistics,statistic,daily,scan,million,top,websites,sites,dmarc,spf,caa,email,dnssec" />
         <meta name="description" content="A daily scan of the top million websites for DNS, Email and other security settings." />
         <title>dnstats.io - {{ report_date }}</title>
         <link rel="stylesheet" href="/style.css" crossorigin="anonymous" />
@@ -33,6 +33,10 @@
             <span class="code">HELO</span> and/or the <span class="code">MAIL FROM</span> during the SMTP connection.
         </p>
         <div class="section group">
+            <p>
+                These charts includes all sites, even those without MX records. This done since all domains
+                can be used in phishing campaigns, even if they do not have MX, A, other public DNS records.
+            </p>
             <div class="col span_1_of_2">
                 <h3>SPF Adoption</h3>
                 <hr />
@@ -46,12 +50,13 @@
         </div>
         <h2 id="dmarc">DMARC</h2>
         <p>
-            Domain-based Message Authentication, Reporting, and Conformance (DMARC) is a email protocol defined in
-            <a href="https://tools.ietf.org/html/rfc7489" target="_blank">RFC 7489</a> is protocol to help domain owner's protect and
-            get reporting for email. DMARC works with Sender Policy Framework (SPF) and DomainKeys Identified Mail
-            (DKIM) to authenticate mail messages. DMARC also provides a facility for domain owners to get reports about
-            how their domain is used to receive email. DMARC matches on the <span class="code">From</span> field on the mail message as
-            defined in <a href="https://tools.ietf.org/html/rfc5322" target="_blank">RFC 5322</a>.
+            Domain-based Message Authentication, Reporting, and Conformance (DMARC) is defined in
+            <a href="https://tools.ietf.org/html/rfc7489" target="_blank">RFC 7489</a> and is protocol used
+            to help domain owner's protect a sender and provide data to the domain owner on the domain has been used for
+            sending. DMARC works with Sender Policy Framework (SPF) and DomainKeys Identified Mail  (DKIM) to
+            authenticate mail messages. DMARC also provides a facility for domain owners to get reports about
+            how their domain is used to receive email. DMARC matches on the <span class="code">From</span> field on the
+            mail message as defined in <a href="https://tools.ietf.org/html/rfc5322" target="_blank">RFC 5322</a>.
         </p>
         <div class="section group">
             <div class="col span_1_of_2">
@@ -82,9 +87,9 @@
         <p>
             DNS Certification Authority Authorization (CAA) Resource Records defined in
             <a href="https://tools.ietf.org/html/rfc8659">RFC 8659</a> allow a domain owner to specify which
-            <a href="/glossary#ca">certificate authorities</a> can issue certificates for a domain. The goal of CAA
-            is to reduce the number of mis-issued certificates. CAA also provides mechanism for CAs to report attempted
-            mis-issuance.
+            <a href="https://dnstats.readthedocs.io/en/latest/about/glossary#glossary.html#term-Certificate-Authority">
+                certificate authorities</a> can issue certificates for a domain. The goal of CAA is to reduce the number
+            of mis-issued certificates. CAA also provides mechanism for CAs to report attempted mis-issuance.
         </p>
         <div class="section group">
             <div class="col span_1_of_2">
@@ -125,7 +130,8 @@
                     <a href="https://tools.ietf.org/html/rfc4034">RFC 4034</a>,
                     and <a href="https://tools.ietf.org/html/rfc4034">RFC 4036</a>
                     adds a chain of trust. From the root zone to the requested zone.
-                    For more information see <a target="_blank" href="https://www.cloudflare.com/dns/dnssec/how-dnssec-works/">this
+                    For more information see
+                    <a target="_blank" href="https://www.cloudflare.com/dns/dnssec/how-dnssec-works/">this
                     blog post</a> from <a href="https://www.cloudflare.com/">CloudFlare</a>.
                 </p>
                 <hr />
