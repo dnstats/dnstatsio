@@ -3,13 +3,14 @@
     <head>
         <meta charset="utf-8" />
         <meta name="author" content="Matthew Burket" />
-        <meta name="generator" content="DNStats - {{ hostname }}" />
+        <meta name="generator" content="DNStats" />
         <meta name="keywords" content="dns,dnstats,stats,statistics,statistic,daily,scan,million,top,websites,sites,dmarc,spf,caa,email,dnssec" />
         <meta name="description" content="A daily scan of the top million websites for DNS, Email and other security settings." />
         <title>dnstats.io - {{ report_date }}</title>
         <link rel="stylesheet" href="/style.css" crossorigin="anonymous" />
     </head>
     <body>
+        <!-- Created by DNStats on {{ hostname }} -->
         <h1 id="top">dnstats.io</h1>
         <p>
             Data for this report was collected on {{ report_date }} and it contains data for the top
@@ -27,10 +28,11 @@
         </nav>
         <h2 id="spf">SPF</h2>
         <p>
-            Sender Policy Framework (SPF) defined in <a href="https://tools.ietf.org/html/rfc7208" target="_blank">RFC 7208</a> is
-            protocol to help prevent email spoofing. SPF works by authorizing hosts to send email on behalf of domains
-            and receivers of email check if the sending host is authorized. SPF checks the
-            <span class="code">HELO</span> and/or the <span class="code">MAIL FROM</span> during the SMTP connection.
+            Sender Policy Framework (SPF) defined in
+            <a href="https://tools.ietf.org/html/rfc7208" target="_blank">RFC 7208</a> is protocol to help prevent email
+            spoofing. SPF works by authorizing hosts to send email on behalf of domains and receivers of email check if
+            the sending host is authorized. SPF checks the <span class="code">HELO</span> and/or the
+            <span class="code">MAIL FROM</span> during the SMTP connection.
         </p>
         <div class="section group">
             <p>
@@ -156,6 +158,7 @@
         <a rel="license" href="https://creativecommons.org/licenses/by/4.0/" target="_blank">
         Creative Commons Attribution 4.0 International License</a>.</p>
         <p>Created by <a href="https://matthewburket.com" target="_blank">Matthew Burket</a>.</p>
+        <a href="https://gitlab.com/dnstats/dnstatsio">Source Code</a>
     </body>
     <script integrity="sha384-A753X7DKbqixyg9PJac76aNkFtPsX0ycrZTWbtFasXq1cWjTruFWwrvspVjmKQIZ" crossorigin="anonymous"  src="/d3.js"></script>
     <script integrity="sha384-hChw8ZV0Iwp7ETExPFldu4PYtFKfWwWBZRiYW/ZvQqWDSsZ33fUS9reU6+gnTvB0" crossorigin="anonymous" src="/d3pie.min.js"></script>
