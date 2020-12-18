@@ -404,6 +404,14 @@ def _update_site_rank_chunked(domains_ranked: dict) -> None:
     logger.info("Site rank chunk updated")
 
 
+@app.task
+def publish_reports(run_id: int):
+    pass
+
+@app.task
+def process_report(run_id: int, report: dict):
+    pass
+
 def _send_message(email):
     if os.environ.get('DNSTATS_ENV') == 'Development':
         print(email)
