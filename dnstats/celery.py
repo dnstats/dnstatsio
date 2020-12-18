@@ -30,21 +30,21 @@ from dnstats.grading.ns import grade as grade_ns_records
 from dnstats.grading.soa import grade as grade_soa_records
 
 
-if not os.environ.get('DB'):
+if not settings.DB:
     raise EnvironmentError("Database connection is not setup.")
 
-if not os.environ.get('AMQP'):
+if not settings.AMQP:
     raise EnvironmentError("Celery AMQP connection is not setup.")
 
-if not os.environ.get('CELERY_BACKEND'):
+if not settings.CELERY_BACKEND:
     raise EnvironmentError("Celery CELERY_BACKEND connection is not setup.")
 
 
-app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('CELERY_BACKEND'), broker_pool_limit=50)
+app = Celery('dnstats', broker=settings.AMQP, backend=settings.CELERY_BACKEND, broker_pool_limit=50)
 
 logger = get_task_logger('dnstats.scans')
 
-if os.environ.get('DNSTATS_ENV') != 'Development':
+if settings.DNSTATS_ENV != 'Development' and settings.USE_SENTRY:
     import sentry_sdk
     from sentry_sdk.integrations.celery import CeleryIntegration
     sentry_sdk.init(os.environ.get("SENTRY"), integrations=[CeleryIntegration()])

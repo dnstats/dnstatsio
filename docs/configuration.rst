@@ -17,7 +17,7 @@ Possible Values
 
 ``REPORT_S3_URL_BASE``
 ----------------------
-The base url for
+The base url for S3 endpoint.
 Example Values
 ~~~~~~~~~~~~~~
 * s3.us-central-1.wasabisys.com
@@ -31,7 +31,7 @@ S3 Access Key
 ------------------------
 S3 Secret Key
 
-``REPORT_BUCKET_NAME``
+``REPORT_S3_BUCKET_NAME``
 ----------------------
 S3 Bucket Name for reports to upload to.
 
