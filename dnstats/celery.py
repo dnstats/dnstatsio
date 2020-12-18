@@ -28,6 +28,8 @@ from dnstats.grading.dmarc import grade as grade_dmarc_record
 from dnstats.grading.caa import grade as grade_caa_records
 from dnstats.grading.ns import grade as grade_ns_records
 from dnstats.grading.soa import grade as grade_soa_records
+from dnstats.reports.process import process_report as process_report_main
+from dnstats import settings
 
 
 if not settings.DB:
@@ -75,7 +77,7 @@ def do_charts(run_id: int):
     run = db_session.query(models.Run).filter_by(id=run_id).scalar()
     if not os.environ.get('DNSTATS_ENV') == 'Development':
         target = 950000
-        site_run_count = db_session.query(models.SiteRun).filter_by(run_id=run_id)
+        site_run_count = db_session.query(models.SiteRun).filter_by(run_id=run_id).count()
         if site_run_count < target:
             _send_botched_deploy(run.start_time, site_run_count, target)
             return
@@ -406,11 +408,21 @@ def _update_site_rank_chunked(domains_ranked: dict) -> None:
 
 @app.task
 def publish_reports(run_id: int):
-    pass
+    # sr is the alias for site_runs table
+    reports = list()
+    reports.append({'query': 'sr.mx_records is not null', 'name': 'mx_domains'})
+    reports.append({'query': 'sr.mx_records is null', 'name': 'no_mx_domains'})
+    reports.append({'query': 'sr.has_caa is true', 'name': 'caa_domains'})
+    reports.append({'query': 'sr.has_caa is not true', 'name': 'no_caa_domains'})
+
+    for report in reports:
+        process_report.s(run_id, report).apply_async()
+
 
 @app.task
 def process_report(run_id: int, report: dict):
-    pass
+    process_report_main(run_id, report)
+
 
 def _send_message(email):
     if os.environ.get('DNSTATS_ENV') == 'Development':
