@@ -20,8 +20,8 @@ def safe_query(site: str, type: str):
 
     if r:
         results = list()
-        for ans in r:
-            results.append(ans.to_text())
+        for answer in r:
+            results.append(answer.to_text())
         return results
     else:
         return None
