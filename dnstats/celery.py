@@ -410,10 +410,38 @@ def _update_site_rank_chunked(domains_ranked: dict) -> None:
 def publish_reports(run_id: int):
     # sr is the alias for site_runs table
     reports = list()
-    reports.append({'query': 'sr.mx_records is not null', 'name': 'mx_domains'})
-    reports.append({'query': 'sr.mx_records is null', 'name': 'no_mx_domains'})
-    reports.append({'query': 'sr.has_caa is true', 'name': 'caa_domains'})
-    reports.append({'query': 'sr.has_caa is not true', 'name': 'no_caa_domains'})
+    reports.append({'query': 'sr.mx_records is not null', 'name': 'mx_domains', 'type': 'list'})
+    reports.append({'query': 'sr.mx_records is null', 'name': 'no_mx_domains', 'type': 'list'})
+
+    reports.append({'query': 'sr.dnssec_ds_algorithm != -1', 'name': 'dnssec_domains', 'type': 'list'})
+    reports.append({'query': 'sr.dnssec_ds_algorithm = -1', 'name': 'no_dnssec_domains', 'type': 'list'})
+
+    reports.append({'query': 'sr.has_caa is true', 'name': 'caa_domains', 'type': 'list'})
+    reports.append({'query': 'sr.has_caa is not true', 'name': 'no_caa_domains', 'type': 'list'})
+
+    reports.append({'query': 'sr.has_caa_reporting is true', 'name': 'caa_reporting_domains', 'type': 'list'})
+    reports.append({'query': 'sr.has_caa_reporting is not true', 'name': 'no_caa_reporting_domains', 'type': 'list'})
+
+    reports.append({'query': 'sr.has_dmarc is true', 'name': 'dmarc_domains', 'type': 'list'})
+    reports.append({'query': 'sr.has_dmarc is not true', 'name': 'no_dmarc_domains'})
+
+    reports.append({'query': 'sr.dmarc_policy_id = 1', 'name': 'dmarc_none', 'type': 'list'})
+    reports.append({'query': 'sr.dmarc_policy_id = 2', 'name': 'dmarc_quarantine', 'type': 'list'})
+    reports.append({'query': 'sr.dmarc_policy_id = 3', 'name': 'dmarc_reject', 'type': 'list'})
+    reports.append({'query': 'sr.dmarc_policy_id = 4', 'name': 'dmarc_no_policy', 'type': 'list'})
+    reports.append({'query': 'sr.dmarc_policy_id = 5', 'name': 'dmarc_invalid', 'type': 'list'})
+
+    reports.append({'query': 'sr.has_spf is true', 'name': 'spf_domains', 'type': 'list'})
+    reports.append({'query': 'sr.has_spf is not true', 'name': 'no_spf_domains', 'type': 'list'})
+
+    reports.append({'query': 'sr.spf_policy_id = 1', 'name': 'spf_pass', 'type': 'list'})
+    reports.append({'query': 'sr.spf_policy_id = 2', 'name': 'spf_neutral', 'type': 'list'})
+    reports.append({'query': 'sr.spf_policy_id = 3', 'name': 'spf_softfail', 'type': 'list'})
+    reports.append({'query': 'sr.spf_policy_id = 4', 'name': 'spf_fail', 'type': 'list'})
+    reports.append({'query': 'sr.spf_policy_id = 5', 'name': 'spf_no_policy', 'type': 'list'})
+
+    reports.append({'query': 'sr.has_securitytxt is true', 'name': 'securitytxt_domains', 'type': 'list'})
+    reports.append({'query': 'sr.has_securitytxt is not true', 'name': 'no_securitytxt_domains', 'type': 'list'})
 
     for report in reports:
         process_report.s(run_id, report).apply_async()
