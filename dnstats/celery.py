@@ -28,23 +28,25 @@ from dnstats.grading.dmarc import grade as grade_dmarc_record
 from dnstats.grading.caa import grade as grade_caa_records
 from dnstats.grading.ns import grade as grade_ns_records
 from dnstats.grading.soa import grade as grade_soa_records
+from dnstats.reports.process import process_report as process_report_main
+from dnstats import settings
 
 
-if not os.environ.get('DB'):
+if not settings.DB:
     raise EnvironmentError("Database connection is not setup.")
 
-if not os.environ.get('AMQP'):
+if not settings.AMQP:
     raise EnvironmentError("Celery AMQP connection is not setup.")
 
-if not os.environ.get('CELERY_BACKEND'):
+if not settings.CELERY_BACKEND:
     raise EnvironmentError("Celery CELERY_BACKEND connection is not setup.")
 
 
-app = Celery('dnstats', broker=os.environ.get('AMQP'), backend=os.environ.get('CELERY_BACKEND'), broker_pool_limit=50)
+app = Celery('dnstats', broker=settings.AMQP, backend=settings.CELERY_BACKEND, broker_pool_limit=50)
 
 logger = get_task_logger('dnstats.scans')
 
-if os.environ.get('DNSTATS_ENV') != 'Development':
+if settings.DNSTATS_ENV != 'Development' and settings.USE_SENTRY:
     import sentry_sdk
     from sentry_sdk.integrations.celery import CeleryIntegration
     sentry_sdk.init(os.environ.get("SENTRY"), integrations=[CeleryIntegration()])
@@ -75,7 +77,7 @@ def do_charts(run_id: int):
     run = db_session.query(models.Run).filter_by(id=run_id).scalar()
     if not os.environ.get('DNSTATS_ENV') == 'Development':
         target = 950000
-        site_run_count = db_session.query(models.SiteRun).filter_by(run_id=run_id)
+        site_run_count = db_session.query(models.SiteRun).filter_by(run_id=run_id).count()
         if site_run_count < target:
             _send_botched_deploy(run.start_time, site_run_count, target)
             return
@@ -402,6 +404,52 @@ def _update_site_rank_chunked(domains_ranked: dict) -> None:
             logger.debug("Updating site rank: {}".format(domain))
     db_session.commit()
     logger.info("Site rank chunk updated")
+
+
+@app.task
+def publish_reports(run_id: int):
+    # sr is the alias for site_runs table
+    reports = list()
+    reports.append({'query': 'sr.mx_records is not null', 'name': 'mx_domains', 'type': 'list'})
+    reports.append({'query': 'sr.mx_records is null', 'name': 'no_mx_domains', 'type': 'list'})
+
+    reports.append({'query': 'sr.dnssec_ds_algorithm != -1', 'name': 'dnssec_domains', 'type': 'list'})
+    reports.append({'query': 'sr.dnssec_ds_algorithm = -1', 'name': 'no_dnssec_domains', 'type': 'list'})
+
+    reports.append({'query': 'sr.has_caa is true', 'name': 'caa_domains', 'type': 'list'})
+    reports.append({'query': 'sr.has_caa is not true', 'name': 'no_caa_domains', 'type': 'list'})
+
+    reports.append({'query': 'sr.has_caa_reporting is true', 'name': 'caa_reporting_domains', 'type': 'list'})
+    reports.append({'query': 'sr.has_caa_reporting is not true', 'name': 'no_caa_reporting_domains', 'type': 'list'})
+
+    reports.append({'query': 'sr.has_dmarc is true', 'name': 'dmarc_domains', 'type': 'list'})
+    reports.append({'query': 'sr.has_dmarc is not true', 'name': 'no_dmarc_domains'})
+
+    reports.append({'query': 'sr.dmarc_policy_id = 1', 'name': 'dmarc_none', 'type': 'list'})
+    reports.append({'query': 'sr.dmarc_policy_id = 2', 'name': 'dmarc_quarantine', 'type': 'list'})
+    reports.append({'query': 'sr.dmarc_policy_id = 3', 'name': 'dmarc_reject', 'type': 'list'})
+    reports.append({'query': 'sr.dmarc_policy_id = 4', 'name': 'dmarc_no_policy', 'type': 'list'})
+    reports.append({'query': 'sr.dmarc_policy_id = 5', 'name': 'dmarc_invalid', 'type': 'list'})
+
+    reports.append({'query': 'sr.has_spf is true', 'name': 'spf_domains', 'type': 'list'})
+    reports.append({'query': 'sr.has_spf is not true', 'name': 'no_spf_domains', 'type': 'list'})
+
+    reports.append({'query': 'sr.spf_policy_id = 1', 'name': 'spf_pass', 'type': 'list'})
+    reports.append({'query': 'sr.spf_policy_id = 2', 'name': 'spf_neutral', 'type': 'list'})
+    reports.append({'query': 'sr.spf_policy_id = 3', 'name': 'spf_softfail', 'type': 'list'})
+    reports.append({'query': 'sr.spf_policy_id = 4', 'name': 'spf_fail', 'type': 'list'})
+    reports.append({'query': 'sr.spf_policy_id = 5', 'name': 'spf_no_policy', 'type': 'list'})
+
+    reports.append({'query': 'sr.has_securitytxt is true', 'name': 'securitytxt_domains', 'type': 'list'})
+    reports.append({'query': 'sr.has_securitytxt is not true', 'name': 'no_securitytxt_domains', 'type': 'list'})
+
+    for report in reports:
+        process_report.s(run_id, report).apply_async()
+
+
+@app.task
+def process_report(run_id: int, report: dict):
+    process_report_main(run_id, report)
 
 
 def _send_message(email):
