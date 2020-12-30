@@ -168,19 +168,15 @@ def _seed_spf():
     ]
 
     for spf_pol in spf_policies:
-        spf_policy = models.SpfPolicy(qualifier=spf_pol[0], display_name=spf_pol[1], color=spf_pol[2])
-        db_session.add(spf_policy)
+        spf_policy_db = db_session.query(models.SpfPolicy).filter_by(qualifier=spf_pol[0]).scalar()
+
+        if not spf_policy_db:
+            spf_policy = models.SpfPolicy(qualifier=spf_pol[0], display_name=spf_pol[1], color=spf_pol[2])
+            db_session.add(spf_policy)
+        else:
+            spf_policy_db.display_name = spf_pol[1]
+            spf_policy_db.color = spf_pol[2]
         db_session.commit()
-
-
-def _seed_sites(filename):
-    with open(filename, 'r') as file:
-        csv_reader = csv.DictReader(file)
-
-        for row in csv_reader:
-            site = models.Site(current_rank=int(row['rank']), domain=row['site'])
-            db_session.add(site)
-            db_session.commit()
 
 
 def _seed_dmarc_policy():
@@ -192,8 +188,14 @@ def _seed_dmarc_policy():
         ('invalid', 'Invalid', '#FF00FF')
     ]
     for dmarc_policy in dmarc_policies:
-        dmarc_policy = models.DmarcPolicy(policy_string=dmarc_policy[0], display_name=dmarc_policy[1], color=dmarc_policy[2])
-        db_session.add(dmarc_policy)
+        dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=dmarc_policy[0]).scalar()
+
+        if not dmarc_policy_db:
+            dmarc_policy = models.DmarcPolicy(policy_string=dmarc_policy[0], display_name=dmarc_policy[1], color=dmarc_policy[2])
+            db_session.add(dmarc_policy)
+        else:
+            dmarc_policy_db.display_name = dmarc_policy[1]
+            dmarc_policy_db.color = dmarc_policy[2]
         db_session.commit()
 
 
