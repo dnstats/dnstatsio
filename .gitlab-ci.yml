@@ -27,6 +27,7 @@ before_script:
   - source venv/bin/activate
   - pip install -r requirements.txt
   - export DB=postgres://$POSTGRES_USER@postgres/$POSTGRES_DB
+  - cp  dnstats/settingslocal_ci.py  dnstats/settingslocal.py
   - alembic upgrade head
   - pip install -e dnstats
   - python -m dnstats.db.seed
