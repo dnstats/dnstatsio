@@ -36,7 +36,7 @@
         </p>
         <div class="section group">
             <p>
-                These charts include all sites, even those without MX records. This done since all domains
+                These charts includes all sites, even those without MX records. This done since all domains
                 can be used in phishing campaigns, even if they do not have MX, A, other public DNS records.
             </p>
             <div class="col span_1_of_2">
@@ -54,7 +54,7 @@
         <p>
             Domain-based Message Authentication, Reporting, and Conformance (DMARC) is defined in
             <a href="https://tools.ietf.org/html/rfc7489" target="_blank">RFC 7489</a> and is a protocol used
-            to help domain owner's protect thier domain and provide data to the domain owner on the domain has been used for
+            to help domain owner's protect their domain and provide data to the domain owner on the domain has been used for
             sending. DMARC works with Sender Policy Framework (SPF) and DomainKeys Identified Mail  (DKIM) to
             authenticate mail messages. DMARC matches on the <span class="code">From</span> field on the
             mail message as defined in <a href="https://tools.ietf.org/html/rfc5322" target="_blank">RFC 5322</a>.
@@ -80,7 +80,7 @@
             </div>
             <div class="col span_1_of_2">
                 <h3>Subdomain DMARC Policy</h3>
-                <hr />f
+                <hr />
                 <div class="chart" id="dmarc_subdomain_policy"></div>
             </div>
         </div>
@@ -91,6 +91,13 @@
             <a href="https://dnstats.readthedocs.io/en/latest/about/glossary#glossary.html#term-Certificate-Authority" target="_blank">
                 certificate authorities</a> can issue certificates for a domain. The goal of CAA is to reduce the number
             of mis-issued certificates. CAA also provides mechanism for CAs to report attempted mis-issuance of certificates.
+        </p>
+        <p>
+            DNS Certification Authority Authorization (CAA) Resource Records defined in
+            <a href="https://tools.ietf.org/html/rfc8659">RFC 8659</a> allow a domain owner to specify which
+            <a href="https://dnstats.readthedocs.io/en/latest/about/glossary#glossary.html#term-Certificate-Authority">
+                certificate authorities</a> can issue certificates for a domain. The goal of CAA is to reduce the number
+            of mis-issued certificates. CAA also provides mechanism for CAs to report attempted mis-issuance.
         </p>
         <div class="section group">
             <div class="col span_1_of_2">
