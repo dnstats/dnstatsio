@@ -36,7 +36,7 @@
         </p>
         <div class="section group">
             <p>
-                These charts includes all sites, even those without MX records. This done since all domains
+                These charts include all sites, even those without MX records. This done since all domains
                 can be used in phishing campaigns, even if they do not have MX, A, other public DNS records.
             </p>
             <div class="col span_1_of_2">
@@ -53,11 +53,10 @@
         <h2 id="dmarc">DMARC</h2>
         <p>
             Domain-based Message Authentication, Reporting, and Conformance (DMARC) is defined in
-            <a href="https://tools.ietf.org/html/rfc7489" target="_blank">RFC 7489</a> and is protocol used
-            to help domain owner's protect a sender and provide data to the domain owner on the domain has been used for
+            <a href="https://tools.ietf.org/html/rfc7489" target="_blank">RFC 7489</a> and is a protocol used
+            to help domain owner's protect thier domain and provide data to the domain owner on the domain has been used for
             sending. DMARC works with Sender Policy Framework (SPF) and DomainKeys Identified Mail  (DKIM) to
-            authenticate mail messages. DMARC also provides a facility for domain owners to get reports about
-            how their domain is used to receive email. DMARC matches on the <span class="code">From</span> field on the
+            authenticate mail messages. DMARC matches on the <span class="code">From</span> field on the
             mail message as defined in <a href="https://tools.ietf.org/html/rfc5322" target="_blank">RFC 5322</a>.
         </p>
         <div class="section group">
@@ -87,11 +86,11 @@
         </div>
         <h2 id="caa">CAA</h2>
         <p>
-            DNS Certification Authority Authorization (CAA) Resource Records defined in
-            <a href="https://tools.ietf.org/html/rfc8659">RFC 8659</a> allow a domain owner to specify which
-            <a href="https://dnstats.readthedocs.io/en/latest/about/glossary#glossary.html#term-Certificate-Authority">
+            DNS Certification Authority Authorization (CAA) Resource Records are defined in
+            <a href="https://tools.ietf.org/html/rfc8659" target="_blank">RFC 8659</a> and allow a domain owner to specify which
+            <a href="https://dnstats.readthedocs.io/en/latest/about/glossary#glossary.html#term-Certificate-Authority" target="_blank">
                 certificate authorities</a> can issue certificates for a domain. The goal of CAA is to reduce the number
-            of mis-issued certificates. CAA also provides mechanism for CAs to report attempted mis-issuance.
+            of mis-issued certificates. CAA also provides mechanism for CAs to report attempted mis-issuance of certificates.
         </p>
         <div class="section group">
             <div class="col span_1_of_2">
@@ -120,6 +119,10 @@
         <h2 id="others">Others</h2>
         <div class="section group">
             <div class="col span_1_of_2">
+                <p>
+                    This report says the percentage of scanned domains that have mail exchanger record (MX) records.
+                    Having an MX records means that domian is being used for email.
+                </p>
                 <h3>Has MX Records</h3>
                 <hr />
                 <div class="chart" id="has_mx_records"></div>
@@ -128,20 +131,40 @@
                 <h3>DNSSEC Adoption</h3>
                 <p>
                     Domain Name System Security Extensions DNSSEC as defined in
-                    <a href="https://tools.ietf.org/html/rfc4033">RFC 4033</a>,
-                    <a href="https://tools.ietf.org/html/rfc4034">RFC 4034</a>,
-                    and <a href="https://tools.ietf.org/html/rfc4034">RFC 4036</a>
+                    <a href="https://tools.ietf.org/html/rfc4033" target="_blank">RFC 4033</a>,
+                    <a href="https://tools.ietf.org/html/rfc4034" target="_blank">RFC 4034</a>,
+                    and <a href="https://tools.ietf.org/html/rfc4034" target="_blank">RFC 4036</a>
                     adds a chain of trust. From the root zone to the requested zone.
                     For more information see
                     <a target="_blank" href="https://www.cloudflare.com/dns/dnssec/how-dnssec-works/">this
-                    blog post</a> from <a href="https://www.cloudflare.com/">CloudFlare</a>.
+                    blog post</a> from <a href="https://www.cloudflare.com/" target="_blank">CloudFlare</a>.
                 </p>
                 <hr />
                 <div class="chart" id="dnssec_adoption"></div>
             </div>
         </div>
+        <div class="section group">
+            <div class="col span_1_of_2">
+                <h3>Security.txt Adoption</h3>
+                <p>
+                    Security.txt is a text file placed at
+                    <span class="code">/.well-known/security.txt</span>
+                    and provides infomation on how to report vulnerabilities securely. Security.txt is a
+                    <a href="https://tools.ietf.org/html/draft-foudil-securitytxt" target="_blank">
+                        proposed web standard</a>. More infomation can be found at
+                    <a href="https:/securitytxt.org" target="_blank">https://securitytxt.org/</a>
+                </p>
+                <hr/>
+                <div class="chart" id="security_txt_adoption"></div>
+            </div>
+        </div>
         <h2 id="provider">Provider Stats</h2>
         <div class="section group">
+            <p>
+                Using a set of regex we determine the DNS and Email providers. This isn't perfect but gets the job
+                done. If you want to help improve this please open a merge request on
+                <a target="_blank" href="https://gitlab.com/dnstats/dnstatsio">GitLab</a>.
+            </p>
             <div class="col span_1_of_2">
                 <h3>Email Providers</h3>
                 <hr />
@@ -158,7 +181,7 @@
         <a rel="license" href="https://creativecommons.org/licenses/by/4.0/" target="_blank">
         Creative Commons Attribution 4.0 International License</a>.</p>
         <p>Created by <a href="https://matthewburket.com" target="_blank">Matthew Burket</a>.</p>
-        <a href="https://gitlab.com/dnstats/dnstatsio">Source Code</a>
+        This project is open source (GPLv2)! See the <a href="https://gitlab.com/dnstats/dnstatsio">Source Code</a>
     </body>
     <script integrity="sha384-A753X7DKbqixyg9PJac76aNkFtPsX0ycrZTWbtFasXq1cWjTruFWwrvspVjmKQIZ" crossorigin="anonymous"  src="/d3.js"></script>
     <script integrity="sha384-hChw8ZV0Iwp7ETExPFldu4PYtFKfWwWBZRiYW/ZvQqWDSsZ33fUS9reU6+gnTvB0" crossorigin="anonymous" src="/d3pie.min.js"></script>

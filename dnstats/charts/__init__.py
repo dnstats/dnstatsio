@@ -67,6 +67,10 @@ def create_reports(run_id: int):
     spf_adoption_query = "select count(*) from site_runs sr " \
                          "where sr.run_id = {} and sr.has_spf is true".format(run_id)
 
+    securitytxt_adoption_query = "select count(*) from site_runs sr " \
+                         "where sr.run_id = {} and sr.has_security is true".format(run_id)
+
+
     spf_reports_query = "select count(*), sp.display_name, sp.color from site_runs sr " \
                         "join spf_policies sp on sr.spf_policy_id = sp.id " \
                         "where sr.run_id = {} " \
@@ -140,6 +144,7 @@ def create_reports(run_id: int):
 
                 """.format(run_id)
 
+
     category_data = [_run_report(spf_adoption_query, 'SPF Adoption', True, run_id),
                      _run_report(spf_reports_query, 'SPF Policy', False, run_id),
                      _run_report(dmarc_adoption_query, 'DMARC Adaption', True, run_id),
@@ -153,7 +158,9 @@ def create_reports(run_id: int):
                      _run_report(email_providers, 'Email Providers', False, run_id, True),
                      _run_report(dns_providers, 'DNS Providers', False, run_id, True),
                      _run_report(caa_issue_count, 'CAA Issue Count', False, run_id, True),
-                     _run_report(caa_wildcard_issue_count, 'CAA Wildcard Issue Count', False, run_id, True)
+                     _run_report(caa_wildcard_issue_count, 'CAA Wildcard Issue Count', False, run_id, True),
+                     _run_report(securitytxt_adoption_query, 'Security.txt Adoption', True, run_id)
+
                      ]
     js_filename = _create_time_date_filename('charts')
     _render_piejs(category_data, js_filename)
