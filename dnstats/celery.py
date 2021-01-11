@@ -75,17 +75,17 @@ class SqlAlchemyTask(Task):
 @app.task(queue='deployment')
 def do_charts(run_id: int):
     run = db_session.query(models.Run).filter_by(id=run_id).scalar()
-    if not os.environ.get('DNSTATS_ENV') == 'Development':
+    if not settings.DNSTATS_ENV == 'Development':
         target = 950000
         site_run_count = db_session.query(models.SiteRun).filter_by(run_id=run_id).count()
         if site_run_count < target:
-            _send_botched_deploy(run.start_time, site_run_count, target)
+            _send_botched_deploy(run.start_time, site_run_count, site_run_count, target)
             return
     folder_name = run.start_time.strftime("%Y-%m-%d")
     js_filename, html_filename = dnstats.charts.create_reports(run_id)
     print(js_filename)
     print(html_filename)
-    if os.environ.get('DNSTATS_ENV') == 'Development':
+    if settings.DNSTATS_ENV == 'Development':
         return
     os.system("ssh dnstatsio@www.dnstats.io 'mkdir /home/dnstatsio/public_html/{}'".format(folder_name))
     os.system('scp {filename}.js  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}.js'.format(filename=js_filename, folder_name=folder_name))

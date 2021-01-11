@@ -88,16 +88,9 @@
         <p>
             DNS Certification Authority Authorization (CAA) Resource Records are defined in
             <a href="https://tools.ietf.org/html/rfc8659" target="_blank">RFC 8659</a> and allow a domain owner to specify which
-            <a href="https://dnstats.readthedocs.io/en/latest/about/glossary#glossary.html#term-Certificate-Authority" target="_blank">
+            <a href="https://dnstats.readthedocs.io/en/latest/about/glossary.html#term-Certificate-Authority" target="_blank">
                 certificate authorities</a> can issue certificates for a domain. The goal of CAA is to reduce the number
             of mis-issued certificates. CAA also provides mechanism for CAs to report attempted mis-issuance of certificates.
-        </p>
-        <p>
-            DNS Certification Authority Authorization (CAA) Resource Records defined in
-            <a href="https://tools.ietf.org/html/rfc8659">RFC 8659</a> allow a domain owner to specify which
-            <a href="https://dnstats.readthedocs.io/en/latest/about/glossary#glossary.html#term-Certificate-Authority">
-                certificate authorities</a> can issue certificates for a domain. The goal of CAA is to reduce the number
-            of mis-issued certificates. CAA also provides mechanism for CAs to report attempted mis-issuance.
         </p>
         <div class="section group">
             <div class="col span_1_of_2">
@@ -126,17 +119,17 @@
         <h2 id="others">Others</h2>
         <div class="section group">
             <div class="col span_1_of_2">
-                <p>
+                <h3>Has MX Records</h3>
+                <div style="width: 600px">
                     This report says the percentage of scanned domains that have mail exchanger record (MX) records.
                     Having an MX records means that domian is being used for email.
-                </p>
-                <h3>Has MX Records</h3>
-                <hr />
+               </div>
+                <hr/>
                 <div class="chart" id="has_mx_records"></div>
             </div>
             <div class="col span_1_of_2">
                 <h3>DNSSEC Adoption</h3>
-                <p>
+                <div style="width: 600px;">
                     Domain Name System Security Extensions DNSSEC as defined in
                     <a href="https://tools.ietf.org/html/rfc4033" target="_blank">RFC 4033</a>,
                     <a href="https://tools.ietf.org/html/rfc4034" target="_blank">RFC 4034</a>,
@@ -145,7 +138,7 @@
                     For more information see
                     <a target="_blank" href="https://www.cloudflare.com/dns/dnssec/how-dnssec-works/">this
                     blog post</a> from <a href="https://www.cloudflare.com/" target="_blank">CloudFlare</a>.
-                </p>
+                </div>
                 <hr />
                 <div class="chart" id="dnssec_adoption"></div>
             </div>
@@ -153,17 +146,18 @@
         <div class="section group">
             <div class="col span_1_of_2">
                 <h3>Security.txt Adoption</h3>
-                <p>
+                <div style="width: 500px;">
                     Security.txt is a text file placed at
                     <span class="code">/.well-known/security.txt</span>
                     and provides infomation on how to report vulnerabilities securely. Security.txt is a
                     <a href="https://tools.ietf.org/html/draft-foudil-securitytxt" target="_blank">
                         proposed web standard</a>. More infomation can be found at
                     <a href="https:/securitytxt.org" target="_blank">https://securitytxt.org/</a>
-                </p>
+                </div>
                 <hr/>
                 <div class="chart" id="security_txt_adoption"></div>
             </div>
+            <div class="col span_2_of_2"></div>
         </div>
         <h2 id="provider">Provider Stats</h2>
         <div class="section group">

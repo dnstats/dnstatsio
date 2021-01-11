@@ -68,7 +68,7 @@ def create_reports(run_id: int):
                          "where sr.run_id = {} and sr.has_spf is true".format(run_id)
 
     securitytxt_adoption_query = "select count(*) from site_runs sr " \
-                         "where sr.run_id = {} and sr.has_security is true".format(run_id)
+                         "where sr.run_id = {} and sr.has_securitytxt is true".format(run_id)
 
 
     spf_reports_query = "select count(*), sp.display_name, sp.color from site_runs sr " \
