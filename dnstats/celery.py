@@ -75,7 +75,7 @@ class SqlAlchemyTask(Task):
 @app.task(queue='deployment')
 def do_charts(run_id: int):
     run = db_session.query(models.Run).filter_by(id=run_id).scalar()
-    if not os.environ.get('DNSTATS_ENV') == 'Development':
+    if not settings.DNSTATS_ENV == 'Development':
         target = 950000
         site_run_count = db_session.query(models.SiteRun).filter_by(run_id=run_id).count()
         if site_run_count < target:
@@ -85,7 +85,7 @@ def do_charts(run_id: int):
     js_filename, html_filename = dnstats.charts.create_reports(run_id)
     print(js_filename)
     print(html_filename)
-    if os.environ.get('DNSTATS_ENV') == 'Development':
+    if settings.DNSTATS_ENV == 'Development':
         return
     os.system("ssh dnstatsio@www.dnstats.io 'mkdir /home/dnstatsio/public_html/{}'".format(folder_name))
     os.system('scp {filename}.js  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}.js'.format(filename=js_filename, folder_name=folder_name))
@@ -299,7 +299,7 @@ def launch_run(run_id):
 @app.task()
 def do_run():
     date = datetime.datetime.now()
-    if os.environ.get('DNSTATS_ENV') == 'Development':
+    if settings == 'Development':
         run = models.Run(start_time=date, start_rank=1, end_rank=150)
         logger.warning("[DO RUN]: Running a Debug top 50 sites runs")
     else:
@@ -453,11 +453,11 @@ def process_report(run_id: int, report: dict):
 
 
 def _send_message(email):
-    if os.environ.get('DNSTATS_ENV') == 'Development':
+    if settings.DNSTATS_ENV == 'Development':
         print(email)
         return
 
-    sendgrid = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+    sendgrid = SendGridAPIClient(settings.SENDGRID_API_KEY)
     sendgrid.send(email)
 
 
