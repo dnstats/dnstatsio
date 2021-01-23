@@ -235,3 +235,4 @@ dnstats.env
 /docs/_build/
 /output
 /dnstats/settingslocal.py
+/.pytype/**
