@@ -415,6 +415,10 @@ def process_report(run_id: int, report: dict):
     process_report_main(run_id, report)
 
 
+def _send_message(email):
+    if settings.DNSTATS_ENV == 'Development':
+        print(email)
+        return
 def do_grading(sr):
     grade_spf.s(sr.id).apply_async()
     grade_dmarc.s(sr.id).apply_async()
