@@ -13,7 +13,7 @@ def _send_message(email):
         print(email)
         return
 
-    sendgrid = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+    sendgrid = SendGridAPIClient(settings.DNSTATS_ENV)
     sendgrid.send(email)
 
 

@@ -36,10 +36,7 @@ app = Celery('dnstats', broker=settings.AMQP, backend=settings.CELERY_BACKEND, b
 
 logger = get_task_logger('dnstats.scans')
 
-if settings.DNSTATS_ENV != 'Development' and settings.USE_SENTRY:
-    import sentry_sdk
-    from sentry_sdk.integrations.celery import CeleryIntegration
-    sentry_sdk.init(os.environ.get("SENTRY"), integrations=[CeleryIntegration()])
+setup_sentry()
 
 
 @app.on_after_configure.connect
@@ -66,7 +63,7 @@ class SqlAlchemyTask(Task):
 @app.task(queue='deployment')
 def do_charts(run_id: int):
     run = db_session.query(models.Run).filter_by(id=run_id).scalar()
-    if not os.environ.get('DNSTATS_ENV') == 'Development':
+    if not settings.DNSTATS_ENV('DNSTATS_ENV') == 'Development':
         target = 950000
         site_run_count = db_session.query(models.SiteRun).filter_by(run_id=run_id).count()
         if site_run_count < target:
@@ -76,7 +73,7 @@ def do_charts(run_id: int):
     js_filename, html_filename = dnstats.charts.create_reports(run_id)
     print(js_filename)
     print(html_filename)
-    if os.environ.get('DNSTATS_ENV') == 'Development':
+    if settings.DNSTATS_ENV == 'Development':
         return
     os.system("ssh dnstatsio@www.dnstats.io 'mkdir /home/dnstatsio/public_html/{}'".format(folder_name))
     os.system('scp {filename}.js  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}.js'.format(filename=js_filename, folder_name=folder_name))
@@ -272,7 +269,7 @@ def launch_run(run_id):
 @app.task()
 def do_run():
     date = datetime.datetime.now()
-    if os.environ.get('DNSTATS_ENV') == 'Development':
+    if settings.DNSTATS_ENV == 'Development':
         run = models.Run(start_time=date, start_rank=1, end_rank=150)
         logger.warning("[DO RUN]: Running a Debug top 50 sites runs")
     else:
@@ -421,10 +418,6 @@ def process_report(run_id: int, report: dict):
     process_report_main(run_id, report)
 
 
-def _send_message(email):
-    if settings.DNSTATS_ENV == 'Development':
-        print(email)
-        return
 def do_grading(sr):
     grade_spf.s(sr.id).apply_async()
     grade_dmarc.s(sr.id).apply_async()
