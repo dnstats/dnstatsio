@@ -44,9 +44,10 @@ if settings.DNSTATS_ENV != 'Development' and settings.USE_SENTRY:
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(crontab(hour=0, minute=58), import_list.s())
+    sender.add_periodic_task(crontab(hour=1, minute=1), import_list.s())
     sender.add_periodic_task(crontab(hour=8, minute=0), do_run.s())
     sender.add_periodic_task(crontab(hour=18, minute=0), do_charts_latest.s())
+    sender.add_periodic_task(crontab(hour=18, minute=15), do_reports_latest.s())
 
 
 class SqlAlchemyTask(Task):
@@ -368,6 +369,11 @@ def _update_site_rank_chunked(domains_ranked: dict) -> None:
     db_session.commit()
     logger.info("Site rank chunk updated")
 
+@app.task
+def do_reports_latest():
+    the_time = db_session.query(func.Max(models.Run.start_time)).scalar()
+    run = db_session.query(models.Run).filter_by(start_time=the_time).scalar()
+    publish_reports.s(run.id).apply_async()
 
 @app.task
 def publish_reports(run_id: int):
