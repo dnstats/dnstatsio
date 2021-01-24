@@ -1,9 +1,12 @@
 default:
-  image: python:3.7
+  image: python:3.6
 
 stages:
   - test
   - pages
+
+include:
+  - template: Code-Quality.gitlab-ci.yml
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
@@ -23,8 +26,7 @@ before_script:
   - virtualenv venv
   - source venv/bin/activate
   - pip install -r requirements.txt
-  - export DB=postgres://$POSTGRES_USER@postgres/$POSTGRES_DB
-  - cp  dnstats/settingslocal_ci.py  dnstats/settingslocal.py
+  - cp dnstats/settingslocal_ci.py  dnstats/settingslocal.py
   - alembic upgrade head
   - pip install -e dnstats
   - python -m dnstats.db.seed
@@ -47,24 +49,14 @@ python36-postgers13:
     - coverage run -m unittest discover
     - coverage report -m
 
-python37-postgers12:
+python39-postgers12:
   stage: test
-  image: python:3.7
+  image: python:3.9
   services:
     - postgres:12
   script:
     - coverage run -m unittest discover
     - coverage report -m
-
-python38-postgers12:
-  stage: test
-  image: python:3.8
-  services:
-    - postgres:12
-  script:
-    - coverage run -m unittest discover
-    - coverage report -m
-
 
 pages:
   stage: pages
