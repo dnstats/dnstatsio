@@ -5,9 +5,6 @@ stages:
   - test
   - pages
 
-include:
-  - template: Code-Quality.gitlab-ci.yml
-
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   POSTGRES_DB: dnstats

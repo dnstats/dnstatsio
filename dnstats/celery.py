@@ -9,8 +9,8 @@ from sqlalchemy import and_
 from sqlalchemy.sql.expression import func
 
 import dnstats.charts
-from dnstats.celery.grading import _grade_errors, get_site_and_site_run
-from dnstats.celery.site_import import setup_import_list
+from dnstats.utils.grading import _grade_errors, get_site_and_site_run
+from dnstats.utils.site_import import setup_import_list
 import dnstats.dnsutils as dnutils
 import dnstats.dnsutils.spf as spfutils
 import dnstats.dnsutils.mx as mxutils
@@ -18,6 +18,7 @@ import dnstats.db.models as models
 from dnstats.dnsutils.dnssec import parse_ds, parse_dnskey
 from dnstats.dnsutils.ns import get_name_server_ips, get_name_server_results
 from dnstats.db import db_session, engine
+from dnstats.utils.site_import import run_rank_site
 from dnstats.utils import chunks
 from dnstats.httputils import has_security_txt
 from dnstats.grading.spf import grade as grade_spf_record
@@ -27,8 +28,8 @@ from dnstats.grading.ns import grade as grade_ns_records
 from dnstats.grading.soa import grade as grade_soa_records
 from dnstats.reports.process import process_report as process_report_main
 from dnstats import settings
-from utils import check_for_config
-from utils.email import _send_start_email, _send_eoq, _send_published_email, _send_sites_updated_done, _send_botched_deploy
+from dnstats.utils import check_for_config, setup_sentry
+from dnstats.utils.email import _send_botched_deploy, _send_eoq, _send_published_email, _send_start_email, _send_sites_updated_done
 
 check_for_config()
 
@@ -64,7 +65,7 @@ class SqlAlchemyTask(Task):
 def do_charts(run_id: int):
     run = db_session.query(models.Run).filter_by(id=run_id).scalar()
     if not settings.DNSTATS_ENV('DNSTATS_ENV') == 'Development':
-        target = 950000
+        target = 920000
         site_run_count = db_session.query(models.SiteRun).filter_by(run_id=run_id).count()
         if site_run_count < target:
             _send_botched_deploy(run.start_time, site_run_count, target)
@@ -76,8 +77,8 @@ def do_charts(run_id: int):
     if settings.DNSTATS_ENV == 'Development':
         return
     os.system("ssh dnstatsio@www.dnstats.io 'mkdir /home/dnstatsio/public_html/{}'".format(folder_name))
-    os.system('scp {filename}.js  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}.js'.format(filename=js_filename, folder_name=folder_name))
-    os.system('scp {filename}  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/index.html'.format(filename=html_filename, folder_name=folder_name))
+    os.system('scp {filename}.js dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}.js'.format(filename=js_filename, folder_name=folder_name))
+    os.system('scp {filename} dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/index.html'.format(filename=html_filename, folder_name=folder_name))
     os.system("ssh dnstatsio@www.dnstats.io 'rm /home/dnstatsio/public_html/index.html'")
     os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/index.html /home/dnstatsio/public_html/index.html'".format(folder_name=folder_name, filename=html_filename))
     os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/{filename}.js /home/dnstatsio/public_html/'".format(folder_name=folder_name, filename=js_filename))
@@ -165,7 +166,6 @@ def process_result(result: dict):
     db_session.add(sr)
     db_session.commit()
     do_grading(sr)
-    return
 
 
 @app.task(time_limit=320, soft_time_limit=300)
@@ -417,17 +417,9 @@ def publish_reports(run_id: int):
 def process_report(run_id: int, report: dict):
     process_report_main(run_id, report)
 
-
 def do_grading(sr):
     grade_spf.s(sr.id).apply_async()
     grade_dmarc.s(sr.id).apply_async()
     grade_caa.s(sr.id).apply_async()
     grade_ns.s(sr.id).apply_async()
     grade_soa.s(sr.id).apply_async()
-
-
-def run_rank_site(existing_sites, new_sites):
-    unranked_sites = existing_sites.keys() - new_sites.keys()
-    for site in unranked_sites:
-        _unrank_domain.s(str(site)).apply_async()
-        logger.debug("Unranking site: {}".format(site))

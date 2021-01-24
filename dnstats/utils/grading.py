@@ -14,3 +14,4 @@ def get_site_and_site_run(site_run_id):
     site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
     site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
     return site, site_run
+
