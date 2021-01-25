@@ -89,6 +89,5 @@ def setup_sentry():
         import sentry_sdk
         from sentry_sdk.integrations.celery import CeleryIntegration
         from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
-        from sentry_sdk.integrations.tornado import TornadoIntegration
         sentry_sdk.init(settings.SENTRY,
-                        integrations=[CeleryIntegration(), SqlalchemyIntegration(), TornadoIntegration()])
+                        integrations=[CeleryIntegration(), SqlalchemyIntegration()])
