@@ -1,11 +1,11 @@
 import re
 
-"""
-Source: https://chrisalbon.com/python/data_wrangling/break_list_into_chunks_of_equal_size/
-"""
-
+import settings
 
 def chunks(array, size):
+    """
+    Source: https://chrisalbon.com/python/data_wrangling/break_list_into_chunks_of_equal_size/
+    """
     for i in range(0, len(array), size):
         yield array[i:i + size]
 
@@ -67,3 +67,28 @@ def count_value(value: object, the_list: list):
         if item == value:
             count += 1
     return count
+
+
+def check_for_config():
+    if not settings.DB:
+        raise EnvironmentError("Database connection is not setup.")
+    if not settings.AMQP:
+        raise EnvironmentError("Celery AMQP connection is not setup.")
+    if not settings.CELERY_BACKEND:
+        raise EnvironmentError("Celery CELERY_BACKEND connection is not setup.")
+
+
+def _send_message(email):
+    if settings.DNSTATS_ENV == 'Development':
+        print(email)
+        return
+
+
+def setup_sentry():
+    if settings.DNSTATS_ENV == 'Production' and settings.USE_SENTRY:
+        import sentry_sdk
+        from sentry_sdk.integrations.celery import CeleryIntegration
+        from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+        from sentry_sdk.integrations.tornado import TornadoIntegration
+        sentry_sdk.init(settings.SENTRY,
+                        integrations=[CeleryIntegration(), SqlalchemyIntegration(), TornadoIntegration()])
