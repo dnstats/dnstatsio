@@ -1,3 +1,4 @@
+import json
 import os
 import socket
 import datetime
@@ -10,11 +11,11 @@ from dnstats.charts.asset_utils import slugify, calculate_sri_hash
 from dnstats.charts.colors import get_color
 
 
-def _render_piejs(categories, filename: str):
+def _render_piejs(categories, histograms, filename: str):
     file_loader = FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates'))
     env = Environment(loader=file_loader)
     template = env.get_template('charts.j2.js')
-    result = template.render(categories=categories)
+    result = template.render(categories=categories, histograms=histograms)
     with open('{}.js'.format(filename), 'w') as f:
         f.write(result)
 
@@ -112,10 +113,10 @@ def create_reports(run_id: int):
                       "order by count asc;".format(run_id)
 
     dns_providers = "select count(*), display_name from site_runs sr " \
-                      "join dns_providers dp on sr.dns_provider_id=dp.id " \
-                      "where run_id={} " \
-                      "group by display_name " \
-                      "order by count asc;".format(run_id)
+                    "join dns_providers dp on sr.dns_provider_id=dp.id " \
+                    "where run_id={} " \
+                    "group by display_name " \
+                    "order by count asc;".format(run_id)
 
     caa_issue_count = """
                     select count(*), sr.range
@@ -144,6 +145,20 @@ def create_reports(run_id: int):
 
                 """.format(run_id)
 
+    caa_grade_distribution = "select caa_grade, count(*) from site_runs where run_id={} group by caa_grade order by caa_grade".format(
+        run_id)
+    dmarc_grade_distribution = "select dmarc_grade, count(*) from site_runs where run_id={}  group by dmarc_grade order by dmarc_grade".format(
+        run_id)
+    spf_grade_distribution = "select spf_grade, count(*) from site_runs where run_id={} group by spf_grade order by spf_grade".format(
+        run_id)
+    overall_grade_distribution = """select (ceil(((COALESCE(dmarc_grade, 0) + COALESCE(caa_grade, 0) +
+                                          COALESCE(spf_grade, 0))/300.0)*100)::integer) as grade, count(*)
+                                       from site_runs
+                                       where run_id={}
+                                       group by grade
+                                       order by grade;
+     """.format(run_id)
+
 
     category_data = [_run_report(spf_adoption_query, 'SPF Adoption', True, run_id),
                      _run_report(spf_reports_query, 'SPF Policy', False, run_id),
@@ -162,13 +177,47 @@ def create_reports(run_id: int):
                      _run_report(securitytxt_adoption_query, 'Security.txt Adoption', True, run_id)
 
                      ]
+    histograms_data = [
+        _run_histogram(caa_grade_distribution, 'CAA Grade Distribution', run_id),
+        _run_histogram(dmarc_grade_distribution, 'DMARC Grade Distribution', run_id),
+        _run_histogram(spf_grade_distribution, 'SPF Grade Distribution', run_id),
+        _run_histogram(overall_grade_distribution, 'Overall Grade Distribution', run_id)
+    ]
     js_filename = _create_time_date_filename('charts')
-    _render_piejs(category_data, js_filename)
-    html_filename = _create_html(category_data, run_id, js_filename)
+    _render_piejs(category_data, histograms_data, js_filename)
+    html_filename = _create_html(category_data, histograms_data, run_id, js_filename)
     return js_filename, html_filename
 
 
-def _create_html(category_data: [()], run_id: int, js_filename: str):
+def _run_histogram(query: str, report: str, run_id: int) -> [{}]:
+    with engine.connect() as connection:
+        result_set = connection.execute(query)
+
+        results = []
+        for i in range(0, 10):
+            results.append(0)
+
+        for row in result_set:
+            results[_get_percentage_bin(row[0])] += row[1]
+
+        json_result = []
+        # Grade is min of the bin
+        for i in range(0, 10):
+            json_result.append({'grade': i * 10, 'count': results[i]})
+
+    filename = _create_time_date_filename(report)
+    return filename, report, slugify(report),  json.dumps(json_result)
+
+
+def _get_percentage_bin(num: int) -> int:
+   if not num or num < 10:
+      return 0
+   if num == 100:
+       return 0
+   else:
+      return int(str(num)[0:1])
+
+def _create_html(category_data: [()], histograms: [()], run_id: int, js_filename: str):
     for filename in category_data:
         print(filename[1], filename[2])
     hostname = socket.gethostname()
@@ -180,7 +229,7 @@ def _create_html(category_data: [()], run_id: int, js_filename: str):
     js_sha = calculate_sri_hash(js_filename + '.js')
     end_rank = '{:,}'.format(run.end_rank)
     result = template.render(charts=category_data, report_date=report_date, end_rank=end_rank,
-                             js_filename=js_filename,
+                             js_filename=js_filename, histrograms=histograms,
                              js_sha=js_sha, hostname=hostname)
     filename = _create_time_date_filename('index') + '.html'
     with open(filename, 'w') as file:

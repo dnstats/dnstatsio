@@ -23,6 +23,7 @@
                 <a href="#dmarc">DMARC</a> |
                 <a href="#caa">CAA</a> |
                 <a href="#provider">Provider</a> |
+                <a href="#grades">Grades</a> |
                 <a href="#others">Others</a>
             </p>
         </nav>
@@ -177,6 +178,31 @@
                 <div class="chart" id="dns_providers"></div>
             </div>
         </div>
+        <h2 id="grades">Grading</h2>
+        <div class="section group">
+            <div class="col span_1_of_2">
+                <h3>Combined Grade</h3>
+                <hr />
+                <svg class="histogram" id="overall_grade_distribution"></svg>
+            </div>
+            <div class="col span_1_of_2">
+                <h3>CAA Grade</h3>
+                <hr />
+                <svg class="histogram" id="caa_grade_distribution"></svg>
+            </div>
+        </div>
+        <div class="section group">
+            <div class="col span_1_of_2">
+                <h3>DMARC Grade</h3>
+                <hr />
+                <svg class="histogram" id="dmarc_grade_distribution"></svg>
+            </div>
+            <div class="col span_1_of_2">
+                <h3>SPF Grade</h3>
+                <hr />
+                <svg class="histogram" id="spf_grade_distribution"></svg>
+            </div>
+        </div>
         <hr />
         <p>This work is licensed under a
         <a rel="license" href="https://creativecommons.org/licenses/by/4.0/" target="_blank">
@@ -184,7 +210,7 @@
         <p>Created by <a href="https://matthewburket.com" target="_blank">Matthew Burket</a>.</p>
         This project is open source (GPLv2)! See the <a href="https://gitlab.com/dnstats/dnstatsio">Source Code</a>
     </body>
-    <script integrity="sha384-A753X7DKbqixyg9PJac76aNkFtPsX0ycrZTWbtFasXq1cWjTruFWwrvspVjmKQIZ" crossorigin="anonymous"  src="/d3.js"></script>
-    <script integrity="sha384-hChw8ZV0Iwp7ETExPFldu4PYtFKfWwWBZRiYW/ZvQqWDSsZ33fUS9reU6+gnTvB0" crossorigin="anonymous" src="/d3pie.min.js"></script>
+    <script crossorigin="anonymous"  src="/d3.js"></script>
+    <script crossorigin="anonymous" src="/d3pie.js"></script>
     <script integrity="sha384-{{ js_sha }}" src="{{ js_filename }}.js" crossorigin="anonymous"></script>
 </html>

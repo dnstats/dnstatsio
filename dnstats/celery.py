@@ -299,7 +299,7 @@ def launch_run(run_id):
 @app.task()
 def do_run():
     date = datetime.datetime.now()
-    if os.environ.get('DNSTATS_ENV') == 'Development':
+    if settings == 'Development':
         run = models.Run(start_time=date, start_rank=1, end_rank=150)
         logger.warning("[DO RUN]: Running a Debug top 50 sites runs")
     else:
@@ -453,11 +453,11 @@ def process_report(run_id: int, report: dict):
 
 
 def _send_message(email):
-    if os.environ.get('DNSTATS_ENV') == 'Development':
+    if settings.DNSTATS_ENV == 'Development':
         print(email)
         return
 
-    sendgrid = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+    sendgrid = SendGridAPIClient(settings.SENDGRID_API_KEY)
     sendgrid.send(email)
 
 
