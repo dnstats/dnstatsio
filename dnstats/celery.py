@@ -92,7 +92,7 @@ def do_charts_latest():
     do_charts.s(run.id).apply_async()
 
 
-@app.task(time_limit=450, soft_time_limit=500, queue='gevent')
+@app.task(time_limit=530, soft_time_limit=500, queue='gevent')
 def site_stat(site_id: int, run_id: int):
     logger.debug('start site stat site {} run id {}'.format(site_id, run_id))
     result = dict()
