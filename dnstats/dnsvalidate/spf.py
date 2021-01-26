@@ -198,8 +198,9 @@ def _validate_spf(spf: str, domain: str) -> {}:
             # TODO: check if valid DNS Name
             if len(sub_parts) == 2:
                 redirect_query = safe_query(sub_parts[1], 'txt')
-                if redirect_query is None or len(redirect_query):
+                if redirect_query is None or len(redirect_query) == 0:
                     errors.append(SpfError.INVALID_REDIRECT_MECHANISM)
+                    break
                 has_spf = False
                 for record in redirect_query:
                     record = record.replace('"', '')
