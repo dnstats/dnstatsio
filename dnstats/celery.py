@@ -457,7 +457,7 @@ def _send_message(email):
         print(email)
         return
 
-    sendgrid = SendGridAPIClient(settings.SENDGRID_API_KEY)
+    sendgrid = SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
     sendgrid.send(email)
 
 
@@ -546,14 +546,6 @@ def _send_sites_updated_started():
     subject = '[DNStats] Site List Update Started'
     body ="""
         Started site list upgrade at: {}
-        
-        
-        
-        
-        
-        
-        
-        
     """.format(datetime.datetime.now().strftime('%c'))
     message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
                    plain_text_content=body)
