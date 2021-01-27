@@ -18,7 +18,6 @@ import dnstats.db.models as models
 from dnstats.dnsutils.dnssec import parse_ds, parse_dnskey
 from dnstats.dnsutils.ns import get_name_server_ips, get_name_server_results
 from dnstats.db import db_session, engine
-from dnstats.utils.site_import import run_rank_site
 from dnstats.utils import chunks
 from dnstats.httputils import has_security_txt
 from dnstats.grading.spf import grade as grade_spf_record
@@ -303,7 +302,7 @@ def import_list():
                     if len(sites_chunked_update) >= 100:
                         chunk_count += 1
                         # loop counter to monitor task creation status
-                        logger.debug("existing_sites chunk count: " % chunk_count)
+                        logger.debug("existing_sites chunk count: {}".format(chunk_count))
                         logger.info("Creating update task: {}".format(chunk_count))
                         _update_site_rank_chunked.s(dict(sites_chunked_update)).apply_async()
                         sites_chunked_update.clear()
@@ -423,3 +422,9 @@ def do_grading(sr):
     grade_caa.s(sr.id).apply_async()
     grade_ns.s(sr.id).apply_async()
     grade_soa.s(sr.id).apply_async()
+
+def run_rank_site(existing_sites, new_sites):
+    unranked_sites = existing_sites.keys() - new_sites.keys()
+    for site in unranked_sites:
+        _unrank_domain.s(str(site)).apply_async()
+        logger.debug("Unranking site: {}".format(site))
