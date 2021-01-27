@@ -1,6 +1,6 @@
 import re
 
-import settings
+from dnstats import settings
 
 def chunks(array, size):
     """
