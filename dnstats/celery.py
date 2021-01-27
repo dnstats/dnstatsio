@@ -64,7 +64,7 @@ class SqlAlchemyTask(Task):
 @app.task(queue='deployment')
 def do_charts(run_id: int):
     run = db_session.query(models.Run).filter_by(id=run_id).scalar()
-    if not settings.DNSTATS_ENV('DNSTATS_ENV') == 'Development':
+    if not settings.DNSTATS_ENV == 'Development':
         target = 920000
         site_run_count = db_session.query(models.SiteRun).filter_by(run_id=run_id).count()
         if site_run_count < target:
@@ -92,7 +92,7 @@ def do_charts_latest():
     do_charts.s(run.id).apply_async()
 
 
-@app.task(time_limit=450, soft_time_limit=500, queue='gevent')
+@app.task(time_limit=530, soft_time_limit=500, queue='gevent')
 def site_stat(site_id: int, run_id: int):
     logger.debug('start site stat site {} run id {}'.format(site_id, run_id))
     result = dict()
