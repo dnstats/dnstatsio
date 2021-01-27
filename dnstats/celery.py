@@ -68,7 +68,7 @@ def do_charts(run_id: int):
         target = 920000
         site_run_count = db_session.query(models.SiteRun).filter_by(run_id=run_id).count()
         if site_run_count < target:
-            _send_botched_deploy(run.start_time, site_run_count, target)
+            _send_botched_deploy(run.start_time, site_run_count, site_run_count, target)
             return
     folder_name = run.start_time.strftime("%Y-%m-%d")
     js_filename, html_filename = dnstats.charts.create_reports(run_id)
