@@ -10,7 +10,7 @@ def slugify(input_str: str) -> str:
     :param input_str: string with spaces to slugify
     :return: the input with the replaces removed and converted to lower case
     """
-    return input_str.replace(' ', '_').lower()
+    return input_str.replace(' ', '_').replace('.', '_').lower()
 
 
 def calculate_sri_hash(filename: str) -> str:

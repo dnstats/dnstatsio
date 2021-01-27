@@ -120,7 +120,7 @@ def _seed_remarks():
     remark_type_db_spf = db_session.query(models.RemarkType).filter_by(name='spf').one()
     _seed_remark_arrays(remark_type_db_spf, spf)
 
-    remark_type_db_caa = db_session.query(models.RemarkType).filter_by(name='spf').one()
+    remark_type_db_caa = db_session.query(models.RemarkType).filter_by(name='caa').one()
     _seed_remark_arrays(remark_type_db_caa, caa)
 
     remark_type_db_ns = db_session.query(models.RemarkType).filter_by(name='ns').one()

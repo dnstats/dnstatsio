@@ -105,7 +105,7 @@ def validate(dmarc_result_set: list) -> dict:
             elif tag == 'aspf':
                 dmarc_record_values['aspf'] = value
                 if value not in ['s', 'r']:
-                    errors.append(DmarcErrors.INVALID_ASPF_VALIE)
+                    errors.append(DmarcErrors.INVALID_ASPF_VALUE)
             elif tag == 'fo':
                 dmarc_record_values['fo'] = value
                 if value not in ['1', 'd', 's', '0']:

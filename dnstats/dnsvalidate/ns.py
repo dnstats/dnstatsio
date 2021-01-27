@@ -65,6 +65,8 @@ class Ns:
         sets = list()
         for ns_server in list(self.ns_server_ns_results.keys()):
             the_set = set()
+            if not self.ns_server_ns_results[ns_server]:
+                errors.append(NsErrors.NAME_SERVER_MISMATCH)
             for ns_result in self.ns_server_ns_results[ns_server]:
                 the_set.add(ns_result)
             sets.append(the_set)

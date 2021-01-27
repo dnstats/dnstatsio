@@ -1,8 +1,5 @@
 import datetime
-import io
 import os
-import zipfile
-import requests
 
 from celery import Celery, Task
 from celery.canvas import chain, group
@@ -10,10 +7,10 @@ from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from sqlalchemy import and_
 from sqlalchemy.sql.expression import func
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 
 import dnstats.charts
+from dnstats.utils.grading import _grade_errors, get_site_and_site_run
+from dnstats.utils.site_import import setup_import_list
 import dnstats.dnsutils as dnutils
 import dnstats.dnsutils.spf as spfutils
 import dnstats.dnsutils.mx as mxutils
@@ -30,33 +27,24 @@ from dnstats.grading.ns import grade as grade_ns_records
 from dnstats.grading.soa import grade as grade_soa_records
 from dnstats.reports.process import process_report as process_report_main
 from dnstats import settings
+from dnstats.utils import check_for_config, setup_sentry
+from dnstats.utils.email import _send_botched_deploy, _send_eoq, _send_published_email, _send_start_email, _send_sites_updated_done
 
-
-if not settings.DB:
-    raise EnvironmentError("Database connection is not setup.")
-
-if not settings.AMQP:
-    raise EnvironmentError("Celery AMQP connection is not setup.")
-
-if not settings.CELERY_BACKEND:
-    raise EnvironmentError("Celery CELERY_BACKEND connection is not setup.")
-
+check_for_config()
 
 app = Celery('dnstats', broker=settings.AMQP, backend=settings.CELERY_BACKEND, broker_pool_limit=50)
 
 logger = get_task_logger('dnstats.scans')
 
-if settings.DNSTATS_ENV != 'Development' and settings.USE_SENTRY:
-    import sentry_sdk
-    from sentry_sdk.integrations.celery import CeleryIntegration
-    sentry_sdk.init(os.environ.get("SENTRY"), integrations=[CeleryIntegration()])
+setup_sentry()
 
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(crontab(hour=0, minute=58), import_list.s())
+    sender.add_periodic_task(crontab(hour=1, minute=1), import_list.s())
     sender.add_periodic_task(crontab(hour=8, minute=0), do_run.s())
     sender.add_periodic_task(crontab(hour=18, minute=0), do_charts_latest.s())
+    sender.add_periodic_task(crontab(hour=18, minute=15), do_reports_latest.s())
 
 
 class SqlAlchemyTask(Task):
@@ -76,10 +64,10 @@ class SqlAlchemyTask(Task):
 def do_charts(run_id: int):
     run = db_session.query(models.Run).filter_by(id=run_id).scalar()
     if not settings.DNSTATS_ENV == 'Development':
-        target = 950000
+        target = 920000
         site_run_count = db_session.query(models.SiteRun).filter_by(run_id=run_id).count()
         if site_run_count < target:
-            _send_botched_deploy(run.start_time, site_run_count, target)
+            _send_botched_deploy(run.start_time, site_run_count, site_run_count, target)
             return
     folder_name = run.start_time.strftime("%Y-%m-%d")
     js_filename, html_filename = dnstats.charts.create_reports(run_id)
@@ -88,8 +76,8 @@ def do_charts(run_id: int):
     if settings.DNSTATS_ENV == 'Development':
         return
     os.system("ssh dnstatsio@www.dnstats.io 'mkdir /home/dnstatsio/public_html/{}'".format(folder_name))
-    os.system('scp {filename}.js  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}.js'.format(filename=js_filename, folder_name=folder_name))
-    os.system('scp {filename}  dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/index.html'.format(filename=html_filename, folder_name=folder_name))
+    os.system('scp {filename}.js dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/{filename}.js'.format(filename=js_filename, folder_name=folder_name))
+    os.system('scp {filename} dnstatsio@www.dnstats.io:/home/dnstatsio/public_html/{folder_name}/index.html'.format(filename=html_filename, folder_name=folder_name))
     os.system("ssh dnstatsio@www.dnstats.io 'rm /home/dnstatsio/public_html/index.html'")
     os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/index.html /home/dnstatsio/public_html/index.html'".format(folder_name=folder_name, filename=html_filename))
     os.system("ssh dnstatsio@www.dnstats.io 'ln -s /home/dnstatsio/public_html/{folder_name}/{filename}.js /home/dnstatsio/public_html/'".format(folder_name=folder_name, filename=js_filename))
@@ -103,7 +91,7 @@ def do_charts_latest():
     do_charts.s(run.id).apply_async()
 
 
-@app.task(time_limit=450, soft_time_limit=500, queue='gevent')
+@app.task(time_limit=530, soft_time_limit=500, queue='gevent')
 def site_stat(site_id: int, run_id: int):
     logger.debug('start site stat site {} run id {}'.format(site_id, run_id))
     result = dict()
@@ -176,18 +164,12 @@ def process_result(result: dict):
                         j_soa_records=result['soa'])
     db_session.add(sr)
     db_session.commit()
-    grade_spf.s(sr.id).apply_async()
-    grade_dmarc.s(sr.id).apply_async()
-    grade_caa.s(sr.id).apply_async()
-    grade_ns.s(sr.id).apply_async()
-    grade_soa.s(sr.id).apply_async()
-    return
+    do_grading(sr)
 
 
 @app.task(time_limit=320, soft_time_limit=300)
 def grade_spf(site_run_id: int):
-    site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
-    site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
+    site, site_run = get_site_and_site_run(site_run_id)
     records = site_run.j_txt_records
     grade, errors = grade_spf_record(records, site.domain, site_run.has_mx)
     site_run.spf_grade = grade
@@ -197,8 +179,7 @@ def grade_spf(site_run_id: int):
 
 @app.task(time_limit=80, soft_time_limit=75)
 def grade_dmarc(site_run_id: int):
-    site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
-    site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
+    site, site_run = get_site_and_site_run(site_run_id)
     records = site_run.j_dmarc_record
     grade = 0
     dmarcs = list()
@@ -218,8 +199,7 @@ def grade_dmarc(site_run_id: int):
 
 @app.task(time_limit=80, soft_time_limit=75)
 def grade_caa(site_run_id: int):
-    site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
-    site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
+    site, site_run = get_site_and_site_run(site_run_id)
     records = site_run.j_caa_records
     grade = 0
     if not records:
@@ -236,8 +216,7 @@ def grade_caa(site_run_id: int):
 
 @app.task(time_limit=80, soft_time_limit=75)
 def grade_ns(site_run_id: int) -> None:
-    site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
-    site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
+    site, site_run = get_site_and_site_run(site_run_id)
     records = site_run.j_ns_records
     ip_addresses = site_run.ns_ip_addresses
     record_results = site_run.ns_server_ns_results
@@ -256,8 +235,7 @@ def grade_ns(site_run_id: int) -> None:
 
 @app.task(time_limit=80, soft_time_limt=75)
 def grade_soa(site_run_id: int) -> None:
-    site_run = db_session.query(models.SiteRun).filter(models.SiteRun.id == site_run_id).one()
-    site = db_session.query(models.Site).filter(models.Site.id == site_run.site_id).one()
+    site, site_run = get_site_and_site_run(site_run_id)
     records = site_run.j_soa_records
     grade = 0
     if not records:
@@ -269,15 +247,6 @@ def grade_soa(site_run_id: int) -> None:
         _grade_errors(errors, 'soa', site_run_id)
     site_run.soa_grade = grade
     db_session.commit()
-
-
-def _grade_errors(errors: list, grade_type: str, site_run_id: int):
-    remark_type = db_session.query(models.RemarkType).filter_by(name=grade_type).one()
-    for error in errors:
-        remark = db_session.query(models.Remark).filter_by(remark_type_id=remark_type.id, enum_value=error.value).one()
-        remark_siterun = models.SiterunRemark(site_run_id=site_run_id, remark_id=remark.id)
-        db_session.add(remark_siterun)
-        db_session.commit()
 
 
 @app.task()
@@ -299,7 +268,7 @@ def launch_run(run_id):
 @app.task()
 def do_run():
     date = datetime.datetime.now()
-    if settings == 'Development':
+    if settings.DNSTATS_ENV == 'Development':
         run = models.Run(start_time=date, start_rank=1, end_rank=150)
         logger.warning("[DO RUN]: Running a Debug top 50 sites runs")
     else:
@@ -314,26 +283,15 @@ def do_run():
 
 @app.task
 def import_list():
-    _send_sites_updated_started()
-    logger.warning("Downloading site list")
-    url = "https://tranco-list.eu/top-1m.csv.zip"
-    r = requests.get(url)
-    csv_content = zipfile.ZipFile(io.BytesIO(r.content)).read('top-1m.csv').splitlines()
-    new_sites = dict()
-    existing_sites = dict()
-    for row in csv_content:
-        row = row.split(b',')
-        new_sites[str(row[1], 'utf-8')] = int(row[0])
+    new_sites = setup_import_list(logger)
 
+    existing_sites = dict()
     with engine.connect() as connection:
         logger.warning("Getting current sites")
         result = connection.execute("select domain, current_rank from sites")
         for row in result:
             existing_sites[row[0]] = row[1]
-        unranked_sites = existing_sites.keys() - new_sites.keys()
-        for site in unranked_sites:
-            _unrank_domain.s(str(site)).apply_async()
-            logger.debug("Unranking site: {}".format(site))
+        run_rank_site(existing_sites, new_sites)
         chunk_count = 0
         sites_chunked_new = {}
         sites_chunked_update = {}
@@ -343,7 +301,8 @@ def import_list():
                     sites_chunked_update[site] = new_sites[site]
                     if len(sites_chunked_update) >= 100:
                         chunk_count += 1
-                        print(chunk_count)  # loop counter to monitor task creation status
+                        # loop counter to monitor task creation status
+                        logger.debug("existing_sites chunk count: {}".format(chunk_count))
                         logger.info("Creating update task: {}".format(chunk_count))
                         _update_site_rank_chunked.s(dict(sites_chunked_update)).apply_async()
                         sites_chunked_update.clear()
@@ -351,7 +310,8 @@ def import_list():
                 sites_chunked_new[site] = new_sites[site]
                 if len(sites_chunked_new) >= 100:
                     chunk_count += 1
-                    print(chunk_count)  # loop counter to monitor task creation status
+                    # loop counter to monitor task creation status
+                    logger.debug("sites_chunked_new: {}" % chunk_count)
                     logger.info("Creating new site task: {}".format(chunk_count))
                     _process_new_sites_chunked.s(dict(sites_chunked_new)).apply_async()
                     sites_chunked_new.clear()
@@ -405,6 +365,11 @@ def _update_site_rank_chunked(domains_ranked: dict) -> None:
     db_session.commit()
     logger.info("Site rank chunk updated")
 
+@app.task
+def do_reports_latest():
+    the_time = db_session.query(func.Max(models.Run.start_time)).scalar()
+    run = db_session.query(models.Run).filter_by(start_time=the_time).scalar()
+    publish_reports.s(run.id).apply_async()
 
 @app.task
 def publish_reports(run_id: int):
@@ -451,139 +416,15 @@ def publish_reports(run_id: int):
 def process_report(run_id: int, report: dict):
     process_report_main(run_id, report)
 
+def do_grading(sr):
+    grade_spf.s(sr.id).apply_async()
+    grade_dmarc.s(sr.id).apply_async()
+    grade_caa.s(sr.id).apply_async()
+    grade_ns.s(sr.id).apply_async()
+    grade_soa.s(sr.id).apply_async()
 
-def _send_message(email):
-    if settings.DNSTATS_ENV == 'Development':
-        print(email)
-        return
-
-    sendgrid = SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
-    sendgrid.send(email)
-
-
-def _send_start_email(date, run_id):
-    subject = '[DNStats] Scan Starting'
-    body = '''
-    Starting time: {starting_time}
-    Run id: {run_id}
-    DNStats scan is starting to queue sites.
-
-
-
-
-    
-    
-    '''.format(starting_time=date.strftime('%c'), run_id=run_id)
-    message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
-                   plain_text_content=body)
-    _send_message(message)
-
-
-@app.task
-def _send_eos(results, run_time):
-    subject = '[DNStats] Scan Ending'
-    print("taco")
-    print(run_time)
-    result_count = db_session.query(models.SiteRun).filter_by(run_id=run_time).count()
-    print("result_count: " + str(result_count))
-    body = '''
-    End time: {starting_time}
-    Number results: {result_count}
-    Run id: {run_id}
-    DNStats scan has ended.
-    
-    
-    
-    
-    
-    
-    '''.format(starting_time=datetime.datetime.now().strftime('%c'), result_count=result_count, run_id=run_time)
-    message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
-                   plain_text_content=body)
-    _send_message(message)
-    print("body: " + body)
-
-
-def _send_eoq(run_id):
-    run = db_session.query(models.Run).filter_by(id=run_id).first()
-    subject = '[DNStats] All Scans In Queue'
-    body = '''
-    Run start time: {starting_time}
-    Run id: {run_id}
-    DNStats scan is in progress and the queuing process is done.
-    
-
-    
-    
-    
-    
-    
-    '''.format(starting_time=run.start_time, run_id=run.id)
-    message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
-                   plain_text_content=body)
-    _send_message(message)
-
-
-def _send_published_email(run_id: int):
-    subject = '[DNStats] Scan id {} Has Been Published'.format(run_id)
-    body = '''
-    The stats are now published at https://dnstats.io.
-    
-    
-    
-    
-    
-    
-    
-    
-    '''
-    message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
-                   plain_text_content=body)
-    _send_message(message)
-
-
-def _send_sites_updated_started():
-    subject = '[DNStats] Site List Update Started'
-    body ="""
-        Started site list upgrade at: {}
-    """.format(datetime.datetime.now().strftime('%c'))
-    message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
-                   plain_text_content=body)
-    _send_message(message)
-
-
-def _send_sites_updated_done():
-    subject = '[DNStats] Site List Update Is Done'
-    body ="""
-        Ended site list upgrade at: {}
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-    """.format(datetime.datetime.now().strftime('%c'))
-    message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
-                   plain_text_content=body)
-    _send_message(message)
-
-
-def _send_botched_deploy(date, run_id: int, count: int, target_count: int):
-    delta = target_count - count
-    subject = '[DNStats] CRITICAL Botched Website Deploy'
-    body = '''
-    Run id: {run_id}
-    Target: {target_count}
-    Actual = {count}
-    Delta = {delta}
-    Run start Time = {starting_time}
-    Cowardly refusing to deploy run {run_id}, it appears the scan failed or is not finished. Investigate and publish 
-    results.
-    '''.format(starting_time=date.strftime('%c'), run_id=run_id, target_count=target_count, count=count, delta=delta)
-    message = Mail(from_email='worker@dnstats.io', to_emails='dnstats_cron@dnstats.io', subject=subject,
-                   plain_text_content=body)
-    _send_message(message)
+def run_rank_site(existing_sites, new_sites):
+    unranked_sites = existing_sites.keys() - new_sites.keys()
+    for site in unranked_sites:
+        _unrank_domain.s(str(site)).apply_async()
+        logger.debug("Unranking site: {}".format(site))

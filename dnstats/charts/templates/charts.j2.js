@@ -19,15 +19,14 @@ let options =  {
                     fontSize: 25
                 },
                 percentage: {
-                    decimalPlaces: 3,
                     fontSize: 12,
                     color: '#f2f2f2',
                 }
             },
             size: {
-                canvasHeight: 650,
-                canvasWidth: 650,
-                pieOuterRadius: "65%"
+                canvasHeight: 550,
+                canvasWidth: 550,
+                pieOuterRadius: "75%"
             },
             effect: {
                 load: {
