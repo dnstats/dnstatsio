@@ -12,8 +12,7 @@ def _send_message(email):
     if settings.DNSTATS_ENV == 'Development':
         print(email)
         return
-
-    sendgrid = SendGridAPIClient(api_key=settings.DNSTATS_ENV)
+    sendgrid = SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
     sendgrid.send(email)
 
 
