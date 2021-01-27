@@ -64,7 +64,7 @@ class SqlAlchemyTask(Task):
 @app.task(queue='deployment')
 def do_charts(run_id: int):
     run = db_session.query(models.Run).filter_by(id=run_id).scalar()
-    if not settings.DNSTATS_ENV('DNSTATS_ENV') == 'Development':
+    if not settings.DNSTATS_ENV == 'Development':
         target = 920000
         site_run_count = db_session.query(models.SiteRun).filter_by(run_id=run_id).count()
         if site_run_count < target:
