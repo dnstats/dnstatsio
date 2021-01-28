@@ -8,5 +8,7 @@ You will need python3.6+, pip and virtualenv installed.
 1. `cd dnstats`
 1. `virtualenv venv -p python3`
 1. `pip install -r requirements.txt`
-1.  Import sites from https://tranco-list.eu
-1. Seed db by running `dnstats.db.seed.seed_db()`
+
+## Overview
+This project uses [Celery](https://docs.celeryproject.org/en/stable/#) and 
+the main code for it is located in `dnstats/celery`.
