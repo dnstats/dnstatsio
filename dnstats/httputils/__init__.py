@@ -2,6 +2,7 @@ import requests
 
 
 def has_security_txt(domain: str, logger):
+    pass
     try:
         logger.debug('started has security.txt for {}'.format(domain))
         r = requests.get('https://{domain}/.well-known/security.txt'.format(domain=domain))
