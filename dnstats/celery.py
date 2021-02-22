@@ -110,7 +110,7 @@ def site_stat(site_id: int, run_id: int):
     logger.debug('got ns')
     result['dmarc'] = dnutils.safe_query('_dmarc.' + site.domain, 'txt')
     logger.debug('got dmarc for {}'.format(site.domain))
-    result['has_dnssec'] = has_security_txt(site.domain, logger)
+    result['has_dnssec'] = None
     logger.debug('got security.txt for {}'.format(site.domain))
     result['is_msdcs'] = dnstats.dnsutils.is_a_msft_dc(site.domain)
     logger.debug('got has msdc for {}'.format(site.domain))
