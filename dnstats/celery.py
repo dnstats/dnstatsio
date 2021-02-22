@@ -311,7 +311,7 @@ def import_list():
                 if len(sites_chunked_new) >= 100:
                     chunk_count += 1
                     # loop counter to monitor task creation status
-                    logger.debug("sites_chunked_new: {}" % chunk_count)
+                    logger.debug("sites_chunked_new: {}".format(chunk_count))
                     logger.info("Creating new site task: {}".format(chunk_count))
                     _process_new_sites_chunked.s(dict(sites_chunked_new)).apply_async()
                     sites_chunked_new.clear()
