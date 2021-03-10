@@ -3,7 +3,7 @@ import os
 
 from sendgrid import SendGridAPIClient, Mail
 
-from db import db_session, models as models
+from dnstats.db import db_session, models as models
 import dnstats.settings as settings
 
 
