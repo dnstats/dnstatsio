@@ -1,4 +1,4 @@
-from db import db_session, models as models
+from dnstats.db import db_session, models as models
 
 
 def _grade_errors(errors: list, grade_type: str, site_run_id: int):
