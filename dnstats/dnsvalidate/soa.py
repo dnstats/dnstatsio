@@ -2,6 +2,7 @@ import enum
 
 
 from dnstats.dnsutils import validate_domain
+from dnsvalidate.util import validate_numbers, MaxValue
 
 
 class SoaErrors(enum.Enum):
@@ -83,33 +84,25 @@ class Soa:
             errors.append(SoaErrors.INVALID_RNAME)
         result['rname'] = rname
 
-        result['serial'], serial_errors = validate_numbers(serial, SoaErrors.INVALID_SERIAL, SoaErrors.SERIAL_NOT_IN_RANGE)
+        result['serial'], serial_errors = validate_numbers(serial, SoaErrors.INVALID_SERIAL,
+                                                           SoaErrors.SERIAL_NOT_IN_RANGE, MaxValue.UTHIRTY_TW0)
         errors.extend(serial_errors)
 
-        result['refresh'], refresh_errors = validate_numbers(refresh, SoaErrors.INVALID_REFRESH, SoaErrors.REFRESH_NOT_IN_RANGE)
+        result['refresh'], refresh_errors = validate_numbers(refresh, SoaErrors.INVALID_REFRESH,
+                                                             SoaErrors.REFRESH_NOT_IN_RANGE, MaxValue.UTHIRTY_TW0)
         errors.extend(refresh_errors)
 
-        result['retry'], retry_errors = validate_numbers(retry, SoaErrors.INVALID_RETRY, SoaErrors.RETRY_NOT_IN_RANGE)
+        result['retry'], retry_errors = validate_numbers(retry, SoaErrors.INVALID_RETRY,
+                                                         SoaErrors.RETRY_NOT_IN_RANGE, MaxValue.UTHIRTY_TW0)
         errors.extend(retry_errors)
 
-        result['expire'], expire_errors = validate_numbers(expire, SoaErrors.INVALID_EXPIRE, SoaErrors.EXPIRE_NOT_IN_RANGE)
+        result['expire'], expire_errors = validate_numbers(expire, SoaErrors.INVALID_EXPIRE,
+                                                           SoaErrors.EXPIRE_NOT_IN_RANGE, MaxValue.UTHIRTY_TW0)
         errors.extend(expire_errors)
 
-        result['minimum'], minimum_errors = validate_numbers(minimum, SoaErrors.INVALID_MINIMUM, SoaErrors.MINIMUM_NOT_IN_RANGE)
+        result['minimum'], minimum_errors = validate_numbers(minimum, SoaErrors.INVALID_MINIMUM,
+                                                             SoaErrors.MINIMUM_NOT_IN_RANGE, MaxValue.UTHIRTY_TW0)
         errors.extend(minimum_errors)
 
         result['errors'] = errors
         return result
-
-
-def validate_numbers(value: str, invalid_error: SoaErrors, out_of_range_error: SoaErrors) -> (int, list):
-    errors = list()
-    try:
-        value_int = int(value)
-    except ValueError:
-        errors.append(invalid_error)
-        return -1, errors
-
-    if value_int > 4294967295 or value_int < 0:
-        errors.append(out_of_range_error)
-    return value_int, errors
