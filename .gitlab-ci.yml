@@ -28,14 +28,6 @@ before_script:
   - pip install -e dnstats
   - python -m dnstats.db.seed
 
-python36-postgers12:
-  stage: test
-  image: python:3.6
-  services:
-    - postgres:12
-  script:
-    - coverage run -m unittest discover
-    - coverage report -m
 
 python36-postgers13:
   stage: test
@@ -46,11 +38,11 @@ python36-postgers13:
     - coverage run -m unittest discover
     - coverage report -m
 
-python39-postgers12:
+python39-postgers13:
   stage: test
   image: python:3.9
   services:
-    - postgres:12
+    - postgres:13
   script:
     - coverage run -m unittest discover
     - coverage report -m
