@@ -1,9 +1,9 @@
-from dnstats.dnsvalidate.caa import Caa
+from dnstats.dnsvalidate.caa import Caa, CAAErrors
 
 
 def grade(caa_records: list, domain: str) -> [int, ()]:
     if len(caa_records) == 0:
-        return 0, []
+        return 0, [CAAErrors.NO_CAA_RECORDS]
     caa = Caa(caa_records, domain)
     current_grade = 0
     if len(caa.issue) != 0:
