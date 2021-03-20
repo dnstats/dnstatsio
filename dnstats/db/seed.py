@@ -114,6 +114,17 @@ def _seed_remarks():
            (1, 'Minimum Not In Range', 13),
            (1, 'Expire Not In Range', 14), ]
 
+    mx = [(0, 'NO MX RECORDS', 0),
+          (0, 'BLANK MX RECORD', 1),
+          (0, 'TOO MANY PARTS', 2),
+          (0, 'TOO FEW PARTS', 3),
+          (0, 'PREFERENCE OUT OF RANGE', 4),
+          (0, 'INVALID PREFERENCE', 5),
+          (0, 'INVALID EXCHANGE', 6),
+          (2, 'EXCHANGE IS AN IP', 7),
+          (2, 'NOT PUBLIC DOMAIN', 8),
+          (2, 'POSSIBLE BAD EXCHANGE', 9)]
+
     remark_type_db_dmarc = db_session.query(models.RemarkType).filter_by(name='dmarc').one()
     _seed_remark_arrays(remark_type_db_dmarc, dmarc)
 
@@ -128,6 +139,9 @@ def _seed_remarks():
 
     remark_type_db_soa = db_session.query(models.RemarkType).filter_by(name='soa').one()
     _seed_remark_arrays(remark_type_db_soa, soa)
+
+    remark_type_db_mx = db_session.query(models.RemarkType).filter_by(name= 'mx').one()
+    _seed_remark_arrays(remark_type_db_mx, mx)
 
 
 def _seed_remark_arrays(remark_type_db_spf: models.RemarkType, spf: list) -> None:
@@ -147,7 +161,7 @@ def _seed_remark_arrays(remark_type_db_spf: models.RemarkType, spf: list) -> Non
 
 
 def _seed_remark_types():
-    remark_types = ['spf', 'dmarc', 'caa', 'ns', 'soa']
+    remark_types = ['spf', 'dmarc', 'caa', 'ns', 'soa', 'mx']
 
     for remark_type in remark_types:
         remark_type_s = db_session.query(models.RemarkType).filter_by(name=remark_type).scalar()

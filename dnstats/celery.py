@@ -19,12 +19,12 @@ from dnstats.dnsutils.dnssec import parse_ds, parse_dnskey
 from dnstats.dnsutils.ns import get_name_server_ips, get_name_server_results
 from dnstats.db import db_session, engine
 from dnstats.utils import chunks
-from dnstats.httputils import has_security_txt
 from dnstats.grading.spf import grade as grade_spf_record
 from dnstats.grading.dmarc import grade as grade_dmarc_record
 from dnstats.grading.caa import grade as grade_caa_records
 from dnstats.grading.ns import grade as grade_ns_records
 from dnstats.grading.soa import grade as grade_soa_records
+from dnstats.grading.mx import grade as grade_mx_records
 from dnstats.reports.process import process_report as process_report_main
 from dnstats import settings
 from dnstats.utils import check_for_config, setup_sentry
@@ -249,6 +249,15 @@ def grade_soa(site_run_id: int) -> None:
     db_session.commit()
 
 
+@app.task
+def grade_mx(site_run_id: int) -> None:
+    site, site_run = get_site_and_site_run(site_run_id)
+    records = site_run.j_mx_records
+    grade, errors = grade_mx_records(records, site.domain)
+    _grade_errors(errors, 'mx', site_run_id)
+    site_run.mx_grade = grade
+    db_session.commit()
+
 @app.task()
 def launch_run(run_id):
     logger.warning("Launching run {}".format(run_id))
@@ -269,7 +278,7 @@ def launch_run(run_id):
 def do_run():
     date = datetime.datetime.now()
     if settings.DNSTATS_ENV == 'Development':
-        run = models.Run(start_time=date, start_rank=1, end_rank=150)
+        run = models.Run(start_time=date, start_rank=1, end_rank=50)
         logger.warning("[DO RUN]: Running a Debug top 50 sites runs")
     else:
         run = models.Run(start_time=date, start_rank=1, end_rank=1000000)
@@ -365,11 +374,13 @@ def _update_site_rank_chunked(domains_ranked: dict) -> None:
     db_session.commit()
     logger.info("Site rank chunk updated")
 
+
 @app.task
 def do_reports_latest():
     the_time = db_session.query(func.Max(models.Run.start_time)).scalar()
     run = db_session.query(models.Run).filter_by(start_time=the_time).scalar()
     publish_reports.s(run.id).apply_async()
+
 
 @app.task
 def publish_reports(run_id: int):
@@ -416,12 +427,15 @@ def publish_reports(run_id: int):
 def process_report(run_id: int, report: dict):
     process_report_main(run_id, report)
 
+
 def do_grading(sr):
     grade_spf.s(sr.id).apply_async()
     grade_dmarc.s(sr.id).apply_async()
     grade_caa.s(sr.id).apply_async()
     grade_ns.s(sr.id).apply_async()
     grade_soa.s(sr.id).apply_async()
+    grade_mx.s(sr.id).apply_async()
+
 
 def run_rank_site(existing_sites, new_sites):
     unranked_sites = existing_sites.keys() - new_sites.keys()
