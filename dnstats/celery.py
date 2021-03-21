@@ -95,6 +95,7 @@ def do_charts_latest():
 def site_stat(site_id: int, run_id: int):
     logger.debug('start site stat site {} run id {}'.format(site_id, run_id))
     result = dict()
+    result['start_time'] = datetime.datetime.now()
     site = db_session.query(models.Site).filter(models.Site.id == site_id).scalar()
     logger.debug('got site for {}'.format(site.domain))
     result['mx'] = dnutils.safe_query(site.domain, 'mx')
@@ -126,13 +127,13 @@ def site_stat(site_id: int, run_id: int):
     logger.debug('got name server results from each name server')
     result['soa'] = dnutils.safe_query(site.domain, 'soa')
     logger.debug('got soa for {}'.format(site.domain))
-
+    result['end_time'] = datetime.datetime.now()
     return result
 
 
 @app.task(time_limit=60, soft_time_limit=54)
 def process_result(result: dict):
-    logger.debug("Processing site: {}".format(result['site_id']))
+    logger.debug("Processing site: %", result['site_id'])
     processed = dict()
     site = db_session.query(models.Site).filter_by(id=result['site_id']).one()
     processed.update(dnutils.get_dmarc_stats(result['dmarc']))
@@ -161,7 +162,7 @@ def process_result(result: dict):
                         j_caa_records=result['caa'], j_dmarc_record=result['dmarc'], j_txt_records=result['txt'],
                         j_ns_records=result['ns'], j_mx_records=result['mx'], j_ds_recoreds=result['ds'],
                         ns_ip_addresses=result['name_server_ips'], ns_server_ns_results=result['ns_server_ns_results'],
-                        j_soa_records=result['soa'])
+                        j_soa_records=result['soa'], start_time=result['start_time'], end_time=result['end_time'])
     db_session.add(sr)
     db_session.commit()
     do_grading(sr)
