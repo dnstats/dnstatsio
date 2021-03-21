@@ -95,6 +95,7 @@ def do_charts_latest():
 def site_stat(site_id: int, run_id: int):
     logger.debug('start site stat site {} run id {}'.format(site_id, run_id))
     result = dict()
+    result['start_time'] = datetime.datetime.now()
     site = db_session.query(models.Site).filter(models.Site.id == site_id).scalar()
     logger.debug('got site for {}'.format(site.domain))
     result['mx'] = dnutils.safe_query(site.domain, 'mx')
@@ -126,7 +127,7 @@ def site_stat(site_id: int, run_id: int):
     logger.debug('got name server results from each name server')
     result['soa'] = dnutils.safe_query(site.domain, 'soa')
     logger.debug('got soa for {}'.format(site.domain))
-
+    result['end_time'] = datetime.datetime.now()
     return result
 
 
