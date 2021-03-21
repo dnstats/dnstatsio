@@ -70,23 +70,43 @@ def full_raise(grade: Grade) -> Grade:
         return Grade.A_PLUS
 
 
-def update_count_dict(d: dict, key: str):
-    if key in d:
-        d[key] += 1
+def update_count_dict(dictt: dict, key: str) -> None:
+    """
+    Given a dict and key add one to the value. Set it to 1 if the key is not found.
+    :param dictt: dictt to search
+    :param key: key to search for
+    :return: None
+    """
+    if key in dictt:
+        dictt[key] += 1
     else:
-        d[key] = 1
+        dictt[key] = 1
 
 
-def get_grade(d: dict, k: str, default: int) -> int:
-    value = d.get(k)
+def get_grade(dictt: dict, key: str, default: int) -> int:
+    """
+    Given key and dict get the value from the dict. If the
+    :param dictt: dict to look up in
+    :param key: the key to search for
+    :param default: the value to return if key is not found
+    :return: value from dictt from key, or default
+    """
+    value = dictt.get(key)
     if not value:
         return default
     else:
         return value
 
 
-def not_in_penalty(d: dict, k: str, pen: int):
-    if d.__contains__(k):
+def not_in_penalty(dictt: dict, key: str, penalty: int):
+    """
+    If the
+    :param dictt: dict to search
+    :param key: key to search for 
+    :param penalty: the value to return if the value is not found
+    :return: 0 if k is in dictt, otherwise 
+    """
+    if dictt.__contains__(key):
         return 0
     else:
-        return pen
+        return penalty
