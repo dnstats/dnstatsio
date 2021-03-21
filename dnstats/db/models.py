@@ -73,8 +73,10 @@ class SiteRun(Base):
     ns_grade = Column(BigInteger)
     j_soa_records = Column(JSON)
     soa_grade = Column(BigInteger)
+    mx_grade = Column(BigInteger)
     start_time = Column(DateTime)
     end_time = Column(DateTime)
+
 
     UniqueConstraint('site_id', 'run_id')
 

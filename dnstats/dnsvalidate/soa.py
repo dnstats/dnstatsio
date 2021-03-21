@@ -2,7 +2,7 @@ import enum
 
 
 from dnstats.dnsutils import validate_domain
-from dnsvalidate.util import validate_numbers, MaxValue
+from dnstats.dnsvalidate.util import validate_numbers, MaxValue
 
 
 class SoaErrors(enum.Enum):

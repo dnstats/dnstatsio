@@ -80,6 +80,7 @@ class Mx:
                 result['errors'].append(MXErrors.POSSIBLE_BAD_EXCHANGE)
 
             result['records'].append(MxRecord(preference, exchange))
+
         self.errors = result['errors']
         self.valid_mx_records = result['records']
         return result
