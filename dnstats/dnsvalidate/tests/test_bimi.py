@@ -107,3 +107,7 @@ class TestBimi(unittest.TestCase):
         bimi = Bimi(record, dmarc)
         self.assertEqual([BimiErrors.DMARC_NOT_DEFINED, BimiErrors.DMARC_STRICT_ENOUGH_POLICY], bimi.errors)
 
+    def test_with_two_records(self):
+        record = ['v=BIMI1; l=https://dnstats.io/logo.svg; s=transaction', 'v=BIMI1; l=https://dnstats.io/logo.svg; s=transaction']
+        bimi = Bimi(record, self.dmarc)
+        self.assertEqual([BimiErrors.TOO_MANY_BIMI_RECORDS], bimi.errors)
