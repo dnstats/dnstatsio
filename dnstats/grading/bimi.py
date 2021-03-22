@@ -1,6 +1,9 @@
 from dnstats.dnsvalidate.bimi import Bimi, BimiErrors
 
 def grade(bimis: list, dmarcs: list, domain: str) -> [int, ()]:
+    if not bimis:
+        return 0, [BimiErrors.N0_BIMI_RECORDS]
+
     the_bimis = []
     for bimi in bimis:
         if bimi.startswith('v=BIMI1'):
