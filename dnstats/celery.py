@@ -25,6 +25,7 @@ from dnstats.grading.caa import grade as grade_caa_records
 from dnstats.grading.ns import grade as grade_ns_records
 from dnstats.grading.soa import grade as grade_soa_records
 from dnstats.grading.mx import grade as grade_mx_records
+from dnstats.grading.bimi import grade as grade_bimi_records
 from dnstats.reports.process import process_report as process_report_main
 from dnstats import settings
 from dnstats.utils import check_for_config, setup_sentry
@@ -164,10 +165,12 @@ def process_result(result: dict):
                         j_caa_records=result['caa'], j_dmarc_record=result['dmarc'], j_txt_records=result['txt'],
                         j_ns_records=result['ns'], j_mx_records=result['mx'], j_ds_recoreds=result['ds'],
                         ns_ip_addresses=result['name_server_ips'], ns_server_ns_results=result['ns_server_ns_results'],
-                        j_soa_records=result['soa'], start_time=result['start_time'], end_time=result['end_time'])
+                        j_soa_records=result['soa'], start_time=result['start_time'], end_time=result['end_time'],
+                        j_bimi_records=result['bimi'])
     db_session.add(sr)
     db_session.commit()
     do_grading(sr)
+
 
 
 @app.task(time_limit=320, soft_time_limit=300)
@@ -259,6 +262,17 @@ def grade_mx(site_run_id: int) -> None:
     grade, errors = grade_mx_records(records, site.domain)
     _grade_errors(errors, 'mx', site_run_id)
     site_run.mx_grade = grade
+    db_session.commit()
+
+
+@app.task
+def grade_bimi(site_run_id: int) -> None:
+    site, site_run = get_site_and_site_run(site_run_id)
+    records = site_run.j_bimi_records
+    grade, errors = grade_bimi_records(records, site_run.j_dmarc_record, site.domain)
+    _grade_errors(errors, 'bimi', site_run_id)
+    site_run.bimi_grade = grade
+    site_run.has_bimi = grade == 100
     db_session.commit()
 
 @app.task()
@@ -438,6 +452,7 @@ def do_grading(sr):
     grade_ns.s(sr.id).apply_async()
     grade_soa.s(sr.id).apply_async()
     grade_mx.s(sr.id).apply_async()
+    grade_bimi.s(sr.id).apply_async()
 
 
 def run_rank_site(existing_sites, new_sites):

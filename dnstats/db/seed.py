@@ -126,6 +126,21 @@ def _seed_remarks():
           (2, 'NOT PUBLIC DOMAIN', 8),
           (2, 'POSSIBLE BAD EXCHANGE', 9)]
 
+    bimi = [(0, 'N0 BIMI RECORDS', 0),
+             (0, 'TOO MANY BIMI RECORDS', 1),
+             (0, 'DMARC STRICT ENOUGH POLICY', 2),
+             (0, 'DMARC STRICT ENOUGH PERCENT', 3),
+             (0, 'INVALID START', 4),
+             (0, 'LOGO NOT DEFINED', 5),
+             (0, 'LOGO NOT HTTPS', 6),
+             (0, 'LOGO INVALID LOCATION', 7),
+             (0, 'LOGO INVALID FORMAT', 8),
+             (0, 'SELECTOR NOT DEFINED', 9),
+             (0, 'DUPLICATE TAG FOUND', 10),
+             (0, 'BIMI OPTED OUT', 11),
+             (0, 'LOGO LOCATION BLANK', 12),
+             (0, 'DMARC NOT DEFINED', 13),]
+
     remark_type_db_dmarc = db_session.query(models.RemarkType).filter_by(name='dmarc').one()
     _seed_remark_arrays(remark_type_db_dmarc, dmarc)
 
@@ -143,6 +158,10 @@ def _seed_remarks():
 
     remark_type_db_mx = db_session.query(models.RemarkType).filter_by(name= 'mx').one()
     _seed_remark_arrays(remark_type_db_mx, mx)
+
+    remark_type_db_mx = db_session.query(models.RemarkType).filter_by(name= 'bimi').one()
+    _seed_remark_arrays(remark_type_db_mx, bimi)
+
 
 
 def _seed_remark_arrays(remark_type_db_spf: models.RemarkType, spf: list) -> None:
