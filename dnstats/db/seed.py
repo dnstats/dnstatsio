@@ -42,7 +42,8 @@ def _seed_remarks():
         (1, 'Invalid Failure reporting (rf) Value', 7),
         (1, 'Invalid Aggregate Reporting interval (ri) Value', 8),
         (1, 'Invalid Percent Value', 9),
-        (0, 'Invalid DMARC Record Start', 10)
+        (0, 'Invalid DMARC Record Start', 10),
+        (0, 'No DMARC Record')
     ]
 
     spf = [
@@ -161,7 +162,7 @@ def _seed_remark_arrays(remark_type_db_spf: models.RemarkType, spf: list) -> Non
 
 
 def _seed_remark_types():
-    remark_types = ['spf', 'dmarc', 'caa', 'ns', 'soa', 'mx']
+    remark_types = ['spf', 'dmarc', 'caa', 'ns', 'soa', 'mx', 'bimi']
 
     for remark_type in remark_types:
         remark_type_s = db_session.query(models.RemarkType).filter_by(name=remark_type).scalar()
