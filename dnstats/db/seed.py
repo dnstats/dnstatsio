@@ -43,7 +43,7 @@ def _seed_remarks():
         (1, 'Invalid Aggregate Reporting interval (ri) Value', 8),
         (1, 'Invalid Percent Value', 9),
         (0, 'Invalid DMARC Record Start', 10),
-        (0, 'No DMARC Record')
+        (0, 'No DMARC Record', 11),
     ]
 
     spf = [
