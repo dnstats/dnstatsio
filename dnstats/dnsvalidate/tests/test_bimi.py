@@ -40,6 +40,14 @@ class TestBimi(unittest.TestCase):
         bimi = Bimi(record, self.dmarc)
         self.assertEqual([BimiErrors.LOGO_NOT_DEFINED, BimiErrors.SELECTOR_NOT_DEFINED], bimi.errors)
 
+        record = ['v=DMARC1;']
+        bimi = Bimi(record, self.dmarc)
+        self.assertEqual([BimiErrors.INVALID_START], bimi.errors)
+
+    def test_duplicate_tags(self):
+        record = ['v=BIMI1; v=BIMI1;']
+        bimi = Bimi(record, self.dmarc)
+        self.assertEqual([BimiErrors.DUPLICATE_TAG_FOUND, BimiErrors.LOGO_NOT_DEFINED, BimiErrors.SELECTOR_NOT_DEFINED], bimi.errors)
 
 
     def test_default(self):
@@ -74,3 +82,22 @@ class TestBimi(unittest.TestCase):
         record = ['v=BIMI1; l=https://dnstats.io/logo.jpg; s=transaction']
         bimi = Bimi(record, self.dmarc)
         self.assertEqual([BimiErrors.LOGO_INVALID_FORMAT], bimi.errors)
+
+    def test_with_none_dmarc(self):
+        record = ['v=BIMI1; l=https://dnstats.io/logo.svg; s=transaction']
+        dmarc = ['v=DMARC1; p=none']
+        bimi = Bimi(record, dmarc)
+        self.assertEqual([BimiErrors.DMARC_STRICT_ENOUGH_POLICY], bimi.errors)
+
+    def test_with_quarantine(self):
+        record = ['v=BIMI1; l=https://dnstats.io/logo.svg; s=transaction']
+        dmarc = ['v=DMARC1; p=quarantine']
+        bimi = Bimi(record, dmarc)
+        self.assertEqual([], bimi.errors)
+
+    def test_with_quarantine_bad_percent(self):
+        record = ['v=BIMI1; l=https://dnstats.io/logo.svg; s=transaction']
+        dmarc = ['v=DMARC1; p=quarantine; pct=10']
+        bimi = Bimi(record, dmarc)
+        self.assertEqual([BimiErrors.DMARC_STRICT_ENOUGH_PERCENT], bimi.errors)
+

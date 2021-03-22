@@ -44,7 +44,7 @@ class Bimi:
             self.errors.append(BimiErrors.DMARC_STRICT_ENOUGH_POLICY)
             return result
 
-        if dmarc.p == 'quarantine' and dmarc.p != '100':
+        if dmarc.p == 'quarantine' and str(dmarc.pct) != '100':
             self.errors.append(BimiErrors.DMARC_STRICT_ENOUGH_PERCENT)
             return result
 
@@ -54,14 +54,11 @@ class Bimi:
             self.errors.append(BimiErrors.INVALID_START)
             return result
 
-        parsed = parse_abnf(bimi_record)
-        tag_count = {}
 
-        for tag in parsed:
-            update_count_dict(tag_count, tag)
-            if tag_count.get(tag) > 1:
-                self.errors.append(BimiErrors.DUPLICATE_TAG_FOUND)
+        parsed, dups = parse_abnf(bimi_record)
 
+        if dups:
+            self.errors.append(BimiErrors.DUPLICATE_TAG_FOUND)
 
 
         if 'l' not in parsed:
@@ -104,12 +101,3 @@ class Bimi:
             self.opt_out = False
             self.selector = parsed['s']
             return True
-
-
-
-
-
-
-
-
-
