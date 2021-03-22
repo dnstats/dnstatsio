@@ -101,3 +101,9 @@ class TestBimi(unittest.TestCase):
         bimi = Bimi(record, dmarc)
         self.assertEqual([BimiErrors.DMARC_STRICT_ENOUGH_PERCENT], bimi.errors)
 
+    def test_with_no_dmarc(self):
+        record = ['v=BIMI1; l=https://dnstats.io/logo.svg; s=transaction']
+        dmarc = []
+        bimi = Bimi(record, dmarc)
+        self.assertEqual([BimiErrors.DMARC_NOT_DEFINED, BimiErrors.DMARC_STRICT_ENOUGH_POLICY], bimi.errors)
+
