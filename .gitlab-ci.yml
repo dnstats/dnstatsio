@@ -29,7 +29,7 @@ before_script:
   - python -m dnstats.db.seed
 
 
-python36-postgers13:
+python36-postgres13:
   stage: test
   image: python:3.6
   services:
@@ -38,7 +38,7 @@ python36-postgers13:
     - coverage run -m unittest discover
     - coverage report -m
 
-python39-postgers13:
+python39-postgres13:
   stage: test
   image: python:3.9
   services:
@@ -49,6 +49,8 @@ python39-postgers13:
 
 pages:
   stage: pages
+  services:
+    - postgres:13
   script:
     - cd docs
     - make html
