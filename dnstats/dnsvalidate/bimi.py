@@ -18,6 +18,7 @@ class BimiErrors(enum.Enum):
     DUPLICATE_TAG_FOUND = 10
     BIMI_OPTED_OUT = 11
     LOGO_LOCATION_BLANK = 12
+    DMARC_NOT_DEFINED = 13
 
 class Bimi:
     """
@@ -30,13 +31,16 @@ class Bimi:
     def _validate(self, records: list) -> dict:
         result = {}
         self.errors = []
-        if len(records) <= 0:
+        if not records or len(records) <= 0:
             self.errors.append(BimiErrors.N0_BIMI_RECORDS)
             return result
 
         if len(records) > 1:
             self.errors.append(BimiErrors.TOO_MANY_BIMI_RECORDS)
             return result
+
+        if len(self.dmarc_records) < 1:
+            self.errors.append(BimiErrors.DMARC_NOT_DEFINED)
 
         dmarc = Dmarc(self.dmarc_records)
 
