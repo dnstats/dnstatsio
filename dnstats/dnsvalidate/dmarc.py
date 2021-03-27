@@ -15,6 +15,7 @@ class DmarcErrors(Enum):
     INVALID_RI_VALUE = 8
     INVALID_PCT_VALUE = 9
     INVALID_DMARC_RECORD_START = 10
+    NO_DMARC_RECORD = 11
 
 
 class Dmarc:
@@ -81,6 +82,11 @@ def validate(dmarc_result_set: list) -> dict:
     dmarc_record_values = dict()
     tag_count = dict()
     errors = list()
+    if len(dmarc_result_set) < 1:
+        errors.append(DmarcErrors.NO_DMARC_RECORD)
+        dmarc_record_values['errors'] = errors
+        return dmarc_record_values
+
     if len(dmarc_result_set) > 1:
         errors.append(DmarcErrors.MULTIPLE_DMARC_RECORDS)
         dmarc_record_values['errors'] = errors
@@ -152,7 +158,7 @@ def validate(dmarc_result_set: list) -> dict:
                 dmarc_record_values['sp'] = value
                 if value not in ['none', 'quarantine', 'reject']:
                     errors.append(DmarcErrors.INVALID_SUBDOMAIN_POLICY)
-            elif tag is 'v':
+            elif tag == 'v':
                 dmarc_record_values['v'] = value
             else:
                 dmarc_record_values[tag] = value

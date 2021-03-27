@@ -76,6 +76,9 @@ class SiteRun(Base):
     mx_grade = Column(BigInteger)
     start_time = Column(DateTime)
     end_time = Column(DateTime)
+    j_bimi_records = Column(JSON)
+    has_bimi = Column(Boolean)
+    bimi_grade = Column(BigInteger)
 
 
     UniqueConstraint('site_id', 'run_id')
