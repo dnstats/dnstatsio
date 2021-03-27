@@ -52,7 +52,7 @@ class Bimi:
             self.errors.append(BimiErrors.DMARC_STRICT_ENOUGH_PERCENT)
             return result
 
-        bimi_record = records[0]
+        bimi_record = records[0].replace('"', '')
 
         if not bimi_record.startswith('v=BIMI1'):
             self.errors.append(BimiErrors.INVALID_START)

@@ -128,7 +128,7 @@ def site_stat(site_id: int, run_id: int):
     logger.debug('got name server results from each name server')
     result['soa'] = dnutils.safe_query(site.domain, 'soa')
     logger.debug('got soa for {}'.format(site.domain))
-    result['bimi'] = dnutils.safe_query('_default._bimi.{}'.format(site.domain), 'txt')
+    result['bimi'] = dnutils.safe_query('default._bimi.{}'.format(site.domain), 'txt')
     logger.debug('got bimi records %', site.domain)
     result['end_time'] = datetime.datetime.now()
     return result
