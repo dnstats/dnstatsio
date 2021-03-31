@@ -6,16 +6,22 @@ from sqlalchemy import pool
 from alembic import context
 
 import sys
+import os
 
 # Ugly hack, https://stackoverflow.com/a/32218546
 from os.path import abspath, dirname
 sys.path.insert(0, dirname(dirname(dirname(abspath(__file__)))))
 
 from dnstats.db.models import Base
+from dnstats import settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# https://stackoverflow.com/a/55190497
+section = config.config_ini_section
+config.set_section_option(section, 'sqlalchemy.url', settings.DB)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

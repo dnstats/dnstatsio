@@ -1,10 +1,17 @@
 import dns.resolver
+import re
 
 from dnstats.db import models
 from dnstats.db import db_session
 
 
 def safe_query(site: str, type: str):
+    """
+    Perform the given query. If any errors return None.
+
+    :param site: the domain to query
+    :param type: type of query to perform
+    """
     r = None
     try:
         r = dns.resolver.query(site, type)
@@ -36,7 +43,8 @@ def caa_stats(ans):
             if ' issue ' in r:
                 has_caa = True
                 issue_count += 1
-    return issue_count, wildcard_count, has_reporting, allows_wildcard, has_caa
+    return {'caa_issue_count': issue_count, 'caa_wildcard_count': wildcard_count, 'caa_has_reporting': has_reporting,
+            'caa_allows_wildcard': allows_wildcard, 'caa_exists': has_caa}
 
 
 def get_dmarc_stats(ans):
@@ -68,7 +76,8 @@ def get_dmarc_stats(ans):
         policy = 'no_policy'
     if sub_policy is '':
         sub_policy = 'no_policy'
-    return aggregate, forensic, dmarc, policy, sub_policy
+    return {'dmarc_has_aggregate': aggregate, 'dmarc_has_forensic': forensic, 'dmarc_exists': dmarc,
+            'dmarc_policy': policy, 'dmarc_sub_policy': sub_policy}
 
 
 def _parse_dmarc(record) -> []:
@@ -92,7 +101,6 @@ def get_provider_from_ns_records(ans: list, site: str) -> int:
         providers = db_session.query(models.DnsProvider).filter_by(is_regex=True).all()
         for provider in providers:
             if provider.search_regex in ns_string:
-                print(provider.id)
                 return provider.id
         return db_session.query(models.DnsProvider).filter_by(search_regex='Unknown.').one().id
 
@@ -107,3 +115,50 @@ def is_a_msft_dc(domain: str) -> bool:
     else:
         return False
 
+
+def query_name_server(dns_server_ips: list, domain: str, request_type: str) -> []:
+    """
+    Do a query with a given name server, domain, and request type
+
+    :param dns_server_ips: IP addresses of the name servers to use
+    :param domain: domain: to query
+    :param request_type: type of record to query
+    :return: list of records from the requested query
+    """
+    if not dns_server_ips or not domain or not request_type:
+        return ValueError('All arguments must not be Falsey')
+
+    resolver = dns.resolver.Resolver(configure=False)
+    resolver.nameservers = dns_server_ips
+    r = None
+    try:
+        r = dns.resolver.query(domain, request_type)
+    except:
+        pass
+    if r:
+        results = list()
+        for ans in r:
+            results.append(ans.to_text())
+        return results
+    else:
+        return None
+
+
+def validate_label(label: str) -> bool:
+    if len(label) == 1:
+        pattern = re.compile('[a-zA-Z]')
+    else:
+        pattern = re.compile('^[a-zA-Z][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]$')
+    return False if pattern.match(label) is None else True
+
+
+def validate_domain(label: str) -> bool:
+    if not str:
+        return False
+    if label.endswith('.'):
+        label = label[:-1]
+    parts = label.split('.')
+    for part in parts:
+        if not validate_label(part):
+            return False
+    return True

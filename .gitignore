@@ -233,3 +233,6 @@ dnstats.env
 /*.html
 /dnstats/data/*.txt
 /docs/_build/
+/output
+/dnstats/settingslocal.py
+/.pytype/**

@@ -1,6 +1,5 @@
 import publicsuffix2
 import collections
-import re
 
 def main():
     with open('mx_records.txt', 'r') as f:

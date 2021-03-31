@@ -1,8 +1,9 @@
 publicsuffix2
 dnspython3
-celery
+celery==5.0.4
+kombu>=5.0.0
+billiard>=3.6.3
 flower
-amqp
 sqlalchemy
 psycopg2-binary
 Jinja2
@@ -10,7 +11,12 @@ sqlalchemy-utils
 sentry_sdk
 sendgrid
 redis
-sphinx
+sphinx>=3.3.1
 sphinx_rtd_theme
 alembic
-requests
+requests>=2.25.0
+gevent
+coverage
+validate_email
+pylint
+aiocontextvars

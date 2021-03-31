@@ -1,0 +1,63 @@
+default:
+  image: python:3.6
+
+stages:
+  - test
+  - pages
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  POSTGRES_DB: dnstats
+  POSTGRES_USER: dnstats
+  POSTGRES_PASSWORD: ""
+  POSTGRES_HOST_AUTH_METHOD: trust
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+before_script:
+  - python -V  # Print out python version for debugging
+  - pip install virtualenv
+  - virtualenv venv
+  - source venv/bin/activate
+  - pip install -r requirements.txt
+  - cp dnstats/settingslocal_ci.py  dnstats/settingslocal.py
+  - alembic upgrade head
+  - pip install -e dnstats
+  - python -m dnstats.db.seed
+
+
+python36-postgres13:
+  stage: test
+  image: python:3.6
+  services:
+    - postgres:13
+  script:
+    - coverage run -m unittest discover
+    - coverage report -m
+
+python39-postgres13:
+  stage: test
+  image: python:3.9
+  services:
+    - postgres:13
+  script:
+    - coverage run -m unittest discover
+    - coverage report -m
+
+pages:
+  stage: pages
+  services:
+    - postgres:13
+  script:
+    - cd docs
+    - make html
+    - mv _build/html/ ../public/
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
+  allow_failure: true

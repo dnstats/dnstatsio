@@ -5,10 +5,191 @@ from dnstats.db import db_session
 
 
 def seed_db() -> None:
+    """
+    This method seeds the database with the needed look up tables.
+
+    .. warning::
+        This method will have had results if ran one than once.
+    :return: None
+    """
     _seed_dmarc_policy()
     _seed_spf()
     _seed_email_providers()
     _seed_ns_providers()
+    _seed_remark_types()
+    _seed_remarks()
+
+
+def _seed_remarks():
+    """
+    This method seed the remarks
+
+    Remark Levels:
+    0 - Fatal
+    1 - Error, assuming default
+    2 - Warning, value should be used
+    3 - Deprecation Warning - Value was once valid, no longer
+    4 - Info - No action need. Just additional data
+    """
+    dmarc = [
+        (0, 'Invalid DMARC Record', 0),
+        (1, 'Invalid DKIM alignment mode (adkim) value', 1),
+        (1, 'Invalid SPF alignment mode ASPF, value', 2),
+        (1, 'Invalid Failure Reporting Value', 3),
+        (0, 'Invalid Policy', 4),
+        (1, 'Invalid Subdomain Policy', 5),
+        (0, 'Multiple Dmarc Records', 6),
+        (1, 'Invalid Failure reporting (rf) Value', 7),
+        (1, 'Invalid Aggregate Reporting interval (ri) Value', 8),
+        (1, 'Invalid Percent Value', 9),
+        (0, 'Invalid DMARC Record Start', 10),
+        (0, 'No DMARC Record', 11),
+    ]
+
+    spf = [
+         (0, 'None', 0),
+         (0, 'Invalid Record Start', 1),
+         (3, 'Has Ptr', 2),
+         (2, 'Too Many DNS Lookups', 3),
+         (1, 'Default All Qualifier', 4),
+         (1, 'Invalid Include Format', 5),
+         (0, 'Include Returned Many Spf', 6),
+         (2, 'Too Many A Records Returned', 7),
+         (1, 'Invalid A Mechanism', 8),
+         (1, 'Invalid MX Mechanism', 9),
+         (2, 'Too Many MX Records Returned', 10),
+         (1, 'Invalid Redirect Mechanism', 11),
+         (0, 'No Record At Redirect', 12),
+         (0, 'Redirect Returned Many Spf', 13),
+         (1, 'Invalid IPv4 Mechanism', 14),
+         (1, 'Invalid IPv6 Mechanism', 15),
+         (1, 'Invalid Mechanism', 16),
+         (0, 'Multiple Spf Records', 17),
+         (0, 'No Spf Found', 18),
+         (1, 'Invalid IPv4 Cidr', 19),
+         (1, 'Invalid IPv6 Cidr', 20),
+         (1, 'Too Many Endings', 21),
+         (0, 'Too Many Starts', 22),
+         (4, 'No MX Records', 23),
+         (2, 'No A Records Returned In Mechanism', 24),
+         (2, 'No MX Records Returned In Mechanism', 25),
+         (1, 'Invalid IPv4 Value', 26),
+         (1, 'Invalid IPv6 Value', 27)]
+
+    caa = [(0, 'Invalid Property Structure', 0),
+     (0, 'No Caa Records', 1),
+     (1, 'Invalid Flag', 2),
+     (1, 'Invalid Tag', 3),
+     (1, 'Invalid Value', 4),
+     (0, 'Value Quote Error', 5),
+     (0, 'Value Not Quoted', 6),
+     (1, 'Iodef No Scheme', 7),
+     (1, 'Iodef Invalid Email', 8),
+     (1, 'Iodef Invalid Url', 9),
+     (1, 'Issuewild Domain Invalid', 10),
+     (1, 'Issue Domain Invalid', 11),
+     (1, 'Tag Too Long', 12)]
+
+    ns = [(0, 'No NS Records', 0),
+          (2, 'Only One Name Server', 1),
+          (0, 'Null NS Record', 2),
+          (1, 'Name Server Has no A Record', 3),
+          (0, 'Name Server Has Invalid Response', 4),
+          (2, 'Name Server Is Not Public', 5),
+          (0, 'No Name Servers Returned', 6),
+          (2, 'Name Server Mismatch', 7), ]
+
+    soa = [(0, 'No SOA', 0),
+           (0, 'Too Many SOA', 1),
+           (0, 'SOA Invalid', 2),
+           (1, 'Invalid MNAME', 3),
+           (1, 'Invalid RNAME', 4),
+           (1, 'Invalid Serial', 5),
+           (1, 'Invalid Refresh', 6),
+           (1, 'Invalid Retry', 7),
+           (1, 'Invalid Expire', 8),
+           (1, 'Invalid Minimum', 9),
+           (1, 'Serial Not In Range', 10),
+           (1, 'Refresh Not in Range', 11),
+           (1, 'Retry Not In Range', 12),
+           (1, 'Minimum Not In Range', 13),
+           (1, 'Expire Not In Range', 14), ]
+
+    mx = [(0, 'NO MX RECORDS', 0),
+          (0, 'BLANK MX RECORD', 1),
+          (0, 'TOO MANY PARTS', 2),
+          (0, 'TOO FEW PARTS', 3),
+          (0, 'PREFERENCE OUT OF RANGE', 4),
+          (0, 'INVALID PREFERENCE', 5),
+          (0, 'INVALID EXCHANGE', 6),
+          (2, 'EXCHANGE IS AN IP', 7),
+          (2, 'NOT PUBLIC DOMAIN', 8),
+          (2, 'POSSIBLE BAD EXCHANGE', 9)]
+
+    bimi = [(0, 'N0 BIMI RECORDS', 0),
+             (0, 'TOO MANY BIMI RECORDS', 1),
+             (0, 'DMARC STRICT ENOUGH POLICY', 2),
+             (0, 'DMARC STRICT ENOUGH PERCENT', 3),
+             (0, 'INVALID START', 4),
+             (0, 'LOGO NOT DEFINED', 5),
+             (0, 'LOGO NOT HTTPS', 6),
+             (0, 'LOGO INVALID LOCATION', 7),
+             (0, 'LOGO INVALID FORMAT', 8),
+             (0, 'SELECTOR NOT DEFINED', 9),
+             (0, 'DUPLICATE TAG FOUND', 10),
+             (0, 'BIMI OPTED OUT', 11),
+             (0, 'LOGO LOCATION BLANK', 12),
+             (0, 'DMARC NOT DEFINED', 13),]
+
+    remark_type_db_dmarc = db_session.query(models.RemarkType).filter_by(name='dmarc').one()
+    _seed_remark_arrays(remark_type_db_dmarc, dmarc)
+
+    remark_type_db_spf = db_session.query(models.RemarkType).filter_by(name='spf').one()
+    _seed_remark_arrays(remark_type_db_spf, spf)
+
+    remark_type_db_caa = db_session.query(models.RemarkType).filter_by(name='caa').one()
+    _seed_remark_arrays(remark_type_db_caa, caa)
+
+    remark_type_db_ns = db_session.query(models.RemarkType).filter_by(name='ns').one()
+    _seed_remark_arrays(remark_type_db_ns, ns)
+
+    remark_type_db_soa = db_session.query(models.RemarkType).filter_by(name='soa').one()
+    _seed_remark_arrays(remark_type_db_soa, soa)
+
+    remark_type_db_mx = db_session.query(models.RemarkType).filter_by(name= 'mx').one()
+    _seed_remark_arrays(remark_type_db_mx, mx)
+
+    remark_type_db_mx = db_session.query(models.RemarkType).filter_by(name= 'bimi').one()
+    _seed_remark_arrays(remark_type_db_mx, bimi)
+
+
+
+def _seed_remark_arrays(remark_type_db_spf: models.RemarkType, spf: list) -> None:
+    for remark in spf:
+        remark_db = db_session.query(models.Remark).filter_by(remark_type_id=remark_type_db_spf.id,
+                                                              enum_value=remark[2]).scalar()
+
+        if remark_db:
+            remark_db.remark_level = remark[0]
+            remark_db.name = remark[1]
+            remark_db.enum_value = remark[2]
+        else:
+            remark_db = models.Remark(remark_type_id=remark_type_db_spf.id, name=remark[1], remark_level=remark[0],
+                                      enum_value=remark[2])
+            db_session.add(remark_db)
+        db_session.commit()
+
+
+def _seed_remark_types():
+    remark_types = ['spf', 'dmarc', 'caa', 'ns', 'soa', 'mx', 'bimi']
+
+    for remark_type in remark_types:
+        remark_type_s = db_session.query(models.RemarkType).filter_by(name=remark_type).scalar()
+
+        if not remark_type_s:
+            remark_type_db = models.RemarkType(name=remark_type)
+            db_session.add(remark_type_db)
+            db_session.commit()
 
 
 def _seed_spf():
@@ -21,19 +202,15 @@ def _seed_spf():
     ]
 
     for spf_pol in spf_policies:
-        spf_policy = models.SpfPolicy(qualifier=spf_pol[0], display_name=spf_pol[1], color=spf_pol[2])
-        db_session.add(spf_policy)
+        spf_policy_db = db_session.query(models.SpfPolicy).filter_by(qualifier=spf_pol[0]).scalar()
+
+        if not spf_policy_db:
+            spf_policy = models.SpfPolicy(qualifier=spf_pol[0], display_name=spf_pol[1], color=spf_pol[2])
+            db_session.add(spf_policy)
+        else:
+            spf_policy_db.display_name = spf_pol[1]
+            spf_policy_db.color = spf_pol[2]
         db_session.commit()
-
-
-def _seed_sites(filename):
-    with open(filename, 'r') as file:
-        csv_reader = csv.DictReader(file)
-
-        for row in csv_reader:
-            site = models.Site(current_rank=int(row['rank']), domain=row['site'])
-            db_session.add(site)
-            db_session.commit()
 
 
 def _seed_dmarc_policy():
@@ -45,8 +222,14 @@ def _seed_dmarc_policy():
         ('invalid', 'Invalid', '#FF00FF')
     ]
     for dmarc_policy in dmarc_policies:
-        dmarc_policy = models.DmarcPolicy(policy_string=dmarc_policy[0], display_name=dmarc_policy[1], color=dmarc_policy[2])
-        db_session.add(dmarc_policy)
+        dmarc_policy_db = db_session.query(models.DmarcPolicy).filter_by(policy_string=dmarc_policy[0]).scalar()
+
+        if not dmarc_policy_db:
+            dmarc_policy = models.DmarcPolicy(policy_string=dmarc_policy[0], display_name=dmarc_policy[1], color=dmarc_policy[2])
+            db_session.add(dmarc_policy)
+        else:
+            dmarc_policy_db.display_name = dmarc_policy[1]
+            dmarc_policy_db.color = dmarc_policy[2]
         db_session.commit()
 
 
@@ -186,3 +369,7 @@ def _seed_ns_providers():
             nsp = models.DnsProvider(display_name=ns_provider[0], search_regex=ns_provider[1], is_regex=ns_provider[2])
             db_session.add(nsp)
             db_session.commit()
+
+
+if __name__ == '__main__':
+    seed_db()
