@@ -134,7 +134,15 @@ def _send_sites_updated_done():
     _send_message(message)
 
 
-def _send_botched_deploy(date, run_id: int, count: int, target_count: int):
+def _send_botched_deploy(date, run_id: int, count: int, target_count: int) -> None:
+    """
+    Send a email stating not enough sites have been scanned
+    :param date: start date of the scan
+    :param run_id: database id of the scan
+    :param count: number of sites that have been complted in the scan
+    :param target_count: the target number of scans, below this numbet the deployment will be refused
+    :return: None
+    """
     delta = target_count - count
     subject = '[DNStats] CRITICAL Botched Website Deploy'
     body = '''
