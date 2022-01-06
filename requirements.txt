@@ -1,6 +1,6 @@
 publicsuffix2
 dnspython3
-celery==5.0.4
+celery==5.2.2
 kombu>=5.0.0
 billiard>=3.6.3
 flower
